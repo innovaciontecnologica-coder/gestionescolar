@@ -484,6 +484,7 @@
             const btn = document.getElementById('btn-login');
             
             btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Validando...';
+            btn.disabled = true; // Desactivar botón para prevenir múltiples clics
             lucide.createIcons({root: btn});
 
             if (appState.isDemoMode) {
@@ -497,17 +498,28 @@
                     } else {
                         showToast('Credenciales de prueba incorrectas', 'error');
                         btn.innerHTML = 'Ingresar al Sistema';
+                        btn.disabled = false;
                     }
                 }, 1000);
                 return;
             }
 
+            // Controlador para abortar si Google Apps Script tarda demasiado
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 segundos máximo
+
             // MODO PRODUCCIÓN: Llamada a Google Apps Script
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ action: 'login', data: { correo: email, password: password } })
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8' // Obligatorio para evitar bloqueos CORS
+                    },
+                    body: JSON.stringify({ action: 'login', data: { correo: email, password: password } }),
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
                 const res = await response.json();
                 
                 if (res.success) {
@@ -517,32 +529,46 @@
                     iniciarApp();
                 } else {
                     showToast(res.message || res.error || 'Error reportado por el servidor', 'error');
-                    btn.innerHTML = 'Ingresar al Sistema';
                 }
             } catch (error) {
                 console.error("Error al conectar:", error);
-                if (error.name === 'SyntaxError') {
+                if (error.name === 'AbortError') {
+                    showToast('La conexión tardó demasiado. Verifica tu internet o el enlace.', 'error');
+                } else if (error.name === 'SyntaxError') {
                     showToast('Error de permisos. Asegúrate de implementar Apps Script para "Cualquier persona".', 'error');
                 } else {
                     showToast('Error de red al conectar con Google Apps Script.', 'error');
                 }
-                btn.innerHTML = 'Ingresar al Sistema';
+            } finally {
+                // Esto asegura que el botón SIEMPRE se recupere, pase lo que pase
+                if (!appState.user) {
+                    btn.innerHTML = 'Ingresar al Sistema';
+                    btn.disabled = false;
+                }
             }
         }
 
         function iniciarApp() {
-            // Ocultar login, mostrar app
-            document.getElementById('view-login').classList.remove('active');
-            document.getElementById('app-layout').classList.remove('hidden');
-            
-            // Setear datos de usuario en sidebar
-            document.getElementById('user-name').innerText = appState.user.Nombre;
-            document.getElementById('user-role').innerText = appState.user.Rol;
-            document.getElementById('user-initial').innerText = appState.user.Nombre.charAt(0).toUpperCase();
+            try {
+                // Ocultar login, mostrar app
+                document.getElementById('view-login').classList.remove('active');
+                document.getElementById('app-layout').classList.remove('hidden');
+                
+                // Setear datos de usuario en sidebar con validación segura
+                const nombreUser = appState.user?.Nombre || "Usuario";
+                const rolUser = appState.user?.Rol || "Rol";
+                
+                document.getElementById('user-name').innerText = nombreUser;
+                document.getElementById('user-role').innerText = rolUser;
+                document.getElementById('user-initial').innerText = nombreUser.charAt(0).toUpperCase();
 
-            // Cargar Dashboard por defecto
-            cambiarVista('dashboard');
-            lucide.createIcons();
+                // Cargar Dashboard por defecto
+                cambiarVista('dashboard');
+                lucide.createIcons();
+            } catch (err) {
+                console.error("Error al cargar la interfaz:", err);
+                showToast("Hubo un error al procesar tus datos de usuario.", "error");
+            }
         }
 
         function cerrarSesion() {
