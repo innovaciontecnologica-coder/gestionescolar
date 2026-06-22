@@ -1284,6 +1284,193 @@
                 mostrarMensaje('Éxito', 'Alumno guardado correctamente.', 'success');
             };
             
+            
+            // --- LÓGICA DE MAESTROS ---
+            document.getElementById('form-agregar-maestro').onsubmit = (e) => {
+                e.preventDefault();
+                const niveles = Array.from(document.querySelectorAll('input[name="maestro-nivel"]:checked')).map(cb => cb.value);
+                if(niveles.length === 0) return mostrarMensaje('Error', 'Debes seleccionar al menos un nivel.', 'error');
+                
+                const data = {
+                    id: document.getElementById('maestro-id-edit').value || generateId(),
+                    nombres: document.getElementById('maestro-nombres').value,
+                    apellidos: document.getElementById('maestro-apellidos').value,
+                    telefono: document.getElementById('maestro-telefono').value,
+                    email: document.getElementById('maestro-email').value,
+                    rfc: document.getElementById('maestro-rfc').value,
+                    curp: document.getElementById('maestro-curp').value,
+                    niveles: niveles
+                };
+                
+                const idx = localMaestros.findIndex(m => m.id === data.id);
+                if(idx > -1) localMaestros[idx] = data; else localMaestros.push(data);
+                
+                saveData('maestros', localMaestros); cargarDatosIniciales();
+                e.target.reset(); document.getElementById('maestro-id-edit').value = '';
+                mostrarMensaje('Éxito', 'Maestro guardado correctamente.', 'success');
+            };
+
+            // --- LÓGICA DE PAGOS ---
+            let pagoConceptosTemp = [];
+            let pagoMetodosTemp = [];
+            const btnGuardarPago = document.getElementById('btn-guardar-pago');
+            
+            const checkPagoValido = () => {
+                const tPagar = pagoConceptosTemp.reduce((s, c) => s + c.monto, 0);
+                const tPagado = pagoMetodosTemp.reduce((s, m) => s + m.monto, 0);
+                const isValido = document.getElementById('pago-alumno').value && 
+                                 document.getElementById('pago-fecha').value && 
+                                 tPagar > 0 && tPagado > 0 && Math.abs(tPagar - tPagado) < 0.01;
+                
+                if (isValido) {
+                    btnGuardarPago.disabled = false;
+                    btnGuardarPago.classList.remove('bg-slate-300', 'text-slate-500', 'cursor-not-allowed');
+                    btnGuardarPago.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700', 'shadow-md');
+                } else {
+                    btnGuardarPago.disabled = true;
+                    btnGuardarPago.classList.add('bg-slate-300', 'text-slate-500', 'cursor-not-allowed');
+                    btnGuardarPago.classList.remove('bg-indigo-600', 'text-white', 'hover:bg-indigo-700', 'shadow-md');
+                }
+            };
+
+            const renderConceptosPago = () => {
+                const wrap = document.getElementById('lista-conceptos-pago');
+                wrap.innerHTML = '';
+                let total = 0;
+                pagoConceptosTemp.forEach((c, idx) => {
+                    total += c.monto;
+                    wrap.innerHTML += `
+                        <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-200 text-sm shadow-sm">
+                            <span class="font-medium text-slate-700">${c.concepto}</span>
+                            <div class="flex items-center gap-3">
+                                <span class="font-bold text-slate-800">${currency(c.monto)}</span>
+                                <button type="button" data-idx="${idx}" class="rm-concepto text-red-500 hover:text-red-700 w-6 h-6 rounded-md hover:bg-red-50 flex items-center justify-center transition-colors"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>`;
+                });
+                document.getElementById('total-a-pagar').textContent = currency(total);
+                checkPagoValido();
+            };
+
+            const renderMetodosPago = () => {
+                const wrap = document.getElementById('lista-metodos-pago');
+                wrap.innerHTML = '';
+                let total = 0;
+                pagoMetodosTemp.forEach((m, idx) => {
+                    total += m.monto;
+                    wrap.innerHTML += `
+                        <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-emerald-200 text-sm shadow-sm">
+                            <span class="font-medium text-emerald-800">${m.metodo}</span>
+                            <div class="flex items-center gap-3">
+                                <span class="font-bold text-emerald-700">${currency(m.monto)}</span>
+                                <button type="button" data-idx="${idx}" class="rm-metodo text-red-500 hover:text-red-700 w-6 h-6 rounded-md hover:bg-red-50 flex items-center justify-center transition-colors"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>`;
+                });
+                document.getElementById('total-pagado').textContent = currency(total);
+                checkPagoValido();
+            };
+
+            document.getElementById('btn-agregar-concepto').addEventListener('click', () => {
+                const concepto = document.getElementById('pago-concepto-select').value;
+                const monto = parseFloat(document.getElementById('pago-concepto-monto').value);
+                if (!concepto || isNaN(monto) || monto <= 0) return mostrarMensaje('Aviso', 'Ingresa un concepto y un monto válido.', 'info');
+                pagoConceptosTemp.push({ concepto, monto });
+                document.getElementById('pago-concepto-monto').value = '';
+                renderConceptosPago();
+            });
+
+            document.getElementById('btn-agregar-metodo').addEventListener('click', () => {
+                const metodo = document.getElementById('pago-metodo-select').value;
+                const monto = parseFloat(document.getElementById('pago-metodo-monto').value);
+                if (!metodo || isNaN(monto) || monto <= 0) return mostrarMensaje('Aviso', 'Ingresa un método y un monto válido.', 'info');
+                pagoMetodosTemp.push({ metodo, monto });
+                document.getElementById('pago-metodo-monto').value = '';
+                renderMetodosPago();
+            });
+
+            document.getElementById('lista-conceptos-pago').addEventListener('click', (e) => {
+                const btn = e.target.closest('.rm-concepto');
+                if(!btn) return;
+                pagoConceptosTemp.splice(btn.dataset.idx, 1);
+                renderConceptosPago();
+            });
+
+            document.getElementById('lista-metodos-pago').addEventListener('click', (e) => {
+                const btn = e.target.closest('.rm-metodo');
+                if(!btn) return;
+                pagoMetodosTemp.splice(btn.dataset.idx, 1);
+                renderMetodosPago();
+            });
+
+            document.getElementById('pago-alumno').addEventListener('change', checkPagoValido);
+            document.getElementById('pago-fecha').addEventListener('change', checkPagoValido);
+
+            document.getElementById('form-agregar-pago').onsubmit = (e) => {
+                e.preventDefault();
+                const tPagar = pagoConceptosTemp.reduce((s, c) => s + c.monto, 0);
+                const tPagado = pagoMetodosTemp.reduce((s, m) => s + m.monto, 0);
+                if (Math.abs(tPagar - tPagado) >= 0.01) return mostrarMensaje('Error', 'El Total a Pagar y el Total Recibido deben coincidir exactamente.', 'error');
+
+                const data = {
+                    id: document.getElementById('pago-id-edit').value || generateId(),
+                    alumnoId: document.getElementById('pago-alumno').value,
+                    fecha: document.getElementById('pago-fecha').value,
+                    conceptos: [...pagoConceptosTemp],
+                    metodosDePago: [...pagoMetodosTemp],
+                    total: tPagar,
+                    notas: document.getElementById('pago-notas').value,
+                    estado: 'activo'
+                };
+                
+                const idx = localPagos.findIndex(p => p.id === data.id);
+                if(idx > -1) localPagos[idx] = data; else localPagos.push(data);
+                
+                saveData('pagos', localPagos); cargarDatosIniciales();
+                e.target.reset(); document.getElementById('pago-id-edit').value = '';
+                pagoConceptosTemp = []; pagoMetodosTemp = [];
+                renderConceptosPago(); renderMetodosPago();
+                mostrarMensaje('Éxito', 'Transacción registrada correctamente.', 'success');
+            };
+
+            // Acciones en la lista de Pagos (Anular e Imprimir)
+            document.getElementById('lista-pagos').addEventListener('click', async (e) => {
+                const btnAnular = e.target.closest('.anular-pago-btn');
+                const btnPrint = e.target.closest('.print-ticket-btn');
+                
+                if (btnAnular && !btnAnular.disabled) {
+                    const id = btnAnular.dataset.id;
+                    const confirmed = await mostrarMensaje("Anular Pago", "¿Estás seguro de anular esta transacción? Requerirá un motivo.", "confirm");
+                    if (confirmed) {
+                        const motivo = await mostrarPromptModal("Motivo de Anulación", "Escribe la razón para anular el recibo:");
+                        if (motivo && motivo.trim() !== '') {
+                            const p = localPagos.find(x => x.id === id);
+                            p.estado = 'anulado'; p.motivoAnulacion = motivo;
+                            saveData('pagos', localPagos); cargarDatosIniciales();
+                        } else if (motivo !== null) {
+                            mostrarMensaje("Error", "Debes ingresar un motivo válido.", "error");
+                        }
+                    }
+                }
+                if (btnPrint) imprimirTicket(btnPrint.dataset.id);
+            });
+
+            // --- LÓGICA DE CAJA CHICA ---
+            document.getElementById('form-caja-chica').onsubmit = (e) => {
+                e.preventDefault();
+                const data = {
+                    id: generateId(),
+                    fecha: document.getElementById('caja-fecha').value,
+                    tipo: document.getElementById('caja-tipo').value,
+                    concepto: document.getElementById('caja-concepto').value,
+                    monto: parseFloat(document.getElementById('caja-monto').value)
+                };
+                localCajaChica.push(data);
+                saveData('cajaChica', localCajaChica); cargarDatosIniciales();
+                e.target.reset();
+                mostrarMensaje('Éxito', 'Movimiento de caja registrado.', 'success');
+            };
+
             // Lógica de exportación de botones
             document.getElementById('export-alumnos-csv-btn').onclick = exportarAlumnosCSV;
             document.getElementById('export-alumnos-pdf-btn').onclick = exportarAlumnosPDF;
