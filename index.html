@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Escolar Pro</title>
+    
+    <!-- Tailwind CSS (Framework Minimalista y Responsivo) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        // Configuración de Tailwind para usar colores institucionales
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        institucional: {
+                            dark: '#1e3a8a', // Azul oscuro
+                            light: '#e5e7eb', // Gris claro
+                            accent: '#3b82f6' // Azul vivo para botones
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* --- STYLES.CSS --- */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .view-section {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Ocultar barra de scroll pero permitir scroll */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Custom Modal Overlay */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(2px);
+        }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex overflow-hidden">
+
+    <!-- MENSAJES TOAST (Alertas personalizadas en lugar de alert()) -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2"></div>
+
+    <!-- ================= VISTA LOGIN ================= -->
+    <div id="view-login" class="view-section active fixed inset-0 bg-gray-100 z-40 flex items-center justify-center">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md border-t-4 border-institucional-dark">
+            <div class="text-center mb-8">
+                <i data-lucide="graduation-cap" class="w-16 h-16 mx-auto text-institucional-dark mb-2"></i>
+                <h1 class="text-2xl font-bold text-gray-800">Control Escolar</h1>
+                <p class="text-sm text-gray-500">Inicia sesión en tu cuenta</p>
+            </div>
+            
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
+                    <input type="email" id="login-email" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-institucional-accent focus:border-transparent outline-none" placeholder="admin@escuela.mx">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                    <input type="password" id="login-password" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-institucional-accent focus:border-transparent outline-none" placeholder="••••••••">
+                </div>
+                <button type="submit" id="btn-login" class="w-full bg-institucional-dark hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 flex justify-center items-center">
+                    <span>Ingresar al Sistema</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= ESTRUCTURA PRINCIPAL (APP) ================= -->
+    <div id="app-layout" class="hidden w-full h-full flex">
+        
+        <!-- BARRA LATERAL (SIDEBAR) -->
+        <aside class="w-64 bg-institucional-dark text-white flex flex-col transition-all duration-300 md:relative absolute z-30 h-full transform -translate-x-full md:translate-x-0" id="sidebar">
+            <div class="p-5 flex items-center justify-between border-b border-blue-800">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="book-open" class="text-white"></i>
+                    <span class="font-bold text-lg tracking-wider">C.E. PRO</span>
+                </div>
+                <button id="close-sidebar-mobile" class="md:hidden text-gray-300 hover:text-white">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            
+            <nav class="flex-1 overflow-y-auto py-4 no-scrollbar">
+                <ul class="space-y-1 px-3">
+                    <li>
+                        <a href="#" data-target="dashboard" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-800 text-white transition-colors">
+                            <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="pt-2 pb-1 px-3 text-xs font-semibold text-blue-300 uppercase tracking-wider">Académico</li>
+                    <li>
+                        <a href="#" data-target="alumnos" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-800 text-gray-200 transition-colors">
+                            <i data-lucide="users" class="w-5 h-5"></i> Alumnos
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-target="tutores" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-800 text-gray-200 transition-colors">
+                            <i data-lucide="user-square-2" class="w-5 h-5"></i> Tutores
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-target="grupos" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-800 text-gray-200 transition-colors">
+                            <i data-lucide="boxes" class="w-5 h-5"></i> Grupos y Materias
+                        </a>
+                    </li>
+                    <li class="pt-2 pb-1 px-3 text-xs font-semibold text-blue-300 uppercase tracking-wider">Operación</li>
+                    <li>
+                        <a href="#" data-target="calificaciones" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-800 text-gray-200 transition-colors">
+                            <i data-lucide="award" class="w-5 h-5"></i> Calificaciones
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-target="asistencia" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-800 text-gray-200 transition-colors">
+                            <i data-lucide="calendar-check" class="w-5 h-5"></i> Asistencia
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-target="pagos" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-800 text-gray-200 transition-colors">
+                            <i data-lucide="circle-dollar-sign" class="w-5 h-5"></i> Pagos
+                        </a>
+                    </li>
+                    <li class="pt-2 pb-1 px-3 text-xs font-semibold text-blue-300 uppercase tracking-wider">Administración</li>
+                    <li>
+                        <a href="#" data-target="reportes" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-800 text-gray-200 transition-colors">
+                            <i data-lucide="file-bar-chart" class="w-5 h-5"></i> Reportes
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="p-4 border-t border-blue-800">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-sm font-bold">
+                        <span id="user-initial">A</span>
+                    </div>
+                    <div>
+                        <p id="user-name" class="text-sm font-medium">Usuario</p>
+                        <p id="user-role" class="text-xs text-blue-300">Rol</p>
+                    </div>
+                </div>
+                <button id="btn-logout" class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-500 hover:bg-red-600 rounded-lg text-sm transition-colors">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Cerrar Sesión
+                </button>
+            </div>
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="flex-1 flex flex-col h-full bg-gray-50 w-full overflow-hidden">
+            
+            <!-- HEADER -->
+            <header class="bg-white shadow-sm h-16 flex items-center justify-between px-6 z-20">
+                <div class="flex items-center gap-4">
+                    <button id="open-sidebar-mobile" class="md:hidden text-gray-600 hover:text-institucional-dark">
+                        <i data-lucide="menu"></i>
+                    </button>
+                    <h2 id="header-title" class="text-xl font-semibold text-gray-800">Dashboard</h2>
+                </div>
+                <div class="flex items-center gap-4">
+                    <!-- Buscador general simple -->
+                    <div class="relative hidden sm:block">
+                        <input type="text" placeholder="Buscar..." class="pl-9 pr-4 py-1.5 bg-gray-100 border-transparent rounded-full text-sm focus:bg-white focus:border-gray-300 focus:ring-0 outline-none w-48 transition-all">
+                        <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-2"></i>
+                    </div>
+                    <button class="relative text-gray-500 hover:text-institucional-dark">
+                        <i data-lucide="bell"></i>
+                        <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- CONTENEDOR DE VISTAS -->
+            <div class="flex-1 overflow-y-auto p-6 relative">
+
+                <!-- 1. VISTA: DASHBOARD -->
+                <div id="view-dashboard" class="view-section">
+                    <!-- Tarjetas de Resumen -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Total Alumnos</p>
+                                    <h3 class="text-2xl font-bold text-gray-800 mt-1">452</h3>
+                                </div>
+                                <div class="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                                    <i data-lucide="users"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Asistencia Hoy</p>
+                                    <h3 class="text-2xl font-bold text-gray-800 mt-1">94%</h3>
+                                </div>
+                                <div class="p-3 bg-green-50 text-green-600 rounded-lg">
+                                    <i data-lucide="check-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-orange-500">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Pagos Pendientes</p>
+                                    <h3 class="text-2xl font-bold text-gray-800 mt-1">28</h3>
+                                </div>
+                                <div class="p-3 bg-orange-50 text-orange-600 rounded-lg">
+                                    <i data-lucide="alert-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Promedio General</p>
+                                    <h3 class="text-2xl font-bold text-gray-800 mt-1">8.6</h3>
+                                </div>
+                                <div class="p-3 bg-purple-50 text-purple-600 rounded-lg">
+                                    <i data-lucide="trending-up"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alertas o Contenido extra -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Alertas Recientes</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-start gap-4 p-3 bg-orange-50 text-orange-800 rounded-lg">
+                                <i data-lucide="bell" class="mt-0.5"></i>
+                                <div>
+                                    <p class="font-medium">Periodo de Evaluación</p>
+                                    <p class="text-sm">Faltan 3 días para cerrar la captura de calificaciones del Bloque 2.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4 p-3 bg-blue-50 text-blue-800 rounded-lg">
+                                <i data-lucide="info" class="mt-0.5"></i>
+                                <div>
+                                    <p class="font-medium">Reunión de Padres</p>
+                                    <p class="text-sm">Programada para el próximo viernes a las 16:00 hrs para grupos de Secundaria.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. VISTA: ALUMNOS (CRUD COMPLETO) -->
+                <div id="view-alumnos" class="view-section">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <input type="text" id="search-alumno" placeholder="Buscar por nombre o matrícula..." class="px-4 py-2 border border-gray-300 rounded-lg w-full sm:w-64 focus:ring-2 focus:ring-institucional-accent outline-none">
+                            <select id="filter-grupo" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-institucional-accent outline-none">
+                                <option value="">Todos los grupos</option>
+                                <option value="1A">1° A</option>
+                                <option value="1B">1° B</option>
+                                <option value="2A">2° A</option>
+                            </select>
+                        </div>
+                        <button onclick="abrirModalAlumno()" class="bg-institucional-accent hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors w-full sm:w-auto justify-center">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Nuevo Alumno
+                        </button>
+                    </div>
+
+                    <!-- Tabla de Alumnos -->
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50 text-gray-600 border-b border-gray-200 text-sm">
+                                        <th class="px-6 py-4 font-semibold">Matrícula</th>
+                                        <th class="px-6 py-4 font-semibold">Nombre Completo</th>
+                                        <th class="px-6 py-4 font-semibold">Grado y Grupo</th>
+                                        <th class="px-6 py-4 font-semibold">CURP</th>
+                                        <th class="px-6 py-4 font-semibold">Estado</th>
+                                        <th class="px-6 py-4 font-semibold text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-alumnos-body" class="text-sm divide-y divide-gray-100">
+                                    <!-- Los datos se insertarán aquí con JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Loader -->
+                        <div id="alumnos-loader" class="py-12 text-center text-gray-500 hidden">
+                            <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2 text-institucional-accent"></i>
+                            <p>Cargando alumnos...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. VISTAS EN CONSTRUCCIÓN (Plantillas) -->
+                <div id="view-tutores" class="view-section">
+                    <div class="bg-white p-8 rounded-xl shadow-sm text-center">
+                        <i data-lucide="hammer" class="w-16 h-16 mx-auto text-gray-300 mb-4"></i>
+                        <h3 class="text-xl font-bold text-gray-700">Módulo de Tutores</h3>
+                        <p class="text-gray-500 mt-2">Este módulo sigue la misma lógica y estructura que "Alumnos".</p>
+                    </div>
+                </div>
+                <div id="view-grupos" class="view-section"><div class="bg-white p-8 rounded-xl shadow-sm text-center"><h3 class="text-xl font-bold text-gray-700">Grupos y Materias</h3></div></div>
+                <div id="view-calificaciones" class="view-section"><div class="bg-white p-8 rounded-xl shadow-sm text-center"><h3 class="text-xl font-bold text-gray-700">Captura de Calificaciones</h3></div></div>
+                <div id="view-asistencia" class="view-section"><div class="bg-white p-8 rounded-xl shadow-sm text-center"><h3 class="text-xl font-bold text-gray-700">Pase de Lista</h3></div></div>
+                <div id="view-pagos" class="view-section"><div class="bg-white p-8 rounded-xl shadow-sm text-center"><h3 class="text-xl font-bold text-gray-700">Control de Colegiaturas</h3></div></div>
+                <div id="view-reportes" class="view-section"><div class="bg-white p-8 rounded-xl shadow-sm text-center"><h3 class="text-xl font-bold text-gray-700">Reportes Generales</h3></div></div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ================= MODAL NUEVO/EDITAR ALUMNO ================= -->
+    <div id="modal-alumno" class="fixed inset-0 z-50 hidden modal-overlay flex justify-center items-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl transform transition-all mt-10 mb-10">
+            <div class="flex justify-between items-center p-6 border-b border-gray-100">
+                <h3 id="modal-alumno-title" class="text-lg font-bold text-gray-800">Alta de Alumno</h3>
+                <button onclick="cerrarModalAlumno()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <form id="form-alumno" class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Datos Personales -->
+                    <div class="col-span-1 md:col-span-2">
+                        <h4 class="text-xs font-semibold text-gray-500 uppercase mb-2">Datos Personales</h4>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">Nombre(s) *</label>
+                        <input type="text" id="al-nombre" required class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">Apellido Paterno *</label>
+                        <input type="text" id="al-apaterno" required class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">Apellido Materno</label>
+                        <input type="text" id="al-amaterno" class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">CURP *</label>
+                        <input type="text" id="al-curp" required maxlength="18" class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-blue-500 uppercase">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">Fecha de Nacimiento</label>
+                        <input type="date" id="al-fechanac" class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-blue-500">
+                    </div>
+                    
+                    <!-- Datos Académicos -->
+                    <div class="col-span-1 md:col-span-2 mt-2">
+                        <h4 class="text-xs font-semibold text-gray-500 uppercase mb-2">Datos Académicos</h4>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">Matrícula (Opcional, autogenerada)</label>
+                        <input type="text" id="al-matricula" class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-blue-500 bg-gray-50">
+                    </div>
+                    <div class="flex gap-2">
+                        <div class="w-1/2">
+                            <label class="block text-sm text-gray-600 mb-1">Grado *</label>
+                            <select id="al-grado" required class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-blue-500">
+                                <option value="1">1°</option><option value="2">2°</option><option value="3">3°</option>
+                                <option value="4">4°</option><option value="5">5°</option><option value="6">6°</option>
+                            </select>
+                        </div>
+                        <div class="w-1/2">
+                            <label class="block text-sm text-gray-600 mb-1">Grupo *</label>
+                            <select id="al-grupo" required class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-blue-500">
+                                <option value="A">A</option><option value="B">B</option><option value="C">C</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 flex justify-end gap-3">
+                    <button type="button" onclick="cerrarModalAlumno()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-institucional-accent text-white rounded-lg hover:bg-blue-600 transition-colors">Guardar Alumno</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script>
+        /* =========================================================
+           --- INICIO DE APP.JS ---
+           (Lógica Frontend, Rutas y API)
+           ========================================================= */
+
+        // INICIALIZACIÓN DE ICONOS
+        lucide.createIcons();
+
+        // CONFIGURACIÓN DE LA API (GOOGLE APPS SCRIPT)
+        // AQUÍ ESTÁ TU URL YA INTEGRADA
+        const API_URL = "https://script.google.com/macros/s/AKfycbxiVulIGV8zt3dYwAwl-tdJgrsNqfGSKsD00mKcmoqUpdX0ZUR-X4FAXOLgB0I-MdldhA/exec"; 
+        
+        // ESTADO GLOBAL
+        let appState = {
+            user: null,
+            alumnos: [],
+            isDemoMode: API_URL === "" // Modo de prueba si no hay API conectada
+        };
+
+        // AL CARGAR EL DOCUMENTO
+        document.addEventListener('DOMContentLoaded', () => {
+            verificarSesion();
+            configurarEventosUi();
+            configurarNavegacion();
+            
+            // Evento Login
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            // Evento Formulario Alumnos
+            document.getElementById('form-alumno').addEventListener('submit', handleGuardarAlumno);
+            // Eventos Búsqueda
+            document.getElementById('search-alumno').addEventListener('input', filtrarAlumnos);
+            document.getElementById('filter-grupo').addEventListener('change', filtrarAlumnos);
+        });
+
+        /* --- 1. UTILIDADES Y UI --- */
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'bg-green-500' : (type === 'error' ? 'bg-red-500' : 'bg-blue-500');
+            const icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'x-circle' : 'info');
+            
+            toast.className = `${bgColor} text-white px-4 py-3 rounded shadow-lg flex items-center gap-3 transform transition-all duration-300 translate-x-full`;
+            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5"></i><span>${message}</span>`;
+            
+            container.appendChild(toast);
+            lucide.createIcons({root: toast});
+            
+            // Animar entrada
+            setTimeout(() => toast.classList.remove('translate-x-full'), 10);
+            
+            // Remover después de 3s
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        /* --- 2. AUTENTICACIÓN --- */
+        function verificarSesion() {
+            const sessionData = localStorage.getItem('ce_session');
+            if (sessionData) {
+                appState.user = JSON.parse(sessionData);
+                iniciarApp();
+            }
+            // Si no hay sesión, se queda en la vista login (por defecto visible)
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            // Se limpian espacios y se pasa a minúsculas para evitar errores comunes
+            const email = document.getElementById('login-email').value.trim().toLowerCase();
+            const password = document.getElementById('login-password').value.trim();
+            const btn = document.getElementById('btn-login');
+            
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Validando...';
+            lucide.createIcons({root: btn});
+
+            if (appState.isDemoMode) {
+                // MODO DEMO: Simular login
+                setTimeout(() => {
+                    if(email === 'admin@test.com' && password === '1234') {
+                        const mockUser = { Nombre: "Arturo (Demo)", Correo: email, Rol: "Administrador" };
+                        localStorage.setItem('ce_session', JSON.stringify(mockUser));
+                        appState.user = mockUser;
+                        iniciarApp();
+                    } else {
+                        showToast('Credenciales de prueba incorrectas', 'error');
+                        btn.innerHTML = 'Ingresar al Sistema';
+                    }
+                }, 1000);
+                return;
+            }
+
+            // MODO PRODUCCIÓN: Llamada a Google Apps Script
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'login', data: { correo: email, password: password } })
+                });
+                const res = await response.json();
+                
+                if (res.success) {
+                    localStorage.setItem('ce_session', JSON.stringify(res.user));
+                    appState.user = res.user;
+                    showToast('¡Bienvenido al sistema!', 'success');
+                    iniciarApp();
+                } else {
+                    showToast(res.message || res.error || 'Error reportado por el servidor', 'error');
+                    btn.innerHTML = 'Ingresar al Sistema';
+                }
+            } catch (error) {
+                console.error("Error al conectar:", error);
+                if (error.name === 'SyntaxError') {
+                    showToast('Error de permisos. Asegúrate de implementar Apps Script para "Cualquier persona".', 'error');
+                } else {
+                    showToast('Error de red al conectar con Google Apps Script.', 'error');
+                }
+                btn.innerHTML = 'Ingresar al Sistema';
+            }
+        }
+
+        function iniciarApp() {
+            // Ocultar login, mostrar app
+            document.getElementById('view-login').classList.remove('active');
+            document.getElementById('app-layout').classList.remove('hidden');
+            
+            // Setear datos de usuario en sidebar
+            document.getElementById('user-name').innerText = appState.user.Nombre;
+            document.getElementById('user-role').innerText = appState.user.Rol;
+            document.getElementById('user-initial').innerText = appState.user.Nombre.charAt(0).toUpperCase();
+
+            // Cargar Dashboard por defecto
+            cambiarVista('dashboard');
+            lucide.createIcons();
+        }
+
+        function cerrarSesion() {
+            localStorage.removeItem('ce_session');
+            appState.user = null;
+            document.getElementById('app-layout').classList.add('hidden');
+            document.getElementById('view-login').classList.add('active');
+            document.getElementById('login-form').reset();
+            document.getElementById('btn-login').innerHTML = 'Ingresar al Sistema';
+        }
+
+        /* --- 3. NAVEGACIÓN Y VISTAS --- */
+        function configurarEventosUi() {
+            const sidebar = document.getElementById('sidebar');
+            document.getElementById('open-sidebar-mobile').addEventListener('click', () => {
+                sidebar.classList.remove('-translate-x-full');
+            });
+            document.getElementById('close-sidebar-mobile').addEventListener('click', () => {
+                sidebar.classList.add('-translate-x-full');
+            });
+            document.getElementById('btn-logout').addEventListener('click', cerrarSesion);
+        }
+
+        function configurarNavegacion() {
+            const links = document.querySelectorAll('.nav-link');
+            links.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // UI actualizaciones
+                    links.forEach(l => {
+                        l.classList.remove('bg-blue-800', 'text-white');
+                        l.classList.add('text-gray-200');
+                    });
+                    link.classList.remove('text-gray-200');
+                    link.classList.add('bg-blue-800', 'text-white');
+                    
+                    // Cambiar vista
+                    const target = link.getAttribute('data-target');
+                    cambiarVista(target);
+                    
+                    // Cerrar sidebar en móvil
+                    if (window.innerWidth < 768) {
+                        document.getElementById('sidebar').classList.add('-translate-x-full');
+                    }
+                });
+            });
+        }
+
+        function cambiarVista(target) {
+            // Ocultar todas
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            // Mostrar target
+            const view = document.getElementById(`view-${target}`);
+            if(view) view.classList.add('active');
+
+            // Actualizar Título
+            const titles = {
+                'dashboard': 'Dashboard General',
+                'alumnos': 'Control de Alumnos',
+                'tutores': 'Padrón de Tutores',
+                'grupos': 'Grupos y Materias',
+                'calificaciones': 'Calificaciones',
+                'asistencia': 'Pase de Lista',
+                'pagos': 'Control de Pagos',
+                'reportes': 'Generación de Reportes'
+            };
+            document.getElementById('header-title').innerText = titles[target] || 'Control Escolar';
+
+            // Ejecutar lógica específica por vista
+            if (target === 'alumnos') {
+                cargarAlumnos();
+            }
+        }
+
+        /* --- 4. MÓDULO ALUMNOS (CRUD) --- */
+        async function cargarAlumnos() {
+            const tbody = document.getElementById('tabla-alumnos-body');
+            const loader = document.getElementById('alumnos-loader');
+            
+            tbody.innerHTML = '';
+            loader.classList.remove('hidden');
+
+            if (appState.isDemoMode) {
+                // Datos falsos para demo
+                setTimeout(() => {
+                    appState.alumnos = [
+                        { ID: "1", Matricula: "MAT-2024-001", Nombre: "Carlos", Apellido_Paterno: "García", Apellido_Materno: "López", Grado: "1", Grupo: "A", CURP: "GALC123456HDFRXX01", Estado: "Activo" },
+                        { ID: "2", Matricula: "MAT-2024-002", Nombre: "María", Apellido_Paterno: "Fernández", Apellido_Materno: "Ruiz", Grado: "2", Grupo: "B", CURP: "FERM123456MDFRXX02", Estado: "Activo" }
+                    ];
+                    renderTablaAlumnos(appState.alumnos);
+                    loader.classList.add('hidden');
+                }, 800);
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'getRegistros', data: { hoja: 'Alumnos' } })
+                });
+                const res = await response.json();
+                if (res.success) {
+                    appState.alumnos = res.data;
+                    renderTablaAlumnos(appState.alumnos);
+                } else {
+                    showToast('Error al cargar alumnos: ' + res.message, 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('Error de red al consultar Google Sheets', 'error');
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        function renderTablaAlumnos(data) {
+            const tbody = document.getElementById('tabla-alumnos-body');
+            tbody.innerHTML = '';
+
+            if(data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">No se encontraron alumnos registrados.</td></tr>`;
+                return;
+            }
+
+            data.forEach(al => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50 transition-colors';
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-mono text-xs text-gray-600">${al.Matricula || 'N/A'}</td>
+                    <td class="px-6 py-4 font-medium text-gray-800">${al.Nombre} ${al.Apellido_Paterno} ${al.Apellido_Materno || ''}</td>
+                    <td class="px-6 py-4 text-gray-600">${al.Grado}° ${al.Grupo}</td>
+                    <td class="px-6 py-4 text-xs text-gray-500 uppercase">${al.CURP}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">${al.Estado || 'Activo'}</span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <button class="text-blue-500 hover:text-blue-700 mx-1" title="Editar" onclick="editarAlumno('${al.ID}')"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                        <button class="text-red-500 hover:text-red-700 mx-1" title="Dar de baja"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons({root: tbody});
+        }
+
+        function filtrarAlumnos() {
+            const query = document.getElementById('search-alumno').value.toLowerCase();
+            const grupo = document.getElementById('filter-grupo').value;
+            
+            const filtrados = appState.alumnos.filter(al => {
+                const nombreCompleto = `${al.Nombre} ${al.Apellido_Paterno} ${al.Apellido_Materno}`.toLowerCase();
+                const grupoCompleto = `${al.Grado}${al.Grupo}`;
+                
+                const matchTexto = nombreCompleto.includes(query) || (al.Matricula && al.Matricula.toLowerCase().includes(query));
+                const matchGrupo = grupo === "" || grupoCompleto === grupo;
+                
+                return matchTexto && matchGrupo;
+            });
+            
+            renderTablaAlumnos(filtrados);
+        }
+
+        /* --- MODAL ALUMNOS --- */
+        function abrirModalAlumno() {
+            document.getElementById('form-alumno').reset();
+            document.getElementById('modal-alumno-title').innerText = "Alta de Nuevo Alumno";
+            document.getElementById('modal-alumno').classList.remove('hidden');
+        }
+
+        function cerrarModalAlumno() {
+            document.getElementById('modal-alumno').classList.add('hidden');
+        }
+
+        function editarAlumno(id) {
+            showToast('Función de edición en construcción', 'info');
+        }
+
+        async function handleGuardarAlumno(e) {
+            e.preventDefault();
+            
+            const payload = {
+                Nombre: document.getElementById('al-nombre').value,
+                Apellido_Paterno: document.getElementById('al-apaterno').value,
+                Apellido_Materno: document.getElementById('al-amaterno').value,
+                CURP: document.getElementById('al-curp').value.toUpperCase(),
+                Fecha_Nacimiento: document.getElementById('al-fechanac').value,
+                Grado: document.getElementById('al-grado').value,
+                Grupo: document.getElementById('al-grupo').value,
+                Matricula: document.getElementById('al-matricula').value || `MAT-${new Date().getFullYear()}-${Math.floor(Math.random()*1000)}`,
+                Estado: 'Activo'
+            };
+
+            if (appState.isDemoMode) {
+                payload.ID = new Date().getTime().toString();
+                appState.alumnos.push(payload);
+                renderTablaAlumnos(appState.alumnos);
+                showToast('Alumno guardado (Demo)', 'success');
+                cerrarModalAlumno();
+                return;
+            }
+
+            // Petición a GAS para guardar en Google Sheets
+            try {
+                const btn = e.target.querySelector('button[type="submit"]');
+                const originalText = btn.innerText;
+                btn.innerText = "Guardando...";
+                btn.disabled = true;
+
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        action: 'crearRegistro', 
+                        data: { hoja: 'Alumnos', payload: payload, usuario: appState.user.Nombre } 
+                    })
+                });
+                const res = await response.json();
+                
+                if(res.success) {
+                    showToast('Alumno guardado correctamente en Google Sheets', 'success');
+                    cerrarModalAlumno();
+                    cargarAlumnos(); // Recargar tabla
+                } else {
+                    showToast(res.message, 'error');
+                }
+            } catch (error) {
+                showToast('Error al intentar guardar el alumno', 'error');
+            } finally {
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.innerText = "Guardar Alumno";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
