@@ -540,18 +540,19 @@
                     showToast('Error de red al conectar con Google Apps Script.', 'error');
                 }
             } finally {
-                // Esto asegura que el botón SIEMPRE se recupere, pase lo que pase
-                if (!appState.user) {
-                    btn.innerHTML = 'Ingresar al Sistema';
-                    btn.disabled = false;
-                }
+                // Restaurar el botón SIEMPRE para evitar que se quede pasmado
+                btn.innerHTML = 'Ingresar al Sistema';
+                btn.disabled = false;
             }
         }
 
         function iniciarApp() {
             try {
-                // Ocultar login, mostrar app
-                document.getElementById('view-login').classList.remove('active');
+                // Ocultar login de forma forzada para vencer el conflicto con Tailwind 'flex'
+                const viewLogin = document.getElementById('view-login');
+                viewLogin.classList.remove('active', 'flex');
+                viewLogin.classList.add('hidden');
+                
                 document.getElementById('app-layout').classList.remove('hidden');
                 
                 // Setear datos de usuario en sidebar con validación segura
@@ -575,9 +576,16 @@
             localStorage.removeItem('ce_session');
             appState.user = null;
             document.getElementById('app-layout').classList.add('hidden');
-            document.getElementById('view-login').classList.add('active');
+            
+            // Restaurar la vista de login completamente
+            const viewLogin = document.getElementById('view-login');
+            viewLogin.classList.remove('hidden');
+            viewLogin.classList.add('active', 'flex');
+            
             document.getElementById('login-form').reset();
-            document.getElementById('btn-login').innerHTML = 'Ingresar al Sistema';
+            const btn = document.getElementById('btn-login');
+            btn.innerHTML = 'Ingresar al Sistema';
+            btn.disabled = false;
         }
 
         /* --- 3. NAVEGACIÓN Y VISTAS --- */
