@@ -1206,6 +1206,36 @@
             populateStaticContent();
             inicializarApp();
             
+            // --- LÓGICA DE GRADOS DINÁMICOS ---
+            const actualizarGrados = (selectNivelId, selectGradoId) => {
+                const nivel = document.getElementById(selectNivelId).value;
+                const gradoSelect = document.getElementById(selectGradoId);
+                gradoSelect.innerHTML = '<option value="">...</option>';
+                
+                if (!nivel) {
+                    gradoSelect.disabled = true;
+                    gradoSelect.classList.add('bg-slate-100', 'text-slate-400', 'cursor-not-allowed');
+                    return;
+                }
+                
+                let grados = [];
+                if (nivel.includes('Preescolar') || nivel.includes('Secundaria')) grados = [1, 2, 3];
+                if (nivel.includes('Primaria')) grados = [1, 2, 3, 4, 5, 6];
+                
+                grados.forEach(g => {
+                    const option = document.createElement('option');
+                    option.value = g; option.textContent = `${g}°`;
+                    gradoSelect.appendChild(option);
+                });
+                
+                gradoSelect.disabled = false;
+                gradoSelect.classList.remove('bg-slate-100', 'text-slate-400', 'cursor-not-allowed');
+            };
+
+            // Asignar eventos para que al cambiar Nivel se actualice Grado
+            document.getElementById('nivel').addEventListener('change', () => actualizarGrados('nivel', 'grado'));
+            document.getElementById('filtro-alumno-nivel').addEventListener('change', () => actualizarGrados('filtro-alumno-nivel', 'filtro-alumno-grado'));
+
             // Toggle Médico
             document.getElementById('toggle-medico').onclick = () => {
                 document.getElementById('medico-fields').classList.toggle('hidden');
@@ -1244,6 +1274,13 @@
                 cargarDatosIniciales();
                 form.reset();
                 document.getElementById('alumno-id-edit').value = '';
+                
+                // Reiniciar el select de grado a su estado bloqueado por defecto
+                const gradoSelect = document.getElementById('grado');
+                gradoSelect.innerHTML = '<option value="">...</option>';
+                gradoSelect.disabled = true;
+                gradoSelect.classList.add('bg-slate-100', 'text-slate-400', 'cursor-not-allowed');
+                
                 mostrarMensaje('Éxito', 'Alumno guardado correctamente.', 'success');
             };
             
