@@ -11,7 +11,7 @@
     <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- FontAwesome (Mantenido para compatibilidad con tu lógica JS) -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Librerías PDF -->
@@ -141,7 +141,7 @@
                 </div>
                 <div>
                     <p class="text-sm font-medium text-white">Admin</p>
-                    <p class="text-xs text-slate-500">Sesión Local</p>
+                    <p class="text-xs text-slate-500">Sesión Activa</p>
                 </div>
             </div>
         </div>
@@ -558,7 +558,7 @@
                                         <input type="date" id="filtro-pago-fecha-fin" class="form-input text-sm w-1/2">
                                     </div>
                                     <button type="reset" id="btn-reset-filtros-pagos" class="bg-white border border-slate-200 text-slate-600 rounded-md hover:bg-slate-50 text-sm font-medium">Limpiar</button>
-                                    <select id="filtro-pago-concepto" class="form-input text-sm hidden"></select> <!-- Mantenido para JS pero oculto por diseño -->
+                                    <select id="filtro-pago-concepto" class="form-input text-sm hidden"></select>
                                     <select id="filtro-pago-metodo" class="form-input text-sm hidden"></select>
                                 </form>
                             </div>
@@ -632,7 +632,7 @@
                                                 <div class="py-2 text-sm font-medium text-slate-500 rounded-md cursor-pointer peer-checked:bg-white peer-checked:text-rose-600 peer-checked:shadow-sm transition-all">Gasto</div>
                                             </label>
                                         </div>
-                                        <select id="caja-tipo" class="hidden"><option value="ingreso">Ingreso</option><option value="gasto">Gasto</option></select> <!-- Hidden select to keep existing JS working -->
+                                        <select id="caja-tipo" class="hidden"><option value="ingreso">Ingreso</option><option value="gasto">Gasto</option></select>
                                     </div>
                                 </div>
                                 <div>
@@ -687,7 +687,7 @@
                     </div>
                     <h2 class="text-3xl font-black text-slate-800 mb-4">Control Escolar Pro</h2>
                     <p class="text-slate-500 text-lg mb-8 leading-relaxed">
-                        Sistema integral de gestión educativa optimizado para velocidad, eficiencia y diseño moderno. Diseñado para procesar localmente altas cantidades de datos sin retrasos.
+                        Sistema integral de gestión educativa optimizado para velocidad, eficiencia y diseño moderno. Sincronización en la nube con Google Sheets.
                     </p>
                     <div class="bg-slate-50 rounded-2xl p-6 inline-block text-left border border-slate-100">
                         <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Desarrollo y Diseño UI/UX</p>
@@ -710,12 +710,24 @@
         const METODOS_PAGO = ["Efectivo", "Tarjeta de débito", "Tarjeta de crédito", "Transferencia"];
         const currency = n => `$${Number(n || 0).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
-        // Helpers de LocalStorage
+        // AQUÍ ESTÁ INTEGRADA TU NUEVA URL DE GOOGLE APPS SCRIPT
+        const API_URL = "https://script.google.com/macros/s/AKfycbyAHBC_aq21PrPeKIRbvAn3H3G__bDU9To_2Isi7RBjy3yn-ueHUvX3IwrSB-b0DMfN5A/exec";
+
+        // Helpers de LocalStorage + Sincronización en la Nube
         function loadData(key) {
             try { return JSON.parse(localStorage.getItem(key)) || []; } catch (e) { return []; }
         }
         function saveData(key, data) {
-            try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) { console.error(e); }
+            try { 
+                localStorage.setItem(key, JSON.stringify(data)); 
+                // Sincronización silenciosa en la nube
+                if (API_URL) {
+                    fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'syncTable', table: key, rows: data })
+                    }).catch(e => console.error("Error sincronizando a la nube:", e));
+                }
+            } catch (e) { console.error(e); }
         }
         function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
 
@@ -805,7 +817,6 @@
         }
 
         // --- STREAMING_CHUNK:Setting up Export and Print logic... ---
-        // (La lógica original de exportación se mantiene intacta, solo envuelta para no alargar demasiado)
         // Exportaciones CSV
         function exportarCSV(datos, filename, mapFn, noDataMsg) {
             if (datos.length === 0) return mostrarMensaje("Información", noDataMsg, "info");
@@ -847,7 +858,7 @@
             }, "No hay movimientos en caja.");
         }
 
-        // Exportaciones PDF adaptadas visualmente a UI moderna (Simplificadas)
+        // Exportaciones PDF
         function generarPDF(title, head, bodyRows) {
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF();
@@ -884,7 +895,7 @@
             if (!pago) return;
             const alumno = localAlumnos.find(a => a.id === pago.alumnoId);
             const nombreAlumno = alumno ? `${alumno.nombres} ${alumno.apellidos}` : 'N/A';
-            const html = `<html><head><style>body{font-family:sans-serif;width:300px;margin:0 auto;padding:20px;text-align:center;}hr{border:0;border-top:1px dashed #000;margin:15px 0;}table{width:100%;text-align:left;}td.r{text-align:right;}</style></head><body onload="window.print();window.close();"><h2>Colegio Labastida</h2><p>Recibo de Pago</p><hr><p>Folio: ${p.id.substr(0,8).toUpperCase()}<br>Fecha: ${pago.fecha}<br>Alumno: ${nombreAlumno}</p><hr><table>${pago.conceptos.map(c=>`<tr><td>${c.concepto}</td><td class="r">${currency(c.monto)}</td></tr>`).join('')}</table><hr><h3>TOTAL: ${currency(pago.total)}</h3><hr><p>¡Gracias por su pago!</p></body></html>`;
+            const html = `<html><head><style>body{font-family:sans-serif;width:300px;margin:0 auto;padding:20px;text-align:center;}hr{border:0;border-top:1px dashed #000;margin:15px 0;}table{width:100%;text-align:left;}td.r{text-align:right;}</style></head><body onload="window.print();window.close();"><h2>Colegio Labastida</h2><p>Recibo de Pago</p><hr><p>Folio: ${pago.id.substr(0,8).toUpperCase()}<br>Fecha: ${pago.fecha}<br>Alumno: ${nombreAlumno}</p><hr><table>${pago.conceptos.map(c=>`<tr><td>${c.concepto}</td><td class="r">${currency(c.monto)}</td></tr>`).join('')}</table><hr><h3>TOTAL: ${currency(pago.total)}</h3><hr><p>¡Gracias por su pago!</p></body></html>`;
             const w = window.open('','_blank'); w.document.write(html); w.document.close();
         }
 
@@ -1124,12 +1135,11 @@
                 };
             }
             if(btnHi) {
-                // Lógica de historial (Similar a la tuya, refactorizada en UI)
-                // Se omite por brevedad visual en este chunk, pero mantiene funcionalidad
-                mostrarMensaje("Historial en construcción", "Esta vista se actualizará con el nuevo diseño pronto.", "info");
+                mostrarMensaje("Historial de Abonos", "El registro en PDF está en desarrollo para este módulo.", "info");
             }
         });
 
+        // --- STREAMING_CHUNK:Loading Initial Data and Syncing... ---
         // Main App Logic Init
         function cargarDatosIniciales() {
             localAlumnos = loadData('alumnos'); localMaestros = loadData('maestros');
@@ -1151,10 +1161,50 @@
             if(pCu) pCu.innerHTML = '<option value="">Selecciona...</option>' + localCuotas.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
         }
 
+        // Lógica de Arranque y Sincronización
+        async function inicializarApp() {
+            // 1. Cargar rápido lo que ya hay guardado en el navegador
+            cargarDatosIniciales();
+            
+            // 2. Traer los datos frescos de Google Sheets (Sincronización)
+            if (API_URL) {
+                const toast = document.createElement('div');
+                toast.innerHTML = `<div class="fixed bottom-6 right-6 bg-indigo-600 text-white px-5 py-3 rounded-2xl shadow-2xl text-sm flex items-center gap-3 z-[2000] transition-all" id="sync-toast"><i class="fas fa-sync fa-spin"></i> Conectando con BD...</div>`;
+                document.body.appendChild(toast);
+                
+                try {
+                    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAll' }) });
+                    const json = await res.json();
+                    if(json.success) {
+                        const d = json.data;
+                        localStorage.setItem('alumnos', JSON.stringify(d.alumnos || []));
+                        localStorage.setItem('maestros', JSON.stringify(d.maestros || []));
+                        localStorage.setItem('cuotas', JSON.stringify(d.cuotas || []));
+                        localStorage.setItem('pagos', JSON.stringify(d.pagos || []));
+                        localStorage.setItem('abonos', JSON.stringify(d.abonos || []));
+                        localStorage.setItem('cajaChica', JSON.stringify(d.cajaChica || []));
+                        localStorage.setItem('nomina', JSON.stringify(d.nomina || []));
+                        
+                        cargarDatosIniciales(); 
+                        
+                        const toastEl = document.getElementById('sync-toast');
+                        toastEl.innerHTML = `<i class="fas fa-check"></i> Sistema Sincronizado`;
+                        toastEl.classList.replace('bg-indigo-600', 'bg-emerald-600');
+                        setTimeout(() => toastEl.remove(), 3000);
+                    }
+                } catch(e) {
+                    const toastEl = document.getElementById('sync-toast');
+                    toastEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Fuera de Línea - Cambios locales`;
+                    toastEl.classList.replace('bg-indigo-600', 'bg-rose-600');
+                    setTimeout(() => toastEl.remove(), 4000);
+                }
+            }
+        }
+
         // Conectar Eventos Generales
         document.addEventListener('DOMContentLoaded', () => {
             populateStaticContent();
-            cargarDatosIniciales();
+            inicializarApp();
             
             // Toggle Médico
             document.getElementById('toggle-medico').onclick = () => {
@@ -1162,13 +1212,50 @@
                 document.getElementById('icono-medico').classList.toggle('fa-chevron-up');
             };
 
-            // Setup Listeners Form Alumnos, Maestros (Se mantienen tus listeners de submit exactamente igual que antes para no romper lógica)
-            // ... (Lógica CRUD base que proporcionaste se conecta aquí hacia las funciones render*)
+            // Setup Listeners Form Alumnos
+            document.getElementById('form-agregar-alumno').onsubmit = (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const estatusInput = form.querySelector('input[name="estatus"]:checked');
+                const alumnoData = {
+                    id: document.getElementById('alumno-id-edit').value || generateId(),
+                    estatus: estatusInput ? estatusInput.value : '',
+                    nombres: form.nombres.value,
+                    apellidos: form.apellidos.value,
+                    fechaNacimiento: form.fechaNacimiento.value,
+                    nivel: form.nivel.value,
+                    grado: form.grado.value,
+                    grupo: form.grupo.value,
+                    tutor: form.tutor.value,
+                    telefono: form.telefono.value,
+                    tipoCuota: form.tipoCuota.value,
+                    tipoSangre: form.tipoSangre.value,
+                    alergias: form.alergias.value,
+                    padecimientos: form.padecimientos.value,
+                    contactoEmergencia: form.contactoEmergencia.value,
+                    telefonoEmergencia: form.telefonoEmergencia.value,
+                };
+                
+                const index = localAlumnos.findIndex(a => a.id === alumnoData.id);
+                if (index > -1) localAlumnos[index] = alumnoData;
+                else localAlumnos.push(alumnoData);
+                
+                saveData('alumnos', localAlumnos);
+                cargarDatosIniciales();
+                form.reset();
+                document.getElementById('alumno-id-edit').value = '';
+                mostrarMensaje('Éxito', 'Alumno guardado correctamente.', 'success');
+            };
             
             // Lógica de exportación de botones
             document.getElementById('export-alumnos-csv-btn').onclick = exportarAlumnosCSV;
             document.getElementById('export-alumnos-pdf-btn').onclick = exportarAlumnosPDF;
-            // (Aplicable para el resto de botones de exportación definidos en tu script)
+            document.getElementById('export-maestros-csv-btn').onclick = exportarMaestrosCSV;
+            document.getElementById('export-maestros-pdf-btn').onclick = exportarMaestrosPDF;
+            document.getElementById('export-pagos-csv-btn').onclick = exportarPagosCSV;
+            document.getElementById('export-pagos-pdf-btn').onclick = exportarPagosPDF;
+            document.getElementById('export-caja-csv-btn').onclick = exportarCajaChicaCSV;
+            document.getElementById('export-caja-pdf-btn').onclick = exportarCajaChicaPDF;
         });
 
     </script>
