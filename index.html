@@ -81,48 +81,9 @@
         .pago-anulado {
             background-color: #fef2f2; text-decoration: line-through; opacity: 0.7;
         }
-        
-        /* Ocultar Login si se requiere */
-        .hidden-login { display: none !important; }
     </style>
 </head>
-<body class="text-slate-800 h-screen overflow-hidden flex relative">
-
-    <!-- MENSAJES TOAST -->
-    <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
-
-    <!-- VISTA LOGIN (Oculta al inicio si hay sesión, manejada por JS) -->
-    <div id="view-login" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center transition-opacity duration-300">
-        <div class="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md transform transition-all border-t-4 border-indigo-600">
-            <div class="text-center mb-8">
-                <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-graduation-cap text-4xl text-indigo-600"></i>
-                </div>
-                <h1 class="text-3xl font-black text-slate-800 tracking-tight">Control Escolar</h1>
-                <p class="text-slate-500 mt-2">Inicia sesión para continuar</p>
-            </div>
-            
-            <form id="login-form" class="space-y-5">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Correo Electrónico</label>
-                    <div class="relative">
-                        <i class="fas fa-envelope absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-                        <input type="email" id="login-email" required class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" placeholder="admin@escuela.mx">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Contraseña</label>
-                    <div class="relative">
-                        <i class="fas fa-lock absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-                        <input type="password" id="login-password" required class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" placeholder="••••••••">
-                    </div>
-                </div>
-                <button type="submit" id="btn-login" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-indigo-600/30 flex justify-center items-center gap-2 mt-4">
-                    <span>Ingresar al Sistema</span> <i class="fas fa-arrow-right"></i>
-                </button>
-            </form>
-        </div>
-    </div>
+<body class="text-slate-800 h-screen overflow-hidden flex">
 
     <!-- Barra Lateral Premium -->
     <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col transition-all duration-300 shadow-2xl z-20">
@@ -160,10 +121,6 @@
                 <i class="fas fa-wallet w-6 text-center text-lg"></i>
                 <span class="ml-3 font-medium">Pagos</span>
             </a>
-            <a href="#" onclick="changeSection('eventos')" id="nav-eventos" class="nav-link flex items-center px-4 py-3 rounded-xl">
-                <i class="fas fa-ticket-alt w-6 text-center text-lg text-rose-400"></i>
-                <span class="ml-3 font-medium">Eventos Especiales</span>
-            </a>
             <a href="#" onclick="changeSection('caja')" id="nav-caja" class="nav-link flex items-center px-4 py-3 rounded-xl">
                 <i class="fas fa-cash-register w-6 text-center text-lg"></i>
                 <span class="ml-3 font-medium">Caja Chica</span>
@@ -178,19 +135,14 @@
         </nav>
         
         <div class="p-4 border-t border-slate-800">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-sm font-bold text-slate-400" id="user-avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-white truncate w-24" id="user-name">Admin</p>
-                        <p class="text-xs text-emerald-400">Sesión Activa</p>
-                    </div>
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-sm font-bold text-slate-400">
+                    <i class="fas fa-user"></i>
                 </div>
-                <button id="btn-logout" class="text-slate-500 hover:text-rose-400 transition-colors" title="Cerrar Sesión">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
+                <div>
+                    <p class="text-sm font-medium text-white">Admin</p>
+                    <p class="text-xs text-slate-500">Sesión Activa</p>
+                </div>
             </div>
         </div>
     </aside>
@@ -213,13 +165,7 @@
         </header>
 
         <!-- Contenedor Scrollable -->
-        <div class="flex-1 overflow-y-auto p-6 lg:p-8 relative" id="main-scroll-area">
-            
-            <!-- LOADER CENTRAL -->
-            <div id="main-loader" class="absolute inset-0 bg-slate-50/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center hidden">
-                <i class="fas fa-circle-notch fa-spin text-4xl text-indigo-600 mb-4"></i>
-                <p class="text-slate-600 font-medium animate-pulse">Sincronizando con Google Sheets...</p>
-            </div>
+        <div class="flex-1 overflow-y-auto p-6 lg:p-8">
 
             <!-- Sección Alumnos -->
             <section id="content-alumnos" class="content-section content-active">
@@ -647,89 +593,6 @@
                 </div>
             </section>
 
-            <!-- Sección Eventos Especiales -->
-            <section id="content-eventos" class="content-section">
-                <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                    <!-- Formulario de Venta (Punto de Venta) -->
-                    <div class="xl:col-span-1">
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 sticky top-0">
-                            <div class="flex justify-between items-center mb-6">
-                                <h3 id="form-venta-evento-title" class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                                    <i class="fas fa-store text-rose-500"></i> Punto de Venta
-                                </h3>
-                                <button id="btn-admin-eventos" class="text-xs bg-slate-800 hover:bg-slate-700 text-white py-1.5 px-3 rounded-lg font-medium transition-colors shadow-sm"><i class="fas fa-cogs"></i> Eventos</button>
-                            </div>
-                            
-                            <form id="form-vender-evento" class="space-y-4">
-                                <input type="hidden" id="venta-evento-id-edit" value="">
-                                
-                                <div class="bg-rose-50/50 p-4 rounded-xl border border-rose-100">
-                                    <label class="block text-xs font-bold text-rose-800 uppercase mb-2">1. Seleccionar Evento</label>
-                                    <select id="venta-evento-select" required class="form-input border-rose-200 text-sm font-medium">
-                                        <option value="">Cargando eventos...</option>
-                                    </select>
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">2. Alumno Inscrito</label>
-                                    <select id="venta-evento-alumno" required class="form-input text-sm">
-                                        <option value="">Seleccione un alumno...</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">3. Paquete a Comprar</label>
-                                    <select id="venta-paquete-select" required disabled class="form-input text-sm bg-slate-100 text-slate-400 cursor-not-allowed">
-                                        <option value="">Primero seleccione un evento</option>
-                                    </select>
-                                </div>
-
-                                <div class="border-t border-slate-100 pt-4 mt-2">
-                                    <div class="flex justify-between items-center mb-4">
-                                        <span class="text-sm font-bold text-slate-500">Costo del Paquete:</span>
-                                        <span id="venta-evento-total" class="text-2xl font-black text-slate-800">$0.00</span>
-                                    </div>
-                                    <div id="venta-evento-form-buttons" class="space-y-2">
-                                        <button type="submit" id="btn-guardar-venta-evento" disabled class="w-full bg-slate-300 text-slate-500 py-3 px-4 rounded-xl font-bold transition-all cursor-not-allowed flex justify-center items-center gap-2">
-                                            <i class="fas fa-ticket-alt"></i> Registrar Venta
-                                        </button>
-                                        <button type="button" id="btn-cancelar-venta-edit" class="w-full bg-slate-100 text-slate-700 py-2.5 px-4 rounded-xl font-medium hover:bg-slate-200 transition-all hidden">Cancelar Edición</button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                    
-                    <!-- Historial de Ventas -->
-                    <div class="xl:col-span-2">
-                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-full">
-                            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-                                <div>
-                                    <h3 class="text-lg font-bold text-slate-800">Boletos Vendidos</h3>
-                                    <p class="text-sm text-slate-500 mt-1">Historial de ventas y control de abonos.</p>
-                                </div>
-                                <span id="contador-ventas-eventos" class="text-xs font-bold text-rose-700 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100"></span>
-                            </div>
-                            
-                            <div class="flex-1 overflow-x-auto p-0">
-                                <table class="w-full text-left border-collapse">
-                                    <thead class="bg-slate-50 sticky top-0 border-b border-slate-200 z-10">
-                                        <tr>
-                                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Fecha / Estado</th>
-                                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Alumno</th>
-                                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Evento / Paquete</th>
-                                            <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Costo / Saldo</th>
-                                            <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="lista-ventas-eventos" class="divide-y divide-slate-100"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
             <!-- Sección Caja Chica -->
             <section id="content-caja" class="content-section">
                 <!-- Tarjetas de Balance Superior -->
@@ -836,7 +699,7 @@
                     </div>
                     <h2 class="text-3xl font-black text-slate-800 mb-4">Control Escolar Pro</h2>
                     <p class="text-slate-500 text-lg mb-8 leading-relaxed">
-                        Sistema integral de gestión educativa optimizado para velocidad, eficiencia y diseño moderno. Arquitectura híbrida (Offline-First) sincronizada en la nube con Google Sheets.
+                        Sistema integral de gestión educativa optimizado para velocidad, eficiencia y diseño moderno. Sincronización en la nube con Google Sheets.
                     </p>
                     <div class="bg-slate-50 rounded-2xl p-6 inline-block text-left border border-slate-100">
                         <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Desarrollo y Diseño UI/UX</p>
@@ -851,70 +714,35 @@
     <!-- Contenedor de Modales (Inyectados desde JS) -->
     <div id="modal-container" class="modal-backdrop"></div>
 
-  
-
-        
+    <script type="module">
+        // --- Estado Global de la Aplicación ---
+        let localAlumnos = [], localMaestros = [], localPagos = [], localCuotas = [], localAbonos = [], localCajaChica = [], pagosFiltrados = [], localNomina = [], alumnosFiltrados = [], maestrosFiltrados = [];
         const NIVELES_ESCOLARES = ["Preescolar", "Primaria", "Secundaria", "Integrado Preescolar", "Integrado Primaria", "Integrado Secundaria"];
         const CONCEPTOS_PAGO = ["Beca 25%", "Beca 50%", "Beca 75%", "Beca 100%", "Colegiatura Normal", "Convivios", "Descuento 1er Hno.", "Descuento 2do Hno.", "Extemporáneos", "Fotografías", "Guardia", "Libros", "Material Didáctico", "Paseos", "Taller", "Uniformes", "Seguro Escolar"];
         const METODOS_PAGO = ["Efectivo", "Tarjeta de débito", "Tarjeta de crédito", "Transferencia"];
         const currency = n => `$${Number(n || 0).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-     
-       // URL DE GOOGLE APPS SCRIPT DEFINITIVA
-        const API_URL = "https://script.google.com/macros/s/AKfycbxfoJWJzIOS69w-p4aLxsjFDhc9XnvhVK_YsMDAhIaS-UHEw2FYjQbT6YK5wJX4WYfjhA/exec";
 
+        // URL DE GOOGLE APPS SCRIPT
+        const API_URL = "https://script.google.com/macros/s/AKfycbyAHBC_aq21PrPeKIRbvAn3H3G__bDU9To_2Isi7RBjy3yn-ueHUvX3IwrSB-b0DMfN5A/exec";
+
+        // Helpers de LocalStorage + Sincronización en la Nube
         function loadData(key) {
             try { return JSON.parse(localStorage.getItem(key)) || []; } catch (e) { return []; }
         }
         function saveData(key, data) {
             try { 
                 localStorage.setItem(key, JSON.stringify(data)); 
-                syncToCloud(key, data);
+                if (API_URL) {
+                    fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'syncTable', table: key, rows: data })
+                    }).catch(e => console.error("Error sincronizando a la nube:", e));
+                }
             } catch (e) { console.error(e); }
         }
         function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
 
-        async function syncToCloud(key, data) {
-            if(!API_URL || isSyncing) return;
-            try {
-                isSyncing = true;
-                showToast(`Sincronizando ${key}...`, 'info');
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'syncTable', table: key, rows: data })
-                });
-                const res = await response.json();
-                if(res.success) {
-                    showToast(`Nube actualizada.`, 'success');
-                } else {
-                    showToast(`Error de Nube: ${res.error}`, 'error');
-                }
-            } catch(e) {
-                console.error("Fallo de sync en 2o plano", e);
-            } finally {
-                isSyncing = false;
-            }
-        }
-
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            
-            const bgClass = type === 'success' ? 'bg-emerald-600' : (type === 'error' ? 'bg-rose-600' : 'bg-indigo-600');
-            const icon = type === 'success' ? 'fa-check' : (type === 'error' ? 'fa-exclamation-triangle' : 'fa-info');
-            
-            toast.className = `${bgClass} text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 transform transition-all duration-300 translate-x-full text-sm font-medium`;
-            toast.innerHTML = `<i class="fas ${icon} w-5 text-center"></i><span>${message}</span>`;
-            
-            container.appendChild(toast);
-            setTimeout(() => toast.classList.remove('translate-x-full'), 10);
-            
-            setTimeout(() => {
-                toast.classList.add('translate-x-full');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
+        // --- Sistema de Modales Modernizados ---
         function mostrarMensaje(title, message, type = 'info') {
             return new Promise((resolve) => {
                 const modalContainer = document.getElementById('modal-container');
@@ -999,7 +827,8 @@
             });
         }
 
-        // Exportaciones CSV y PDF (Sin cambios lógicos, usando tu código optimizado)
+        // --- STREAMING_CHUNK:Defining PDF generation logic... ---
+        // Exportaciones CSV y PDF (Reusando tu lógica probada)
         function exportarCSV(datos, filename, mapFn, noDataMsg) {
             if (datos.length === 0) return mostrarMensaje("Información", noDataMsg, "info");
             const csvRows = mapFn(datos);
@@ -1037,7 +866,7 @@
             const w = window.open('','_blank'); w.document.write(html); w.document.close();
         }
 
-        // --- Recibo de Nómina Profesional ---
+        // --- Recibo de Nómina Ultra-Profesional con quiebre de página ---
         function imprimirReciboNomina(nominaData) {
             const montoFormateado = currency(nominaData.monto);
             const fechaFormateada = new Date(nominaData.fechaPago + 'T00:00:00').toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -1063,6 +892,8 @@
                         .linea-firma { border-top: 1px solid #0f172a; width: 350px; margin: 0 auto 10px auto; }
                         .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-35deg); font-size: 120px; color: rgba(226, 232, 240, 0.4); z-index: -1; font-weight: 900; }
                         .copy-bg { background-color: #f8fafc; }
+                        
+                        /* Configuración estricta para impresión */
                         @media print {
                             @page { margin: 0; size: letter portrait; }
                             body { margin: 0; }
@@ -1091,6 +922,7 @@
                         </div>
                     </div>
 
+                    <!-- QUIEBRE DE PÁGINA OBLIGATORIO -->
                     <div class="page-break"></div>
 
                     <!-- COPIA -->
@@ -1112,17 +944,23 @@
                             <span style="color: #64748b; font-size: 13px;">Firma de Recibido (Archivo Contable)</span>
                         </div>
                     </div>
+
                     <script>
-                        window.onload = function() { setTimeout(() => { window.print(); setTimeout(window.close, 500); }, 600); }
+                        window.onload = function() {
+                            setTimeout(() => { window.print(); setTimeout(window.close, 500); }, 600);
+                        }
                     <\/script>
                 </body>
                 </html>
             `;
+
             const printWindow = window.open('', '_blank');
             printWindow.document.write(reciboHTML);
             printWindow.document.close();
         }
 
+        // --- STREAMING_CHUNK:Adding Modals and Event Listeners... ---
+        // INICIALIZACIÓN Y RENDERIZADO VISUAL
         function inicializarCatalogos() {
             const opcionesNivel = `<option value="">Seleccionar...</option>` + NIVELES_ESCOLARES.map(n => `<option value="${n}">${n}</option>`).join('');
             document.getElementById('nivel').innerHTML = opcionesNivel;
@@ -1145,6 +983,7 @@
             document.getElementById('filtro-pago-metodo').innerHTML = `<option value="">Todos</option>` + opcionesMetodos;
         }
 
+        // LA FUNCIÓN DE GRADO MEJORADA Y TOTALMENTE REPARADA
         function actualizarGrados(nivelId, gradoId) {
             const selectNivel = document.getElementById(nivelId);
             const selectGrado = document.getElementById(gradoId);
@@ -1167,6 +1006,7 @@
                 selectGrado.innerHTML += `<option value="${g}">${g}°</option>`;
             });
             
+            // Aquí se remueven correctamente las clases de bloqueo
             selectGrado.disabled = false; 
             selectGrado.classList.remove('bg-slate-100', 'text-slate-400', 'cursor-not-allowed');
         }
@@ -1257,7 +1097,7 @@
             });
         }
 
-        // MOTOR DE ESTADO DE CUOTAS REGULARES
+        // MOTOR DE ESTADO DE CUOTAS
         function renderEstadoDeCuotas() {
             const tbody = document.getElementById('lista-estado-cuotas');
             if(!tbody) return;
@@ -1295,6 +1135,7 @@
             });
         }
 
+        // VENTANA PARA PAGAR CUOTA
         window.abrirModalAbono = (alumnoId) => {
             const alumno = localAlumnos.find(a => a.id === alumnoId);
             const cuota = localCuotas.find(c => c.nombre === alumno.tipoCuota);
@@ -1307,7 +1148,7 @@
             const mc = document.getElementById('modal-container');
             mc.innerHTML = `
                 <div class="modal-content">
-                    <h2 class="text-xl font-bold text-slate-800 mb-2">Registrar Abono Regular</h2>
+                    <h2 class="text-xl font-bold text-slate-800 mb-2">Registrar Abono</h2>
                     <p class="text-sm text-slate-500 mb-6">Alumno: <strong>${alumno.nombres} ${alumno.apellidos}</strong></p>
                     <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-6 flex justify-between items-center">
                         <span class="text-amber-800 font-medium text-sm">Saldo Pendiente</span>
@@ -1367,7 +1208,7 @@
 
             mc.innerHTML = `
                 <div class="modal-content">
-                    <h2 class="text-xl font-bold text-slate-800 mb-2">Historial de Abonos Regulares</h2>
+                    <h2 class="text-xl font-bold text-slate-800 mb-2">Historial de Abonos</h2>
                     <p class="text-sm text-slate-500 mb-4">Alumno: <strong>${alumno.nombres} ${alumno.apellidos}</strong></p>
                     <div class="max-h-60 overflow-y-auto bg-slate-50 rounded-xl p-4 border border-slate-100">
                         <table class="w-full text-left">
@@ -1384,6 +1225,7 @@
             document.getElementById('btn-cerrar-historial-abono').onclick = () => mc.classList.remove('active');
         };
 
+        // CARGA LOCAL DE DATOS A LAS TABLAS
         function cargarDatosIniciales() {
             localAlumnos = loadData('alumnos');
             localMaestros = loadData('maestros');
@@ -1391,10 +1233,6 @@
             localNomina = loadData('nomina');
             localCuotas = loadData('cuotas');
             localAbonos = loadData('abonos');
-            localCajaChica = loadData('cajaChica');
-            localEventos = loadData('eventos');
-            localVentasEventos = loadData('ventasEventos');
-            localAbonosEventos = loadData('abonosEventos'); // Nuevo
             
             alumnosFiltrados = [...localAlumnos];
             maestrosFiltrados = [...localMaestros];
@@ -1405,9 +1243,8 @@
             renderPagos(pagosFiltrados);
             cargarCuotasEnFormulario();
             renderEstadoDeCuotas();
-            renderCaja();
 
-            // Select de Alumnos para Pagos Regulares
+            // Llenar selector de alumnos en la pestaña de Pagos
             const selectAlumno = document.getElementById('pago-alumno');
             if (selectAlumno) {
                 selectAlumno.innerHTML = '<option value="">Seleccione un alumno...</option>';
@@ -1415,34 +1252,18 @@
                     selectAlumno.innerHTML += `<option value="${al.id}">${al.nombres} ${al.apellidos}</option>`;
                 });
             }
-            
-            // Select de Alumnos para Eventos Especiales
-            const selectVentaAlumno = document.getElementById('venta-evento-alumno');
-            if (selectVentaAlumno) {
-                selectVentaAlumno.innerHTML = '<option value="">Seleccione un alumno...</option>';
-                localAlumnos.sort((a,b) => a.nombres.localeCompare(b.nombres)).forEach(al => {
-                    selectVentaAlumno.innerHTML += `<option value="${al.id}">${al.nombres} ${al.apellidos}</option>`;
-                });
-            }
-            
-            actualizarSelectEventos();
-            renderVentasEventos();
         }
 
-        async function descargarDatosNube(force = false) {
-            if(!API_URL) {
-                cargarDatosIniciales();
-                document.getElementById('view-login').classList.remove('hidden-login'); // Modo test local
-                return;
-            }
-            
-            const loader = document.getElementById('main-loader');
-            if (force) loader.classList.remove('hidden');
-            
+        // DESCARGA MAESTRA AL INICIAR
+        async function descargarDatosNube() {
             try {
+                if(!API_URL) return cargarDatosIniciales();
+                const btnHeader = document.getElementById('header-title');
+                const titleOriginal = btnHeader.innerHTML;
+                btnHeader.innerHTML = titleOriginal + ' <i class="fas fa-sync fa-spin text-sm text-indigo-400 ml-2" title="Conectando BD..."></i>';
+                
                 const response = await fetch(API_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'getAll' })
                 });
                 const res = await response.json();
@@ -1454,297 +1275,31 @@
                     localStorage.setItem('nomina', JSON.stringify(res.data.nomina || []));
                     localStorage.setItem('cuotas', JSON.stringify(res.data.cuotas || []));
                     localStorage.setItem('abonos', JSON.stringify(res.data.abonos || []));
-                    localStorage.setItem('cajaChica', JSON.stringify(res.data.cajaChica || []));
-                    localStorage.setItem('eventos', JSON.stringify(res.data.eventos || []));
-                    localStorage.setItem('ventasEventos', JSON.stringify(res.data.ventasEventos || []));
-                    localStorage.setItem('abonosEventos', JSON.stringify(res.data.abonosEventos || []));
                 }
+                btnHeader.innerHTML = titleOriginal;
                 cargarDatosIniciales();
             } catch(e) {
-                console.warn("Fallo descarga Nube (Offline mode):", e);
-                showToast("Modo sin conexión. Datos locales.", "error");
+                console.warn("Offline", e);
                 cargarDatosIniciales();
-            } finally {
-                if (force) loader.classList.add('hidden');
             }
         }
 
-        // --- SISTEMA DE CAJA CHICA ---
-        const renderCaja = () => {
-            const tbody = document.getElementById('lista-caja-chica'); let ing = 0, gas = 0; tbody.innerHTML = '';
-            localCajaChica.sort((a,b)=>b.fecha.localeCompare(a.fecha)).forEach(c => {
-                if (c.tipo === 'ingreso') ing += c.monto; else gas += c.monto;
-                tbody.innerHTML += `<tr class="hover:bg-slate-50"><td class="px-6 py-4 text-sm">${c.fecha}</td><td class="px-6 py-4 text-sm">${c.concepto}</td><td class="px-6 py-4 text-right font-bold ${c.tipo==='ingreso'?'text-emerald-600':'text-rose-600'}">${c.tipo==='ingreso'?'+':'-'} ${currency(c.monto)}</td></tr>`;
-            });
-            document.getElementById('caja-total-ingresos').textContent = currency(ing); document.getElementById('caja-total-gastos').textContent = currency(gas); document.getElementById('caja-balance').textContent = currency(ing - gas); document.getElementById('contador-caja').textContent = `${localCajaChica.length} Reg`;
-        };
-
-        // ================== MÓDULO EVENTOS ESPECIALES ==================
-        function actualizarSelectEventos() {
-            const selectEv = document.getElementById('venta-evento-select');
-            if(!selectEv) return;
-            selectEv.innerHTML = '<option value="">Seleccione un evento...</option>';
-            localEventos.filter(e => e.estado === 'activo').forEach(ev => {
-                selectEv.innerHTML += `<option value="${ev.id}">${ev.concepto} (${ev.fecha})</option>`;
-            });
-        }
-
-        function renderVentasEventos() {
-            const tbody = document.getElementById('lista-ventas-eventos');
-            tbody.innerHTML = '';
-            document.getElementById('contador-ventas-eventos').textContent = `${localVentasEventos.length} Ventas`;
-            
-            if(localVentasEventos.length === 0) return tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400 text-sm">No hay boletos vendidos aún.</td></tr>';
-            
-            localVentasEventos.sort((a,b) => new Date(b.fechaVenta) - new Date(a.fechaVenta)).forEach(v => {
-                const alumno = localAlumnos.find(a => a.id === v.alumnoId);
-                const evento = localEventos.find(e => e.id === v.eventoId);
-                const paquete = evento ? evento.paquetes.find(p => p.id === v.paqueteId) : null;
-                
-                const nomAl = alumno ? `${alumno.nombres} ${alumno.apellidos}` : 'N/A';
-                const nomEv = evento ? evento.concepto : 'Evento Borrado';
-                const nomPkt = paquete ? paquete.nombre : 'Paquete no encontrado';
-                
-                // Lógica de Abonos para Eventos
-                const abonos = localAbonosEventos.filter(a => a.ventaId === v.id);
-                const totalAbonado = abonos.reduce((s, a) => s + Number(a.monto), 0);
-                const saldo = Number(v.monto) - totalAbonado;
-                
-                let badgeCls, estadoTxt;
-                if (v.estado === 'anulado') {
-                    badgeCls = 'bg-rose-100 text-rose-700 border-rose-200'; estadoTxt = 'Anulado';
-                } else if (saldo <= 0) {
-                    badgeCls = 'bg-emerald-100 text-emerald-700 border-emerald-200'; estadoTxt = 'Pagado';
-                } else {
-                    badgeCls = 'bg-amber-100 text-amber-700 border-amber-200'; estadoTxt = 'Pendiente';
-                }
-                
-                const rowClass = v.estado === 'anulado' ? 'pago-anulado' : 'hover:bg-slate-50 transition-colors';
-                
-                tbody.innerHTML += `
-                    <tr class="${rowClass}">
-                        <td class="px-6 py-4 text-sm text-slate-600">
-                            <div class="font-medium">${v.fechaVenta}</div>
-                            <span class="px-2 py-0.5 mt-1 text-[10px] font-bold rounded-md border ${badgeCls}">${estadoTxt}</span>
-                        </td>
-                        <td class="px-6 py-4 font-medium text-slate-800">${nomAl}</td>
-                        <td class="px-6 py-4 text-sm text-slate-600"><strong>${nomEv}</strong><br><span class="text-xs text-slate-500">${nomPkt}</span></td>
-                        <td class="px-6 py-4 text-right">
-                            <div class="text-xs text-slate-500">Costo: ${currency(v.monto)}</div>
-                            <div class="font-bold text-rose-600">Saldo: ${currency(saldo)}</div>
-                            <div class="text-xs text-emerald-600 font-bold">Abonado: ${currency(totalAbonado)}</div>
-                        </td>
-                        <td class="px-6 py-4 text-center space-x-1">
-                            <button data-id="${v.id}" class="abonar-evento-btn text-emerald-600 hover:bg-emerald-50 p-1.5 rounded transition-colors" title="Abonar" ${v.estado === 'anulado' || saldo <= 0 ? 'disabled style="opacity:0.3"' : ''}><i class="fas fa-hand-holding-usd"></i></button>
-                            <button data-id="${v.id}" class="historial-evento-btn text-blue-500 hover:bg-blue-50 p-1.5 rounded transition-colors" title="Historial"><i class="fas fa-history"></i></button>
-                            <button data-id="${v.id}" class="print-boleto-btn text-slate-500 hover:text-indigo-600 p-1.5 rounded" title="Imprimir"><i class="fas fa-print"></i></button>
-                            <button data-id="${v.id}" class="edit-venta-evento-btn text-indigo-500 hover:bg-indigo-50 p-1.5 rounded transition-colors" title="Editar" ${v.estado === 'anulado' ? 'disabled style="opacity:0.3"' : ''}><i class="fas fa-edit"></i></button>
-                            <button data-id="${v.id}" class="anular-boleto-btn text-red-500 hover:text-red-700 p-1.5 rounded" title="Anular" ${v.estado === 'anulado' ? 'disabled style="opacity:0.3"' : ''}><i class="fas fa-ban"></i></button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        window.abrirModalAbonoEvento = (ventaId) => {
-            const v = localVentasEventos.find(x => x.id === ventaId);
-            const alumno = localAlumnos.find(a => a.id === v.alumnoId);
-            const evento = localEventos.find(e => e.id === v.eventoId);
-            const nomEv = evento ? evento.concepto : 'Evento';
-            
-            const abonos = localAbonosEventos.filter(a => a.ventaId === ventaId);
-            const totalAbonado = abonos.reduce((s, a) => s + Number(a.monto), 0);
-            const saldo = Number(v.monto) - totalAbonado;
-            const hoy = new Date().toISOString().split("T")[0];
-
-            const mc = document.getElementById('modal-container');
-            mc.innerHTML = `
-                <div class="modal-content">
-                    <h2 class="text-xl font-bold text-slate-800 mb-2">Registrar Abono a Evento</h2>
-                    <p class="text-sm text-slate-500 mb-2">Alumno: <strong>${alumno.nombres} ${alumno.apellidos}</strong></p>
-                    <p class="text-sm text-slate-500 mb-6">Evento: <strong>${nomEv}</strong></p>
-                    
-                    <div class="bg-rose-50 border border-rose-200 p-4 rounded-xl mb-6 flex justify-between items-center">
-                        <span class="text-rose-800 font-medium text-sm">Saldo Pendiente</span>
-                        <span class="text-rose-700 font-black text-xl">${currency(saldo)}</span>
-                    </div>
-                    <form id="form-abono-ev" class="space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha</label>
-                                <input type="date" id="abono-ev-fecha" required value="${hoy}" class="form-input">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Monto</label>
-                                <input type="number" id="abono-ev-monto" required min="0.01" max="${saldo}" step="0.01" value="${saldo.toFixed(2)}" class="form-input text-lg font-bold text-emerald-700 border-emerald-200">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Método</label>
-                            <select id="abono-ev-metodo" required class="form-input">
-                                <option value="Efectivo">Efectivo</option> <option value="Transferencia">Transferencia</option> <option value="Tarjeta">Tarjeta</option>
-                            </select>
-                        </div>
-                        <div class="mt-6 flex justify-end gap-3">
-                            <button type="button" id="btn-cerrar-abono-ev" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-colors">Cancelar</button>
-                            <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl transition-colors shadow-sm">Guardar Abono</button>
-                        </div>
-                    </form>
-                </div>
-            `;
-            mc.classList.add('active');
-            document.getElementById('btn-cerrar-abono-ev').onclick = () => mc.classList.remove('active');
-            document.getElementById('form-abono-ev').onsubmit = (e) => {
-                e.preventDefault();
-                localAbonosEventos.push({
-                    id: generateId(),
-                    ventaId: ventaId,
-                    monto: parseFloat(document.getElementById('abono-ev-monto').value),
-                    metodo: document.getElementById('abono-ev-metodo').value,
-                    fechaAbono: document.getElementById('abono-ev-fecha').value
-                });
-                saveData('abonosEventos', localAbonosEventos);
-                mc.classList.remove('active');
-                renderVentasEventos();
-                mostrarMensaje('Éxito', 'Abono para evento registrado.', 'success');
-            };
-        };
-
-        window.abrirModalHistorialAbonosEvento = (ventaId) => {
-            const v = localVentasEventos.find(x => x.id === ventaId);
-            const abonos = localAbonosEventos.filter(a => a.ventaId === ventaId).sort((a,b)=>b.fechaAbono.localeCompare(a.fechaAbono));
-            
-            const mc = document.getElementById('modal-container');
-            let html = abonos.length ? abonos.map(a => `<tr class="border-b border-slate-100"><td class="py-2 text-sm">${a.fechaAbono}</td><td class="py-2 text-sm">${a.metodo}</td><td class="py-2 text-right text-emerald-600 font-bold">${currency(a.monto)}</td></tr>`).join('') : '<tr><td colspan="3" class="py-4 text-center text-slate-400">Sin abonos registrados.</td></tr>';
-
-            mc.innerHTML = `
-                <div class="modal-content">
-                    <h2 class="text-xl font-bold text-slate-800 mb-4">Historial de Abonos (Evento)</h2>
-                    <div class="max-h-60 overflow-y-auto bg-slate-50 rounded-xl p-4 border border-slate-100">
-                        <table class="w-full text-left">
-                            <thead class="text-xs text-slate-400 uppercase"><tr><th class="pb-2">Fecha</th><th class="pb-2">Método</th><th class="pb-2 text-right">Monto</th></tr></thead>
-                            <tbody>${html}</tbody>
-                        </table>
-                    </div>
-                    <div class="mt-6 flex justify-end">
-                        <button id="btn-cerrar-h-abono-ev" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-colors">Cerrar</button>
-                    </div>
-                </div>
-            `;
-            mc.classList.add('active');
-            document.getElementById('btn-cerrar-h-abono-ev').onclick = () => mc.classList.remove('active');
-        };
-
-        function imprimirBoletoEvento(venta) {
-            const alumno = localAlumnos.find(a => a.id === venta.alumnoId);
-            const evento = localEventos.find(e => e.id === venta.eventoId);
-            const paquete = evento ? evento.paquetes.find(p => p.id === venta.paqueteId) : {nombre: 'Desconocido'};
-            
-            const abonos = localAbonosEventos.filter(a => a.ventaId === venta.id);
-            const totalAbonado = abonos.reduce((s, a) => s + Number(a.monto), 0);
-            const saldo = Number(venta.monto) - totalAbonado;
-
-            const html = `<html><head><style>body{font-family:sans-serif;width:300px;margin:0 auto;padding:20px;text-align:center;}hr{border:0;border-top:2px dashed #000;margin:15px 0;}.ev{font-size:18px;font-weight:bold;margin:10px 0;}.pkt{font-size:16px;background:#eee;padding:10px;border-radius:5px;}td.r{text-align:right;}table{width:100%;font-size:14px;}</style></head><body onload="window.print();window.close();">
-                <h2>Colegio Labastida</h2><p>Boleto / Ticket de Acceso</p><hr>
-                <div class="ev">${evento ? evento.concepto : 'N/A'}</div>
-                <p>Fecha del Evento: ${evento ? evento.fecha : 'N/A'}</p>
-                <div class="pkt">${paquete.nombre}</div>
-                <hr>
-                <p><strong>Alumno:</strong> ${alumno ? alumno.nombres + ' ' + alumno.apellidos : 'N/A'}</p>
-                <p><strong>Folio:</strong> ${venta.id.substring(0,8).toUpperCase()}</p>
-                <hr>
-                <table>
-                    <tr><td>Costo Total:</td><td class="r">${currency(venta.monto)}</td></tr>
-                    <tr><td>Abonado:</td><td class="r">${currency(totalAbonado)}</td></tr>
-                    <tr><td><strong>Saldo Pendiente:</strong></td><td class="r"><strong>${currency(saldo)}</strong></td></tr>
-                </table>
-                <hr><p>¡Conserva este boleto!</p>
-            </body></html>`;
-            const w = window.open('','_blank'); w.document.write(html); w.document.close();
-        }
-
+        // ================== EVENT LISTENERS ==================
+        
         document.addEventListener('DOMContentLoaded', () => {
             inicializarCatalogos();
+            descargarDatosNube(); // Fuerza la carga antes de interactuar
             
-          // --- VERIFICACIÓN DE SESIÓN CON SEGURIDAD ---
-const sessionData = sessionStorage.getItem('userSession');
-if (sessionData) {
-    appStateUser = JSON.parse(sessionData);
-    
-    // Esperamos a que la página esté cargada para manipular el DOM
-    window.addEventListener('load', () => {
-        const userNameElement = document.getElementById('user-name');
-        if (userNameElement) userNameElement.innerText = appStateUser.Nombre || "Usuario";
-        
-        const loginView = document.getElementById('view-login');
-        if (loginView) loginView.classList.add('hidden-login');
-        
-        descargarDatosNube(true);
-    });
-} else {
-    // Si no hay sesión, aseguramos que el login sea visible
-    window.addEventListener('load', () => {
-        const loginView = document.getElementById('view-login');
-        if (loginView) loginView.classList.remove('hidden-login');
-    });
-}
-
-            // --- Toggle Acordeón Médico ---
+            // Toggle Acordeón Médico
             document.getElementById('toggle-medico').onclick = () => {
                 document.getElementById('medico-fields').classList.toggle('hidden');
                 document.getElementById('icono-medico').classList.toggle('fa-chevron-up');
             };
 
+            // Select Nivel que activa Grado
             document.getElementById('nivel').addEventListener('change', () => actualizarGrados('nivel', 'grado'));
 
-            // --- Login y Logout ---
-            let appStateUser = null;
-            document.getElementById('login-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const email = document.getElementById('login-email').value.trim().toLowerCase();
-                const password = document.getElementById('login-password').value.trim();
-                const btn = document.getElementById('btn-login');
-                
-                btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Validando...';
-                btn.disabled = true;
-
-                try {
-                    const response = await fetch(API_URL, {
-                        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({ action: 'login', data: { correo: email, password: password } })
-                    });
-                    const res = await response.json();
-                    
-                    if (res.success) {
-                        localStorage.setItem('ce_session', JSON.stringify(res.user));
-                        appStateUser = res.user;
-                        document.getElementById('user-name').innerText = appStateUser.Nombre || "Usuario";
-                        document.getElementById('view-login').style.opacity = '0';
-                        setTimeout(() => document.getElementById('view-login').classList.add('hidden-login'), 300);
-                        showToast('¡Bienvenido al sistema!', 'success');
-                        descargarDatosNube(true); // Descargar datos frescos
-                    } else {
-                        showToast(res.message || 'Error', 'error');
-                    }
-                } catch (err) {
-                    showToast('Error de red. ¿URL correcta?', 'error');
-                } finally {
-                    btn.innerHTML = '<span>Ingresar al Sistema</span> <i class="fas fa-arrow-right"></i>';
-                    btn.disabled = false;
-                }
-            });
-
-            document.getElementById('btn-logout').addEventListener('click', () => {
-                localStorage.removeItem('ce_session');
-                appStateUser = null;
-                const vl = document.getElementById('view-login');
-                vl.classList.remove('hidden-login');
-                setTimeout(() => vl.style.opacity = '1', 10);
-            });
-
-            // === CONECTAR EVENTOS GENERALES Y TABLAS ===
-            
-            // Administrador de Cuotas
+            // === EVENTOS DE CUOTAS ===
             document.getElementById('btn-admin-cuotas').addEventListener('click', () => {
                 const mc = document.getElementById('modal-container');
                 mc.innerHTML = `
@@ -1787,8 +1342,15 @@ if (sessionData) {
 
                 document.getElementById('form-nueva-cuota').onsubmit = (e) => {
                     e.preventDefault();
-                    localCuotas.push({ id: generateId(), nombre: document.getElementById('nueva-cuota-nombre').value, costo: parseFloat(document.getElementById('nueva-cuota-costo').value) });
-                    saveData('cuotas', localCuotas); e.target.reset(); renderC(); renderEstadoDeCuotas();
+                    localCuotas.push({
+                        id: generateId(),
+                        nombre: document.getElementById('nueva-cuota-nombre').value,
+                        costo: parseFloat(document.getElementById('nueva-cuota-costo').value)
+                    });
+                    saveData('cuotas', localCuotas);
+                    e.target.reset();
+                    renderC();
+                    renderEstadoDeCuotas();
                 };
 
                 document.getElementById('btn-cerrar-cuotas').onclick = () => mc.classList.remove('active');
@@ -1796,16 +1358,18 @@ if (sessionData) {
                 window.eliminarCuota = async (id) => {
                     if(await mostrarMensaje('Confirmar', '¿Seguro que deseas eliminar esta cuota?', 'confirm')){
                         localCuotas = localCuotas.filter(c => c.id !== id);
-                        saveData('cuotas', localCuotas); renderC(); renderEstadoDeCuotas();
+                        saveData('cuotas', localCuotas);
+                        renderC();
+                        renderEstadoDeCuotas();
                     }
                 };
             });
 
-            // Alumnos Clics (Editar y Borrar)
+            // === EVENTOS TABLA ALUMNOS ===
             document.getElementById('lista-alumnos').addEventListener('click', async (e) => {
                 const editBtn = e.target.closest('.edit-alumno-btn');
                 const deleteBtn = e.target.closest('.delete-alumno-btn');
-                
+
                 if (editBtn) {
                     const id = editBtn.dataset.id;
                     const alumno = localAlumnos.find(a => a.id === id);
@@ -1813,65 +1377,114 @@ if (sessionData) {
 
                     const form = document.getElementById('form-agregar-alumno');
                     document.getElementById('alumno-id-edit').value = alumno.id;
+                    
                     if(alumno.estatus === 'Nuevo Ingreso') document.getElementById('estatus-nuevo').checked = true;
                     if(alumno.estatus === 'Reinscripción') document.getElementById('estatus-reinscripcion').checked = true;
-                    form.nombres.value = alumno.nombres; form.apellidos.value = alumno.apellidos; form.fechaNacimiento.value = alumno.fechaNacimiento;
-                    form.nivel.value = alumno.nivel; actualizarGrados('nivel', 'grado');
-                    setTimeout(() => { form.grado.value = alumno.grado; form.grupo.value = alumno.grupo; }, 50);
-                    form.tutor.value = alumno.tutor || ''; form.telefono.value = alumno.telefono || '';
-                    form.responsable2.value = alumno.responsable2 || ''; form.telefonoResp2.value = alumno.telefonoResp2 || '';
-                    form.tipoCuota.value = alumno.tipoCuota || ''; form.tipoSangre.value = alumno.tipoSangre || '';
-                    form.alergias.value = alumno.alergias || ''; form.padecimientos.value = alumno.padecimientos || '';
-                    form.contactoEmergencia.value = alumno.contactoEmergencia || ''; form.telefonoEmergencia.value = alumno.telefonoEmergencia || '';
+                    
+                    form.nombres.value = alumno.nombres;
+                    form.apellidos.value = alumno.apellidos;
+                    form.fechaNacimiento.value = alumno.fechaNacimiento;
+                    
+                    form.nivel.value = alumno.nivel;
+                    actualizarGrados('nivel', 'grado');
+                    setTimeout(() => { form.grado.value = alumno.grado; }, 50);
+                    
+                    form.grupo.value = alumno.grupo;
+                    form.tutor.value = alumno.tutor || '';
+                    form.telefono.value = alumno.telefono || '';
+                    form.responsable2.value = alumno.responsable2 || '';
+                    form.telefonoResp2.value = alumno.telefonoResp2 || '';
+                    form.tipoCuota.value = alumno.tipoCuota || '';
+                    form.tipoSangre.value = alumno.tipoSangre || '';
+                    form.alergias.value = alumno.alergias || '';
+                    form.padecimientos.value = alumno.padecimientos || '';
+                    form.contactoEmergencia.value = alumno.contactoEmergencia || '';
+                    form.telefonoEmergencia.value = alumno.telefonoEmergencia || '';
 
                     document.getElementById('form-alumno-title').innerHTML = `<i class="fas fa-user-edit text-amber-500"></i> Editando Alumno`;
-                    const btnG = document.getElementById('btn-guardar-alumno'); btnG.innerHTML = '<i class="fas fa-save"></i> Actualizar Alumno';
-                    btnG.classList.replace('bg-indigo-600', 'bg-amber-500'); btnG.classList.replace('hover:bg-indigo-700', 'hover:bg-amber-600');
+                    const btnGuardar = document.getElementById('btn-guardar-alumno');
+                    btnGuardar.innerHTML = '<i class="fas fa-save"></i> Actualizar Alumno';
+                    btnGuardar.classList.replace('bg-indigo-600', 'bg-amber-500');
+                    btnGuardar.classList.replace('hover:bg-indigo-700', 'hover:bg-amber-600');
                     document.getElementById('btn-cancelar-alumno-edit').classList.remove('hidden');
-                    document.getElementById('main-scroll-area').scrollTo({top: 0, behavior: 'smooth'});
+                    
+                    document.querySelector('.overflow-y-auto').scrollTo({top: 0, behavior: 'smooth'});
                 }
-                
+
                 if (deleteBtn) {
                     const id = deleteBtn.dataset.id;
-                    const al = localAlumnos.find(a => a.id === id);
-                    if (await mostrarMensaje("Confirmar Eliminación", `¿Eliminar a <strong>${al.nombres} ${al.apellidos}</strong>?`, "confirm")) {
-                        localAlumnos = localAlumnos.filter(a => a.id !== id); saveData('alumnos', localAlumnos); cargarDatosIniciales();
+                    const alumno = localAlumnos.find(a => a.id === id);
+                    const confirmed = await mostrarMensaje("Confirmar Eliminación", `¿Estás seguro de eliminar a <strong>${alumno.nombres} ${alumno.apellidos}</strong>?`, "confirm");
+                    if (confirmed) {
+                        localAlumnos = localAlumnos.filter(a => a.id !== id);
+                        saveData('alumnos', localAlumnos);
+                        cargarDatosIniciales();
                     }
                 }
             });
 
             document.getElementById('btn-cancelar-alumno-edit').addEventListener('click', () => {
-                document.getElementById('form-agregar-alumno').reset(); document.getElementById('alumno-id-edit').value = '';
+                document.getElementById('form-agregar-alumno').reset();
+                document.getElementById('alumno-id-edit').value = '';
                 document.getElementById('form-alumno-title').innerHTML = '<i class="fas fa-user-plus text-indigo-500"></i> Agregar Alumno';
-                const btn = document.getElementById('btn-guardar-alumno'); btn.innerHTML = '<i class="fas fa-save"></i> Guardar Alumno';
-                btn.classList.replace('bg-amber-500', 'bg-indigo-600'); btn.classList.replace('hover:bg-amber-600', 'hover:bg-indigo-700');
+                const btnGuardar = document.getElementById('btn-guardar-alumno');
+                btnGuardar.innerHTML = '<i class="fas fa-save"></i> Guardar Alumno';
+                btnGuardar.classList.replace('bg-amber-500', 'bg-indigo-600');
+                btnGuardar.classList.replace('hover:bg-amber-600', 'hover:bg-indigo-700');
                 document.getElementById('btn-cancelar-alumno-edit').classList.add('hidden');
-                document.getElementById('grado').innerHTML = '<option value="">...</option>'; document.getElementById('grado').disabled = true;
+                
+                // Restablecer el selector de grado al cancelar
+                const selectGrado = document.getElementById('grado');
+                selectGrado.innerHTML = '<option value="">...</option>';
+                selectGrado.disabled = true;
+                selectGrado.classList.add('bg-slate-100', 'text-slate-400', 'cursor-not-allowed');
             });
 
             document.getElementById('form-agregar-alumno').onsubmit = (e) => {
-                e.preventDefault(); const form = e.target;
-                const data = {
+                e.preventDefault();
+                const form = e.target;
+                const estatusInput = form.querySelector('input[name="estatus"]:checked');
+                const alumnoData = {
                     id: document.getElementById('alumno-id-edit').value || generateId(),
-                    estatus: form.querySelector('input[name="estatus"]:checked')?.value || '',
-                    nombres: form.nombres.value, apellidos: form.apellidos.value, fechaNacimiento: form.fechaNacimiento.value,
-                    nivel: form.nivel.value, grado: form.grado.value, grupo: form.grupo.value, tutor: form.tutor.value, telefono: form.telefono.value,
-                    responsable2: form.responsable2.value, telefonoResp2: form.telefonoResp2.value, tipoCuota: form.tipoCuota.value,
-                    tipoSangre: form.tipoSangre.value, alergias: form.alergias.value, padecimientos: form.padecimientos.value, contactoEmergencia: form.contactoEmergencia.value, telefonoEmergencia: form.telefonoEmergencia.value,
+                    estatus: estatusInput ? estatusInput.value : '',
+                    nombres: form.nombres.value,
+                    apellidos: form.apellidos.value,
+                    fechaNacimiento: form.fechaNacimiento.value,
+                    nivel: form.nivel.value,
+                    grado: form.grado.value,
+                    grupo: form.grupo.value,
+                    tutor: form.tutor.value,
+                    telefono: form.telefono.value,
+                    responsable2: form.responsable2.value,
+                    telefonoResp2: form.telefonoResp2.value,
+                    tipoCuota: form.tipoCuota.value,
+                    tipoSangre: form.tipoSangre.value,
+                    alergias: form.alergias.value,
+                    padecimientos: form.padecimientos.value,
+                    contactoEmergencia: form.contactoEmergencia.value,
+                    telefonoEmergencia: form.telefonoEmergencia.value,
                 };
-                const idx = localAlumnos.findIndex(a => a.id === data.id);
-                if (idx > -1) localAlumnos[idx] = data; else localAlumnos.push(data);
-                saveData('alumnos', localAlumnos); cargarDatosIniciales();
-                document.getElementById('btn-cancelar-alumno-edit').click(); showToast('Alumno guardado.', 'success');
+                
+                const index = localAlumnos.findIndex(a => a.id === alumnoData.id);
+                if (index > -1) localAlumnos[index] = alumnoData;
+                else localAlumnos.push(alumnoData);
+                
+                saveData('alumnos', localAlumnos);
+                cargarDatosIniciales();
+                document.getElementById('btn-cancelar-alumno-edit').click();
+                mostrarMensaje('Éxito', 'Alumno guardado correctamente en la BD.', 'success');
             };
 
-            // Maestros Clics
+            // === EVENTOS TABLA MAESTROS ===
             document.getElementById('lista-maestros').addEventListener('click', async (e) => {
-                const editBtn = e.target.closest('.edit-maestro-btn'); const deleteBtn = e.target.closest('.delete-maestro-btn');
-                const nominaBtn = e.target.closest('.pagar-nomina-btn'); const historialBtn = e.target.closest('.historial-nomina-btn');
+                const editBtn = e.target.closest('.edit-maestro-btn');
+                const deleteBtn = e.target.closest('.delete-maestro-btn');
+                const nominaBtn = e.target.closest('.pagar-nomina-btn');
+                const historialBtn = e.target.closest('.historial-nomina-btn');
 
                 if (nominaBtn) {
-                    const mc = document.getElementById('modal-container'); const hoy = new Date().toISOString().split("T")[0];
+                    const mc = document.getElementById('modal-container');
+                    const hoy = new Date().toISOString().split("T")[0];
                     mc.innerHTML = `
                         <div class="modal-content">
                             <h2 class="text-xl font-bold text-slate-800 mb-2 flex items-center gap-2"><i class="fas fa-money-check-dollar text-emerald-500"></i> Pago Compensatorio</h2>
@@ -1879,336 +1492,192 @@ if (sessionData) {
                             <form id="form-nomina" class="space-y-4">
                                 <input type="hidden" id="nomina-maestro-id" value="${nominaBtn.dataset.id}">
                                 <input type="hidden" id="nomina-maestro-nombre" value="${nominaBtn.dataset.nombre}">
-                                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha de Pago</label><input type="date" id="nomina-fecha" value="${hoy}" required class="form-input"></div>
-                                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Monto a Pagar (MXN)</label><input type="number" id="nomina-monto" step="0.01" min="0.01" required placeholder="0.00" class="form-input text-lg font-bold text-emerald-700 border-emerald-200"></div>
-                                <div class="flex justify-end gap-3 mt-6"><button type="button" id="close-modal-nomina" class="px-5 py-2.5 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200">Cancelar</button><button type="submit" class="px-5 py-2.5 rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm">Generar Recibo</button></div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha de Pago</label>
+                                    <input type="date" id="nomina-fecha" value="${hoy}" required class="form-input">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Monto a Pagar (MXN)</label>
+                                    <input type="number" id="nomina-monto" step="0.01" min="0.01" required placeholder="0.00" class="form-input text-lg font-bold text-emerald-700 border-emerald-200">
+                                </div>
+                                <div class="flex justify-end gap-3 mt-6">
+                                    <button type="button" id="close-modal-nomina" class="px-5 py-2.5 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 font-medium transition-colors">Cancelar</button>
+                                    <button type="submit" class="px-5 py-2.5 rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 font-medium transition-colors shadow-sm">Generar Recibo</button>
+                                </div>
                             </form>
                         </div>`;
-                    mc.classList.add('active'); document.getElementById('close-modal-nomina').onclick = () => mc.classList.remove('active');
+                    mc.classList.add('active');
+                    document.getElementById('close-modal-nomina').onclick = () => mc.classList.remove('active');
                     document.getElementById('form-nomina').onsubmit = (ev) => {
                         ev.preventDefault();
                         const nData = { id: generateId(), maestroId: document.getElementById('nomina-maestro-id').value, maestroNombre: document.getElementById('nomina-maestro-nombre').value, fechaPago: document.getElementById('nomina-fecha').value, monto: parseFloat(document.getElementById('nomina-monto').value) };
                         localNomina.push(nData); saveData('nomina', localNomina); mc.classList.remove('active'); imprimirReciboNomina(nData); cargarDatosIniciales();
                     };
                 }
+
                 if (historialBtn) {
-                    const mId = historialBtn.dataset.id; const mNom = historialBtn.dataset.nombre;
+                    const mId = historialBtn.dataset.id;
+                    const mNom = historialBtn.dataset.nombre;
                     const pagosM = localNomina.filter(p => p.maestroId === mId).sort((a, b) => b.fechaPago.localeCompare(a.fechaPago));
                     let html = pagosM.length === 0 ? '<tr><td colspan="3" class="text-center py-4 text-slate-400">No hay pagos.</td></tr>' : pagosM.map(p => `<tr class="border-b border-slate-100"><td class="px-4 py-3">${new Date(p.fechaPago + 'T00:00:00').toLocaleDateString('es-MX')}</td><td class="px-4 py-3 text-right font-medium text-emerald-600">${currency(p.monto)}</td><td class="px-4 py-3 text-center"><button data-id="${p.id}" class="reimprimir-nomina-btn bg-slate-100 text-blue-600 p-2 rounded-lg hover:bg-blue-600 hover:text-white transition-colors"><i class="fas fa-print"></i></button></td></tr>`).join('');
                     const mc = document.getElementById('modal-container');
-                    mc.innerHTML = `<div class="modal-content"><h2 class="text-2xl font-bold text-slate-800 mb-2">Historial de Pagos</h2><p class="mb-6 text-sm text-slate-500">Maestro: <strong class="text-slate-800">${mNom}</strong></p><div class="overflow-y-auto max-h-80 border border-slate-200 rounded-xl"><table class="w-full text-left text-sm"><thead class="bg-slate-50 sticky top-0"><tr><th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">Fecha</th><th class="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase">Monto</th><th class="px-4 py-3 text-center text-xs font-bold text-slate-500 uppercase">Recibo</th></tr></thead><tbody class="divide-y divide-slate-100">${html}</tbody></table></div><div class="mt-6 flex justify-end"><button id="close-modal-btn" class="px-5 py-2.5 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200">Cerrar</button></div></div>`;
-                    mc.classList.add('active'); document.getElementById('close-modal-btn').onclick = () => mc.classList.remove('active');
+                    mc.innerHTML = `
+                        <div class="modal-content">
+                            <h2 class="text-2xl font-bold text-slate-800 mb-2">Historial de Pagos</h2>
+                            <p class="mb-6 text-sm text-slate-500">Maestro: <strong class="text-slate-800">${mNom}</strong></p>
+                            <div class="overflow-y-auto max-h-80 border border-slate-200 rounded-xl">
+                                <table class="w-full text-left text-sm"><thead class="bg-slate-50 sticky top-0"><tr><th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">Fecha</th><th class="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase">Monto</th><th class="px-4 py-3 text-center text-xs font-bold text-slate-500 uppercase">Recibo</th></tr></thead><tbody class="divide-y divide-slate-100">${html}</tbody></table>
+                            </div>
+                            <div class="mt-6 flex justify-end"><button id="close-modal-btn" class="px-5 py-2.5 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200">Cerrar Historial</button></div>
+                        </div>`;
+                    mc.classList.add('active');
+                    document.getElementById('close-modal-btn').onclick = () => mc.classList.remove('active');
                     mc.querySelectorAll('.reimprimir-nomina-btn').forEach(b => { b.addEventListener('click', (ev) => { const pData = localNomina.find(x => x.id === ev.currentTarget.dataset.id); if (pData) imprimirReciboNomina(pData); }); });
                 }
+
                 if (editBtn) {
-                    const maestro = localMaestros.find(m => m.id === editBtn.dataset.id); if (!maestro) return;
-                    document.getElementById('maestro-id-edit').value = maestro.id; document.getElementById('maestro-nombres').value = maestro.nombres; document.getElementById('maestro-apellidos').value = maestro.apellidos; document.getElementById('maestro-telefono').value = maestro.telefono || ''; document.getElementById('maestro-email').value = maestro.email || ''; document.getElementById('maestro-rfc').value = maestro.rfc || ''; document.getElementById('maestro-curp').value = maestro.curp || '';
+                    const id = editBtn.dataset.id;
+                    const maestro = localMaestros.find(m => m.id === id);
+                    if (!maestro) return;
+
+                    const form = document.getElementById('form-agregar-maestro');
+                    document.getElementById('maestro-id-edit').value = maestro.id;
+                    document.getElementById('maestro-nombres').value = maestro.nombres;
+                    document.getElementById('maestro-apellidos').value = maestro.apellidos;
+                    document.getElementById('maestro-telefono').value = maestro.telefono || '';
+                    document.getElementById('maestro-email').value = maestro.email || '';
+                    document.getElementById('maestro-rfc').value = maestro.rfc || '';
+                    document.getElementById('maestro-curp').value = maestro.curp || '';
+                    
                     document.querySelectorAll('input[name="maestro-nivel"]').forEach(cb => { cb.checked = (maestro.niveles || []).includes(cb.value); });
                     document.getElementById('form-maestro-title').innerHTML = `<i class="fas fa-user-edit text-amber-500"></i> Editando Maestro`;
-                    const btn = document.getElementById('btn-guardar-maestro'); btn.innerHTML = '<i class="fas fa-save"></i> Actualizar'; btn.classList.replace('bg-indigo-600', 'bg-amber-500'); btn.classList.replace('hover:bg-indigo-700', 'hover:bg-amber-600');
-                    document.getElementById('btn-cancelar-maestro-edit').classList.remove('hidden'); document.getElementById('main-scroll-area').scrollTo({top: 0, behavior: 'smooth'});
+                    const btnGuardar = document.getElementById('btn-guardar-maestro');
+                    btnGuardar.innerHTML = '<i class="fas fa-save"></i> Actualizar Maestro';
+                    btnGuardar.classList.replace('bg-indigo-600', 'bg-amber-500');
+                    btnGuardar.classList.replace('hover:bg-indigo-700', 'hover:bg-amber-600');
+                    document.getElementById('btn-cancelar-maestro-edit').classList.remove('hidden');
+                    document.querySelector('.overflow-y-auto').scrollTo({top: 0, behavior: 'smooth'});
                 }
-                if (deleteBtn && await mostrarMensaje("Confirmar Eliminación", "¿Eliminar a este maestro?", "confirm")) {
-                    localMaestros = localMaestros.filter(m => m.id !== deleteBtn.dataset.id); saveData('maestros', localMaestros); cargarDatosIniciales();
+
+                if (deleteBtn) {
+                    const id = deleteBtn.dataset.id;
+                    const maestro = localMaestros.find(m => m.id === id);
+                    const confirmed = await mostrarMensaje("Confirmar Eliminación", `¿Eliminar a <strong>${maestro.nombres} ${maestro.apellidos}</strong>?`, "confirm");
+                    if (confirmed) {
+                        localMaestros = localMaestros.filter(m => m.id !== id);
+                        saveData('maestros', localMaestros); cargarDatosIniciales();
+                    }
                 }
             });
 
             document.getElementById('btn-cancelar-maestro-edit').addEventListener('click', () => {
-                document.getElementById('form-agregar-maestro').reset(); document.getElementById('maestro-id-edit').value = '';
+                document.getElementById('form-agregar-maestro').reset();
+                document.getElementById('maestro-id-edit').value = '';
                 document.getElementById('form-maestro-title').innerHTML = '<i class="fas fa-chalkboard-teacher text-indigo-500"></i> Agregar Maestro';
-                const btn = document.getElementById('btn-guardar-maestro'); btn.innerHTML = '<i class="fas fa-save"></i> Guardar Maestro'; btn.classList.replace('bg-amber-500', 'bg-indigo-600'); btn.classList.replace('hover:bg-amber-600', 'hover:bg-indigo-700');
+                const btnGuardar = document.getElementById('btn-guardar-maestro');
+                btnGuardar.innerHTML = '<i class="fas fa-save"></i> Guardar Maestro';
+                btnGuardar.classList.replace('bg-amber-500', 'bg-indigo-600');
+                btnGuardar.classList.replace('hover:bg-amber-600', 'hover:bg-indigo-700');
                 document.getElementById('btn-cancelar-maestro-edit').classList.add('hidden');
             });
 
             document.getElementById('form-agregar-maestro').onsubmit = (e) => {
-                e.preventDefault(); const niveles = Array.from(document.querySelectorAll('input[name="maestro-nivel"]:checked')).map(cb => cb.value);
-                if(niveles.length === 0) return mostrarMensaje('Error', 'Debes seleccionar al menos un nivel.', 'error');
-                const data = { id: document.getElementById('maestro-id-edit').value || generateId(), nombres: document.getElementById('maestro-nombres').value, apellidos: document.getElementById('maestro-apellidos').value, telefono: document.getElementById('maestro-telefono').value, email: document.getElementById('maestro-email').value, rfc: document.getElementById('maestro-rfc').value, curp: document.getElementById('maestro-curp').value, niveles: niveles };
-                const idx = localMaestros.findIndex(m => m.id === data.id); if(idx > -1) localMaestros[idx] = data; else localMaestros.push(data);
-                saveData('maestros', localMaestros); cargarDatosIniciales(); document.getElementById('btn-cancelar-maestro-edit').click(); showToast('Maestro guardado.', 'success');
+                e.preventDefault();
+                const niveles = Array.from(document.querySelectorAll('input[name="maestro-nivel"]:checked')).map(cb => cb.value);
+                if(niveles.length === 0) return mostrarMensaje('Error de Validación', 'Debes seleccionar al menos un nivel.', 'error');
+                
+                const data = {
+                    id: document.getElementById('maestro-id-edit').value || generateId(), nombres: document.getElementById('maestro-nombres').value, apellidos: document.getElementById('maestro-apellidos').value,
+                    telefono: document.getElementById('maestro-telefono').value, email: document.getElementById('maestro-email').value, rfc: document.getElementById('maestro-rfc').value, curp: document.getElementById('maestro-curp').value, niveles: niveles
+                };
+                const idx = localMaestros.findIndex(m => m.id === data.id);
+                if(idx > -1) localMaestros[idx] = data; else localMaestros.push(data);
+                
+                saveData('maestros', localMaestros); cargarDatosIniciales();
+                document.getElementById('btn-cancelar-maestro-edit').click();
+                mostrarMensaje('Éxito', 'Maestro guardado.', 'success');
             };
 
-            // Pagos Regulares Lógica
-            let pagoConceptosTemp = [], pagoMetodosTemp = [];
+            // === EVENTOS DE PAGOS ===
+            let pagoConceptosTemp = []; let pagoMetodosTemp = [];
+            const btnGuardarPago = document.getElementById('btn-guardar-pago');
+
             const checkPagoValido = () => {
-                const tPagar = pagoConceptosTemp.reduce((s, c) => s + c.monto, 0), tPagado = pagoMetodosTemp.reduce((s, m) => s + m.monto, 0);
-                const btn = document.getElementById('btn-guardar-pago');
-                if (document.getElementById('pago-alumno').value && document.getElementById('pago-fecha').value && tPagar > 0 && tPagado > 0 && Math.abs(tPagar - tPagado) < 0.01) {
-                    btn.disabled = false; btn.classList.replace('bg-slate-300', 'bg-indigo-600'); btn.classList.replace('text-slate-500', 'text-white'); btn.classList.replace('cursor-not-allowed', 'hover:bg-indigo-700'); btn.classList.add('shadow-md');
-                } else {
-                    btn.disabled = true; btn.classList.replace('bg-indigo-600', 'bg-slate-300'); btn.classList.replace('text-white', 'text-slate-500'); btn.classList.replace('hover:bg-indigo-700', 'cursor-not-allowed'); btn.classList.remove('shadow-md');
-                }
+                const tPagar = pagoConceptosTemp.reduce((s, c) => s + c.monto, 0); const tPagado = pagoMetodosTemp.reduce((s, m) => s + m.monto, 0);
+                const isValido = document.getElementById('pago-alumno').value && document.getElementById('pago-fecha').value && tPagar > 0 && tPagado > 0 && Math.abs(tPagar - tPagado) < 0.01;
+                if (isValido) { btnGuardarPago.disabled = false; btnGuardarPago.classList.remove('bg-slate-300', 'text-slate-500', 'cursor-not-allowed'); btnGuardarPago.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700', 'shadow-md'); } else { btnGuardarPago.disabled = true; btnGuardarPago.classList.add('bg-slate-300', 'text-slate-500', 'cursor-not-allowed'); btnGuardarPago.classList.remove('bg-indigo-600', 'text-white', 'hover:bg-indigo-700', 'shadow-md'); }
             };
 
-            const renderC = () => { document.getElementById('lista-conceptos-pago').innerHTML = pagoConceptosTemp.map((c, i) => `<div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-200 text-sm shadow-sm"><span class="font-medium text-slate-700">${c.concepto}</span><div class="flex items-center gap-3"><span class="font-bold text-slate-800">${currency(c.monto)}</span><button type="button" data-idx="${i}" class="rm-concepto text-red-500 hover:text-red-700 w-6 h-6 hover:bg-red-50 flex items-center justify-center rounded transition-colors"><i class="fas fa-times"></i></button></div></div>`).join(''); document.getElementById('total-a-pagar').textContent = currency(pagoConceptosTemp.reduce((s, c) => s + c.monto, 0)); checkPagoValido(); };
-            const renderM = () => { document.getElementById('lista-metodos-pago').innerHTML = pagoMetodosTemp.map((m, i) => `<div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-emerald-200 text-sm shadow-sm"><span class="font-medium text-emerald-800">${m.metodo}</span><div class="flex items-center gap-3"><span class="font-bold text-emerald-700">${currency(m.monto)}</span><button type="button" data-idx="${i}" class="rm-metodo text-red-500 hover:text-red-700 w-6 h-6 hover:bg-red-50 flex items-center justify-center rounded transition-colors"><i class="fas fa-times"></i></button></div></div>`).join(''); document.getElementById('total-pagado').textContent = currency(pagoMetodosTemp.reduce((s, m) => s + m.monto, 0)); checkPagoValido(); };
+            const renderConceptosPago = () => {
+                const wrap = document.getElementById('lista-conceptos-pago'); wrap.innerHTML = ''; let total = 0;
+                pagoConceptosTemp.forEach((c, idx) => { total += c.monto; wrap.innerHTML += `<div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-200 text-sm shadow-sm"><span class="font-medium text-slate-700">${c.concepto}</span><div class="flex items-center gap-3"><span class="font-bold text-slate-800">${currency(c.monto)}</span><button type="button" data-idx="${idx}" class="rm-concepto text-red-500 hover:text-red-700 w-6 h-6 hover:bg-red-50 flex items-center justify-center transition-colors"><i class="fas fa-times"></i></button></div></div>`; });
+                document.getElementById('total-a-pagar').textContent = currency(total); checkPagoValido();
+            };
 
-            document.getElementById('btn-agregar-concepto').addEventListener('click', () => { const concepto = document.getElementById('pago-concepto-select').value, monto = parseFloat(document.getElementById('pago-concepto-monto').value); if (concepto && monto > 0) { pagoConceptosTemp.push({concepto, monto}); document.getElementById('pago-concepto-monto').value = ''; renderC(); } });
-            document.getElementById('btn-agregar-metodo').addEventListener('click', () => { const metodo = document.getElementById('pago-metodo-select').value, monto = parseFloat(document.getElementById('pago-metodo-monto').value); if (metodo && monto > 0) { pagoMetodosTemp.push({metodo, monto}); document.getElementById('pago-metodo-monto').value = ''; renderM(); } });
-            document.getElementById('lista-conceptos-pago').addEventListener('click', (e) => { const btn = e.target.closest('.rm-concepto'); if(btn) { pagoConceptosTemp.splice(btn.dataset.idx, 1); renderC(); } });
-            document.getElementById('lista-metodos-pago').addEventListener('click', (e) => { const btn = e.target.closest('.rm-metodo'); if(btn) { pagoMetodosTemp.splice(btn.dataset.idx, 1); renderM(); } });
+            const renderMetodosPago = () => {
+                const wrap = document.getElementById('lista-metodos-pago'); wrap.innerHTML = ''; let total = 0;
+                pagoMetodosTemp.forEach((m, idx) => { total += m.monto; wrap.innerHTML += `<div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-emerald-200 text-sm shadow-sm"><span class="font-medium text-emerald-800">${m.metodo}</span><div class="flex items-center gap-3"><span class="font-bold text-emerald-700">${currency(m.monto)}</span><button type="button" data-idx="${idx}" class="rm-metodo text-red-500 hover:text-red-700 w-6 h-6 hover:bg-red-50 flex items-center justify-center transition-colors"><i class="fas fa-times"></i></button></div></div>`; });
+                document.getElementById('total-pagado').textContent = currency(total); checkPagoValido();
+            };
+
+            document.getElementById('btn-agregar-concepto').addEventListener('click', () => { const concepto = document.getElementById('pago-concepto-select').value; const monto = parseFloat(document.getElementById('pago-concepto-monto').value); if (!concepto || isNaN(monto) || monto <= 0) return mostrarMensaje('Aviso', 'Ingresa un concepto y un monto.', 'info'); pagoConceptosTemp.push({ concepto, monto }); document.getElementById('pago-concepto-monto').value = ''; renderConceptosPago(); });
+            document.getElementById('btn-agregar-metodo').addEventListener('click', () => { const metodo = document.getElementById('pago-metodo-select').value; const monto = parseFloat(document.getElementById('pago-metodo-monto').value); if (!metodo || isNaN(monto) || monto <= 0) return mostrarMensaje('Aviso', 'Ingresa un método y un monto.', 'info'); pagoMetodosTemp.push({ metodo, monto }); document.getElementById('pago-metodo-monto').value = ''; renderMetodosPago(); });
+            document.getElementById('lista-conceptos-pago').addEventListener('click', (e) => { const btn = e.target.closest('.rm-concepto'); if(!btn) return; pagoConceptosTemp.splice(btn.dataset.idx, 1); renderConceptosPago(); });
+            document.getElementById('lista-metodos-pago').addEventListener('click', (e) => { const btn = e.target.closest('.rm-metodo'); if(!btn) return; pagoMetodosTemp.splice(btn.dataset.idx, 1); renderMetodosPago(); });
             document.getElementById('pago-alumno').addEventListener('change', checkPagoValido); document.getElementById('pago-fecha').addEventListener('change', checkPagoValido);
 
             document.getElementById('form-agregar-pago').onsubmit = (e) => {
                 e.preventDefault();
                 const data = { id: document.getElementById('pago-id-edit').value || generateId(), alumnoId: document.getElementById('pago-alumno').value, fecha: document.getElementById('pago-fecha').value, conceptos: [...pagoConceptosTemp], metodosDePago: [...pagoMetodosTemp], total: pagoConceptosTemp.reduce((s, c) => s + c.monto, 0), notas: document.getElementById('pago-notas').value, estado: 'activo' };
-                const idx = localPagos.findIndex(p => p.id === data.id); if(idx > -1) localPagos[idx] = data; else localPagos.push(data);
-                saveData('pagos', localPagos); cargarDatosIniciales(); document.getElementById('btn-cancelar-pago-edit').click(); showToast('Transacción guardada.', 'success');
+                const idx = localPagos.findIndex(p => p.id === data.id);
+                if(idx > -1) localPagos[idx] = data; else localPagos.push(data);
+                saveData('pagos', localPagos); cargarDatosIniciales();
+                e.target.reset(); document.getElementById('pago-id-edit').value = ''; pagoConceptosTemp = []; pagoMetodosTemp = []; renderConceptosPago(); renderMetodosPago();
+                mostrarMensaje('Éxito', 'Transacción guardada.', 'success');
             };
 
             document.getElementById('lista-pagos').addEventListener('click', async (e) => {
-                const btnAnular = e.target.closest('.anular-pago-btn'), btnPrint = e.target.closest('.print-ticket-btn'), editBtn = e.target.closest('.edit-pago-btn');
+                const btnAnular = e.target.closest('.anular-pago-btn'); const btnPrint = e.target.closest('.print-ticket-btn'); const editBtn = e.target.closest('.edit-pago-btn');
                 if (btnAnular && !btnAnular.disabled) {
-                    const motivo = await mostrarPromptModal("Anular Pago", "Razón para anular el recibo:");
-                    if (motivo) { const p = localPagos.find(x => x.id === btnAnular.dataset.id); p.estado = 'anulado'; p.motivoAnulacion = motivo; saveData('pagos', localPagos); cargarDatosIniciales(); }
+                    if (await mostrarMensaje("Anular Pago", "¿Estás seguro de anular esta transacción?", "confirm")) {
+                        const motivo = await mostrarPromptModal("Motivo de Anulación", "Razón para anular el recibo:");
+                        if (motivo) { const p = localPagos.find(x => x.id === btnAnular.dataset.id); p.estado = 'anulado'; p.motivoAnulacion = motivo; saveData('pagos', localPagos); cargarDatosIniciales(); }
+                    }
                 }
                 if (editBtn && !editBtn.disabled) {
                     const pago = localPagos.find(p => p.id === editBtn.dataset.id);
                     document.getElementById('pago-id-edit').value = pago.id; document.getElementById('pago-alumno').value = pago.alumnoId; document.getElementById('pago-fecha').value = pago.fecha; document.getElementById('pago-notas').value = pago.notas || '';
-                    pagoConceptosTemp = [...pago.conceptos]; pagoMetodosTemp = [...pago.metodosDePago]; renderC(); renderM();
+                    pagoConceptosTemp = [...pago.conceptos]; pagoMetodosTemp = [...pago.metodosDePago]; renderConceptosPago(); renderMetodosPago();
                     document.getElementById('btn-cancelar-pago-edit').classList.remove('hidden'); document.getElementById('form-pago-title').innerHTML = '<i class="fas fa-edit text-amber-500"></i> Editando Cobro';
-                    document.getElementById('main-scroll-area').scrollTo({top: 0, behavior: 'smooth'});
                 }
                 if (btnPrint) imprimirTicket(btnPrint.dataset.id);
             });
 
             document.getElementById('btn-cancelar-pago-edit').addEventListener('click', () => {
-                document.getElementById('form-agregar-pago').reset(); document.getElementById('pago-id-edit').value = ''; pagoConceptosTemp = []; pagoMetodosTemp = []; renderC(); renderM();
+                document.getElementById('form-agregar-pago').reset(); document.getElementById('pago-id-edit').value = ''; pagoConceptosTemp = []; pagoMetodosTemp = []; renderConceptosPago(); renderMetodosPago();
                 document.getElementById('form-pago-title').innerHTML = '<i class="fas fa-receipt text-indigo-500"></i> Registrar Cobro'; document.getElementById('btn-cancelar-pago-edit').classList.add('hidden');
             });
 
-            // Caja Chica
+            // === EVENTOS DE CAJA CHICA ===
             document.getElementById('form-caja-chica').onsubmit = (e) => {
                 e.preventDefault();
                 localCajaChica.push({ id: generateId(), fecha: document.getElementById('caja-fecha').value, tipo: document.getElementById('caja-tipo').value, concepto: document.getElementById('caja-concepto').value, monto: parseFloat(document.getElementById('caja-monto').value) });
-                saveData('cajaChica', localCajaChica); cargarDatosIniciales(); e.target.reset(); showToast('Movimiento registrado en caja.', 'success');
+                saveData('cajaChica', localCajaChica); cargarDatosIniciales(); e.target.reset(); mostrarMensaje('Éxito', 'Movimiento registrado en caja.', 'success');
             };
 
-            // ================== MÓDULO EVENTOS ESPECIALES (COMPLETO) ==================
-            // Admin Eventos Modal
-            document.getElementById('btn-admin-eventos').addEventListener('click', () => {
-                let paquetesTemp = [];
-                const mc = document.getElementById('modal-container');
-                const hoy = new Date().toISOString().split("T")[0];
-                
-                mc.innerHTML = `
-                    <div class="modal-content" style="max-width: 800px;">
-                        <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="fas fa-calendar-alt text-indigo-500"></i> Catálogo de Eventos</h2>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                                <h3 class="text-sm font-bold text-slate-700 uppercase mb-3">Configurar Evento</h3>
-                                <div class="space-y-3">
-                                    <input type="hidden" id="nuevo-evento-id">
-                                    <input type="text" id="nuevo-evento-nombre" placeholder="Nombre (Ej. Kermés Primavera)" class="form-input text-sm">
-                                    <input type="date" id="nuevo-evento-fecha" value="${hoy}" class="form-input text-sm">
-                                    
-                                    <div class="border border-indigo-100 rounded-lg p-3 bg-indigo-50/30">
-                                        <p class="text-xs font-bold text-indigo-800 mb-2">Paquetes Disponibles</p>
-                                        <div class="flex gap-2 mb-2">
-                                            <input type="text" id="temp-paquete-nombre" placeholder="Ej. Boleto + Comida" class="form-input text-sm flex-1">
-                                            <input type="number" id="temp-paquete-costo" placeholder="$ Costo" class="form-input text-sm w-24">
-                                            <button type="button" id="btn-add-paquete-temp" class="bg-indigo-600 text-white rounded-lg px-3 hover:bg-indigo-700 transition-colors"><i class="fas fa-plus"></i></button>
-                                        </div>
-                                        <div id="lista-paquetes-temp" class="space-y-1 text-sm max-h-32 overflow-y-auto"></div>
-                                    </div>
-                                    <button type="button" id="btn-guardar-evento" class="w-full bg-slate-800 text-white py-2 rounded-lg font-bold hover:bg-slate-700 transition-all">Guardar Evento en Catálogo</button>
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <h3 class="text-sm font-bold text-slate-700 uppercase mb-3">Eventos Vigentes</h3>
-                                <div class="overflow-y-auto max-h-80 border border-slate-200 rounded-xl">
-                                    <table class="w-full text-left text-sm">
-                                        <thead class="bg-slate-100 sticky top-0 text-slate-500 uppercase text-xs">
-                                            <tr><th class="p-3">Evento</th><th class="p-3 text-center">Acciones</th></tr>
-                                        </thead>
-                                        <tbody id="lista-eventos-modal" class="divide-y divide-slate-100"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-6 flex justify-end"><button id="btn-cerrar-admin-eventos" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-colors">Cerrar Panel</button></div>
-                    </div>
-                `;
-                mc.classList.add('active');
-
-                window.renderPaquetesTemp = () => {
-                    const wrap = document.getElementById('lista-paquetes-temp');
-                    wrap.innerHTML = paquetesTemp.length === 0 ? '<p class="text-xs text-slate-400 italic">No hay paquetes aún.</p>' : '';
-                    paquetesTemp.forEach((p, idx) => {
-                        wrap.innerHTML += `<div class="flex justify-between items-center bg-white p-2 rounded border border-slate-200"><span class="font-medium">${p.nombre}</span> <div class="flex items-center gap-2"><span class="font-bold text-emerald-600">${currency(p.costo)}</span> <button class="text-red-500 hover:text-red-700 px-1 rm-pkt" data-idx="${idx}"><i class="fas fa-times"></i></button></div></div>`;
-                    });
-                };
-
-                const renderEventosCat = () => {
-                    const tbody = document.getElementById('lista-eventos-modal');
-                    tbody.innerHTML = localEventos.length === 0 ? '<tr><td colspan="2" class="p-4 text-center text-slate-400">No hay eventos configurados.</td></tr>' : '';
-                    localEventos.forEach(ev => {
-                        const count = ev.paquetes.length;
-                        tbody.innerHTML += `<tr class="hover:bg-slate-50"><td class="p-3"><div class="font-bold text-slate-800">${ev.concepto}</div><div class="text-xs text-slate-500">${ev.fecha} | ${count} Paq.</div></td><td class="p-3 text-center space-x-1"><button class="text-indigo-500 hover:bg-indigo-50 p-1.5 rounded-lg transition-colors edit-evento" data-id="${ev.id}"><i class="fas fa-edit"></i></button><button class="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors rm-evento" data-id="${ev.id}"><i class="fas fa-trash"></i></button></td></tr>`;
-                    });
-                };
-                renderEventosCat();
-
-                document.getElementById('btn-add-paquete-temp').addEventListener('click', () => {
-                    const n = document.getElementById('temp-paquete-nombre').value; const c = parseFloat(document.getElementById('temp-paquete-costo').value);
-                    if(!n || isNaN(c) || c < 0) return mostrarMensaje('Error', 'Ingresa nombre y costo válido.', 'error');
-                    paquetesTemp.push({ id: generateId(), nombre: n, costo: c });
-                    document.getElementById('temp-paquete-nombre').value = ''; document.getElementById('temp-paquete-costo').value = '';
-                    window.renderPaquetesTemp();
+            const renderCaja = () => {
+                const tbody = document.getElementById('lista-caja-chica'); let ing = 0, gas = 0; tbody.innerHTML = '';
+                localCajaChica.sort((a,b)=>b.fecha.localeCompare(a.fecha)).forEach(c => {
+                    if (c.tipo === 'ingreso') ing += c.monto; else gas += c.monto;
+                    tbody.innerHTML += `<tr class="hover:bg-slate-50"><td class="px-6 py-4 text-sm">${c.fecha}</td><td class="px-6 py-4 text-sm">${c.concepto}</td><td class="px-6 py-4 text-right font-bold ${c.tipo==='ingreso'?'text-emerald-600':'text-rose-600'}">${c.tipo==='ingreso'?'+':'-'} ${currency(c.monto)}</td></tr>`;
                 });
+                document.getElementById('caja-total-ingresos').textContent = currency(ing); document.getElementById('caja-total-gastos').textContent = currency(gas); document.getElementById('caja-balance').textContent = currency(ing - gas); document.getElementById('contador-caja').textContent = `${localCajaChica.length} Reg`;
+            };
+            // Sobrescribimos cargarDatosIniciales para inyectar renderCaja al final
+            const originalCargar = cargarDatosIniciales;
+            cargarDatosIniciales = function() { originalCargar(); renderCaja(); };
+        });
 
-                document.getElementById('lista-paquetes-temp').addEventListener('click', (e) => {
-                    const btn = e.target.closest('.rm-pkt'); if(btn) { paquetesTemp.splice(btn.dataset.idx, 1); window.renderPaquetesTemp(); }
-                });
-
-                document.getElementById('btn-guardar-evento').addEventListener('click', () => {
-                    const id = document.getElementById('nuevo-evento-id').value;
-                    const nom = document.getElementById('nuevo-evento-nombre').value; const fec = document.getElementById('nuevo-evento-fecha').value;
-                    if(!nom || !fec || paquetesTemp.length === 0) return mostrarMensaje('Error', 'Se requiere nombre, fecha y al menos un paquete.', 'error');
-                    
-                    const data = { id: id || generateId(), concepto: nom, fecha: fec, paquetes: [...paquetesTemp], estado: 'activo' };
-                    const idx = localEventos.findIndex(e => e.id === data.id);
-                    if(idx > -1) localEventos[idx] = data; else localEventos.push(data);
-                    
-                    saveData('eventos', localEventos);
-                    document.getElementById('nuevo-evento-id').value = ''; document.getElementById('nuevo-evento-nombre').value = '';
-                    document.getElementById('btn-guardar-evento').textContent = 'Guardar Evento en Catálogo';
-                    paquetesTemp = []; window.renderPaquetesTemp(); renderEventosCat(); actualizarSelectEventos();
-                    showToast('Evento actualizado.', 'success');
-                });
-
-                document.getElementById('lista-eventos-modal').addEventListener('click', async (e) => {
-                    const btnRm = e.target.closest('.rm-evento'); const btnEd = e.target.closest('.edit-evento');
-                    if(btnRm && await mostrarMensaje('Confirmar', '¿Eliminar este evento del catálogo?', 'confirm')) {
-                        localEventos = localEventos.filter(x => x.id !== btnRm.dataset.id); saveData('eventos', localEventos); renderEventosCat(); actualizarSelectEventos();
-                    }
-                    if(btnEd) {
-                        const ev = localEventos.find(x => x.id === btnEd.dataset.id);
-                        document.getElementById('nuevo-evento-id').value = ev.id;
-                        document.getElementById('nuevo-evento-nombre').value = ev.concepto;
-                        document.getElementById('nuevo-evento-fecha').value = ev.fecha;
-                        paquetesTemp = [...ev.paquetes]; window.renderPaquetesTemp();
-                        document.getElementById('btn-guardar-evento').textContent = 'Actualizar Evento';
-                    }
-                });
-
-                document.getElementById('btn-cerrar-admin-eventos').onclick = () => mc.classList.remove('active');
-            });
-
-            // Venta de Eventos: Selectores
-            let paqueteSeleccionadoObj = null;
-            document.getElementById('venta-evento-select').addEventListener('change', (e) => {
-                const evId = e.target.value; const selectPkt = document.getElementById('venta-paquete-select');
-                document.getElementById('venta-evento-total').textContent = "$0.00"; paqueteSeleccionadoObj = null; validarBtnVentaEvento();
-                if(!evId) {
-                    selectPkt.innerHTML = '<option value="">Primero seleccione un evento</option>';
-                    selectPkt.disabled = true; selectPkt.classList.add('bg-slate-100', 'cursor-not-allowed'); return;
-                }
-                const evento = localEventos.find(x => x.id === evId);
-                selectPkt.innerHTML = '<option value="">Seleccione paquete...</option>';
-                evento.paquetes.forEach(p => { selectPkt.innerHTML += `<option value="${p.id}">${p.nombre} - ${currency(p.costo)}</option>`; });
-                selectPkt.disabled = false; selectPkt.classList.remove('bg-slate-100', 'cursor-not-allowed');
-            });
-
-            document.getElementById('venta-paquete-select').addEventListener('change', (e) => {
-                const pktId = e.target.value; const evId = document.getElementById('venta-evento-select').value;
-                if(!pktId || !evId) {
-                    document.getElementById('venta-evento-total').textContent = "$0.00"; paqueteSeleccionadoObj = null;
-                } else {
-                    const evento = localEventos.find(x => x.id === evId);
-                    paqueteSeleccionadoObj = evento.paquetes.find(p => p.id === pktId);
-                    document.getElementById('venta-evento-total').textContent = currency(paqueteSeleccionadoObj.costo);
-                }
-                validarBtnVentaEvento();
-            });
-
-            document.getElementById('venta-evento-alumno').addEventListener('change', validarBtnVentaEvento);
-
-            function validarBtnVentaEvento() {
-                const btn = document.getElementById('btn-guardar-venta-evento'); const alId = document.getElementById('venta-evento-alumno').value;
-                if(alId && paqueteSeleccionadoObj) {
-                    btn.disabled = false; btn.classList.replace('bg-slate-300', 'bg-indigo-600'); btn.classList.replace('text-slate-500', 'text-white'); btn.classList.replace('cursor-not-allowed', 'hover:bg-indigo-700'); btn.classList.add('shadow-md');
-                } else {
-                    btn.disabled = true; btn.classList.replace('bg-indigo-600', 'bg-slate-300'); btn.classList.replace('text-white', 'text-slate-500'); btn.classList.replace('hover:bg-indigo-700', 'cursor-not-allowed'); btn.classList.remove('shadow-md');
-                }
-            }
-
-            document.getElementById('form-vender-evento').addEventListener('submit', (e) => {
-                e.preventDefault();
-                const editId = document.getElementById('venta-evento-id-edit').value;
-                const venta = {
-                    id: editId || generateId(),
-                    eventoId: document.getElementById('venta-evento-select').value,
-                    alumnoId: document.getElementById('venta-evento-alumno').value,
-                    paqueteId: paqueteSeleccionadoObj.id,
-                    monto: paqueteSeleccionadoObj.costo,
-                    fechaVenta: new Date().toISOString().split("T")[0],
-                    estado: 'activo'
-                };
-                
-                const idx = localVentasEventos.findIndex(v => v.id === venta.id);
-                if(idx > -1) localVentasEventos[idx] = venta; else localVentasEventos.push(venta);
-                
-                saveData('ventasEventos', localVentasEventos);
-                document.getElementById('btn-cancelar-venta-edit').click();
-                renderVentasEventos(); showToast('Venta de evento registrada.', 'success');
-            });
-            
-            document.getElementById('btn-cancelar-venta-edit').addEventListener('click', () => {
-                document.getElementById('form-vender-evento').reset(); document.getElementById('venta-evento-id-edit').value = '';
-                document.getElementById('venta-paquete-select').disabled = true; document.getElementById('venta-paquete-select').classList.add('bg-slate-100', 'cursor-not-allowed');
-                document.getElementById('venta-evento-total').textContent = "$0.00"; paqueteSeleccionadoObj = null; validarBtnVentaEvento();
-                document.getElementById('form-venta-evento-title').innerHTML = '<i class="fas fa-store text-rose-500"></i> Punto de Venta';
-                document.getElementById('btn-cancelar-venta-edit').classList.add('hidden');
-                document.getElementById('btn-guardar-venta-evento').innerHTML = '<i class="fas fa-ticket-alt"></i> Registrar Venta';
-            });
-
-            // Acciones en la Tabla de Ventas de Eventos (Editar, Anular, Abonar, Historial, Imprimir)
-            document.getElementById('lista-ventas-eventos').addEventListener('click', async (e) => {
-                const btnPrint = e.target.closest('.print-boleto-btn'); const btnAnular = e.target.closest('.anular-boleto-btn');
-                const btnAbonar = e.target.closest('.abonar-evento-btn'); const btnHistorial = e.target.closest('.historial-evento-btn');
-                const btnEditar = e.target.closest('.edit-venta-evento-btn');
-                
-                if(btnPrint) {
-                    const v = localVentasEventos.find(x => x.id === btnPrint.dataset.id); imprimirBoletoEvento(v);
-                }
-                if(btnAnular && !btnAnular.disabled) {
-                    const v = localVentasEventos.find(x => x.id === btnAnular.dataset.id);
-                    const motivo = await mostrarPromptModal("Anular Boleto", "¿Cuál es el motivo para cancelar esta venta?");
-                    if(motivo) { v.estado = 'anulado'; v.motivoAnulacion = motivo; saveData('ventasEventos', localVentasEventos); renderVentasEventos(); }
-                }
-                if(btnAbonar && !btnAbonar.disabled) {
-                    abrirModalAbonoEvento(btnAbonar.dataset.id);
-                }
-                if(btnHistorial) {
-                    abrirModalHistorialAbonosEvento(btnHistorial.dataset.id);
-                }
-                if(btnEditar && !btnEditar.disabled) {
-                    const v = localVentasEventos.find(x => x.id === btnEditar.dataset.id);
-                    document.getElementById('venta-evento-id-edit').value = v.id;
-                    document.getElementById('venta-evento-alumno').value = v.alumnoId;
-                    const selectEv = document.getElementById('venta-evento-select');
-                    selectEv.value = v.eventoId;
-                    
-                    // Disparar evento de cambio manualmente para cargar los paquetes
-                    const event = new Event('change'); selectEv.dispatchEvent(event);
-                    
-                    setTimeout(() => {
-                        const selectPkt = document.getElementById('venta-paquete-select');
-                        selectPkt.value = v.paqueteId;
-                        const event2 = new Event('change'); selectPkt.dispatchEvent(event2);
-                        
-                        document.getElementById('form-venta-evento-title').innerHTML = '<i class="fas fa-edit text-amber-500"></i> Editando Venta';
-                        document.getElementById('btn-cancelar-venta-edit').classList.remove('hidden');
-                        document.getElementById('btn-guardar-venta-evento').innerHTML = '<i class="fas fa-save"></i> Actualizar Venta';
-                        document.getElementById('main-scroll-area').scrollTo({top: 0, behavior: 'smooth'});
-                    }, 50);
-                }
-            });
-
-        }); // FIN DOMContentLoaded
     </script>
     <script>
         // Navegación Sidebar Simple
@@ -2218,8 +1687,8 @@ if (sessionData) {
             document.getElementById('content-' + sectionName).classList.add('content-active');
             document.getElementById('nav-' + sectionName).classList.add('active');
             
-            const titles = { 'alumnos':'Gestión de Alumnos', 'maestros':'Plantilla Docente', 'cuotas':'Cuotas Anuales', 'pagos':'Registro de Pagos Regulares', 'caja':'Caja Chica', 'eventos':'Eventos Especiales', 'acerca':'Acerca del Sistema' };
-            document.getElementById('header-title').innerText = titles[sectionName] || 'Control Escolar Pro';
+            const titles = { 'alumnos':'Gestión de Alumnos', 'maestros':'Plantilla Docente', 'cuotas':'Cuotas Anuales', 'pagos':'Registro de Pagos', 'caja':'Caja Chica', 'acerca':'Acerca del Sistema' };
+            document.getElementById('header-title').textContent = titles[sectionName];
         }
         window.changeSection = changeSection;
     </script>
