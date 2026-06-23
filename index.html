@@ -851,7 +851,9 @@
     <!-- Contenedor de Modales (Inyectados desde JS) -->
     <div id="modal-container" class="modal-backdrop"></div>
 
-    <script type="module">
+   <script type="module">
+        let appStateUser = null; 
+
         // --- Estado Global de la Aplicación ---
         let localAlumnos = [], localMaestros = [], localPagos = [], localCuotas = [], localAbonos = [], localCajaChica = [], pagosFiltrados = [], localNomina = [], alumnosFiltrados = [], maestrosFiltrados = [];
         let localEventos = [], localVentasEventos = [], localAbonosEventos = [];
