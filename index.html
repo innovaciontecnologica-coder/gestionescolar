@@ -851,20 +851,15 @@
     <!-- Contenedor de Modales (Inyectados desde JS) -->
     <div id="modal-container" class="modal-backdrop"></div>
 
-   <script type="module">
-        let appStateUser = null; 
+  
 
-        // --- Estado Global de la Aplicación ---
-        let localAlumnos = [], localMaestros = [], localPagos = [], localCuotas = [], localAbonos = [], localCajaChica = [], pagosFiltrados = [], localNomina = [], alumnosFiltrados = [], maestrosFiltrados = [];
-        let localEventos = [], localVentasEventos = [], localAbonosEventos = [];
-        let isSyncing = false; // Flag para evitar sincronizaciones concurrentes
         
         const NIVELES_ESCOLARES = ["Preescolar", "Primaria", "Secundaria", "Integrado Preescolar", "Integrado Primaria", "Integrado Secundaria"];
         const CONCEPTOS_PAGO = ["Beca 25%", "Beca 50%", "Beca 75%", "Beca 100%", "Colegiatura Normal", "Convivios", "Descuento 1er Hno.", "Descuento 2do Hno.", "Extemporáneos", "Fotografías", "Guardia", "Libros", "Material Didáctico", "Paseos", "Taller", "Uniformes", "Seguro Escolar"];
         const METODOS_PAGO = ["Efectivo", "Tarjeta de débito", "Tarjeta de crédito", "Transferencia"];
         const currency = n => `$${Number(n || 0).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-
-        // URL DE GOOGLE APPS SCRIPT DEFINITIVA
+     
+       // URL DE GOOGLE APPS SCRIPT DEFINITIVA
         const API_URL = "https://script.google.com/macros/s/AKfycbxfoJWJzIOS69w-p4aLxsjFDhc9XnvhVK_YsMDAhIaS-UHEw2FYjQbT6YK5wJX4WYfjhA/exec";
 
         function loadData(key) {
@@ -1671,17 +1666,28 @@
         document.addEventListener('DOMContentLoaded', () => {
             inicializarCatalogos();
             
-            // --- Lógica de Sesión Incial ---
-            const sessionData = localStorage.getItem('ce_session');
-            if (sessionData) {
-                appStateUser = JSON.parse(sessionData);
-                document.getElementById('user-name').innerText = appStateUser.Nombre || "Usuario";
-                document.getElementById('view-login').classList.add('hidden-login'); // Ocultar directo
-                descargarDatosNube(true); // Forzar loader inicial
-            } else {
-                // Sin sesión = Mostrar login
-                document.getElementById('view-login').classList.remove('hidden-login');
-            }
+          // --- VERIFICACIÓN DE SESIÓN CON SEGURIDAD ---
+const sessionData = sessionStorage.getItem('userSession');
+if (sessionData) {
+    appStateUser = JSON.parse(sessionData);
+    
+    // Esperamos a que la página esté cargada para manipular el DOM
+    window.addEventListener('load', () => {
+        const userNameElement = document.getElementById('user-name');
+        if (userNameElement) userNameElement.innerText = appStateUser.Nombre || "Usuario";
+        
+        const loginView = document.getElementById('view-login');
+        if (loginView) loginView.classList.add('hidden-login');
+        
+        descargarDatosNube(true);
+    });
+} else {
+    // Si no hay sesión, aseguramos que el login sea visible
+    window.addEventListener('load', () => {
+        const loginView = document.getElementById('view-login');
+        if (loginView) loginView.classList.remove('hidden-login');
+    });
+}
 
             // --- Toggle Acordeón Médico ---
             document.getElementById('toggle-medico').onclick = () => {
