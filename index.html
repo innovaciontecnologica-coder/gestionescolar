@@ -234,16 +234,28 @@
                                         </div>
                                     </div>
                                     <div class="space-y-3">
-                                        <div>
-                                            <label for="tutor" class="block text-xs font-medium text-slate-500 mb-1">Nombre del Tutor</label>
-                                            <input type="text" id="tutor" name="tutor" class="form-input">
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div>
+                                                <label for="tutor" class="block text-xs font-medium text-slate-500 mb-1">Tutor / Responsable 1</label>
+                                                <input type="text" id="tutor" name="tutor" placeholder="Ej. Mamá" class="form-input">
+                                            </div>
+                                            <div>
+                                                <label for="telefono" class="block text-xs font-medium text-slate-500 mb-1">Tel. Responsable 1</label>
+                                                <input type="tel" id="telefono" name="telefono" class="form-input">
+                                            </div>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-100 p-2 rounded-lg border border-slate-200">
+                                            <div>
+                                                <label for="responsable2" class="block text-xs font-medium text-slate-500 mb-1">Resp. Pago 2 (Deudor)</label>
+                                                <input type="text" id="responsable2" name="responsable2" placeholder="Ej. Papá (Opcional)" class="form-input bg-white focus:bg-white">
+                                            </div>
+                                            <div>
+                                                <label for="telefonoResp2" class="block text-xs font-medium text-slate-500 mb-1">Tel. Responsable 2</label>
+                                                <input type="tel" id="telefonoResp2" name="telefonoResp2" class="form-input bg-white focus:bg-white">
+                                            </div>
                                         </div>
                                         <div>
-                                            <label for="telefono" class="block text-xs font-medium text-slate-500 mb-1">Teléfono Contacto</label>
-                                            <input type="tel" id="telefono" name="telefono" class="form-input">
-                                        </div>
-                                        <div>
-                                            <label for="tipoCuota" class="block text-xs font-medium text-slate-500 mb-1">Tipo de Cuota</label>
+                                            <label for="tipoCuota" class="block text-xs font-medium text-slate-500 mb-1">Tipo de Cuota Anual</label>
                                             <select id="tipoCuota" name="tipoCuota" required class="form-input">
                                                 <option value="">Cargando...</option>
                                             </select>
@@ -827,7 +839,7 @@
             link.download = `${filename}_${new Date().toISOString().slice(0, 10)}.csv`;
             link.click();
         }
-        function exportarAlumnosCSV() { exportarCSV(alumnosFiltrados, 'Alumnos', (d) => { const head = "Nombres,Apellidos,Fecha de Nacimiento,Estatus,Nivel,Grado,Grupo,Tutor,Teléfono,Tipo de Cuota"; return [head, ...d.map(a => `"${a.nombres}","${a.apellidos}",${a.fechaNacimiento},${a.estatus},${a.nivel},${a.grado},${a.grupo},"${a.tutor||''}",${a.telefono||''},"${a.tipoCuota||''}"`)]; }, "No hay alumnos para exportar."); }
+        function exportarAlumnosCSV() { exportarCSV(alumnosFiltrados, 'Alumnos', (d) => { const head = "Nombres,Apellidos,Fecha de Nacimiento,Estatus,Nivel,Grado,Grupo,Tutor 1,Tel. 1,Responsable 2,Tel. 2,Tipo de Cuota"; return [head, ...d.map(a => `"${a.nombres}","${a.apellidos}",${a.fechaNacimiento},${a.estatus},${a.nivel},${a.grado},${a.grupo},"${a.tutor||''}","${a.telefono||''}","${a.responsable2||''}","${a.telefonoResp2||''}","${a.tipoCuota||''}"`)]; }, "No hay alumnos para exportar."); }
         function exportarMaestrosCSV() { exportarCSV(maestrosFiltrados, 'Maestros', (d) => { const head = "Nombres,Apellidos,Teléfono,Email,Niveles,RFC,CURP"; return [head, ...d.map(m => `"${m.nombres}","${m.apellidos}","${m.telefono}","${m.email}","${(m.niveles||[]).join(';')}","${m.rfc||''}","${m.curp||''}"`)]; }, "No hay maestros para exportar."); }
         function exportarPagosCSV() { exportarCSV(pagosFiltrados, 'Pagos', (d) => { const head = "Fecha,Alumno,Total,Estado,Notas"; return [head, ...d.map(p => { const al = localAlumnos.find(a=>a.id===p.alumnoId); const name = al ? `${al.nombres} ${al.apellidos}` : 'N/A'; return `${p.fecha},"${name}",${p.total},${p.estado||'Activo'},"${p.notas||''}"`; })]; }, "No hay pagos para exportar."); }
         
@@ -841,7 +853,7 @@
             pdf.autoTable({ head: [head], body: bodyRows, startY: 30, theme: 'grid', headStyles: { fillColor: [79, 70, 229] } });
             pdf.save(`${title.replace(/ /g, '_')}.pdf`);
         }
-        function exportarAlumnosPDF() { if(alumnosFiltrados.length === 0) return; generarPDF('Reporte de Alumnos', ["Nombre", "Nivel/Grado", "Estatus", "Tutor"], alumnosFiltrados.map(a => [`${a.nombres} ${a.apellidos}`, `${a.nivel} ${a.grado}° ${a.grupo}`, a.estatus, a.tutor||'N/A'])); }
+        function exportarAlumnosPDF() { if(alumnosFiltrados.length === 0) return; generarPDF('Reporte de Alumnos', ["Nombre", "Nivel/Grado", "Estatus", "Contactos"], alumnosFiltrados.map(a => [`${a.nombres} ${a.apellidos}`, `${a.nivel} ${a.grado}° ${a.grupo}`, a.estatus, `1: ${a.tutor||'N/A'} | 2: ${a.responsable2||'N/A'}`])); }
         function exportarMaestrosPDF() { if(maestrosFiltrados.length === 0) return; generarPDF('Reporte de Maestros', ["Nombre", "Niveles", "Contacto"], maestrosFiltrados.map(m => [`${m.nombres} ${m.apellidos}`, (m.niveles||[]).join(', '), `${m.telefono} | ${m.email}`])); }
         function exportarPagosPDF() { if(pagosFiltrados.length === 0) return; generarPDF('Reporte de Pagos', ["Fecha", "Alumno", "Total", "Estatus"], pagosFiltrados.map(p => { const al = localAlumnos.find(a=>a.id===p.alumnoId); return [p.fecha, al ? `${al.nombres} ${al.apellidos}` : 'N/A', currency(p.total), p.estado==='anulado'?'Anulado':'Activo']; })); }
 
@@ -1018,7 +1030,7 @@
                     <tr class="hover:bg-slate-50 transition-colors">
                         <td class="px-6 py-4">
                             <div class="font-medium text-slate-800">${al.nombres} ${al.apellidos}</div>
-                            <div class="text-xs text-slate-500">${al.tutor || 'Sin tutor'}</div>
+                            <div class="text-xs text-slate-500 mt-1" title="Contactos de Pago"><i class="fas fa-user-shield text-slate-400"></i> ${al.tutor || 'Sin tutor'} ${al.responsable2 ? `<br><i class="fas fa-hand-holding-usd text-emerald-500 mt-1"></i> ${al.responsable2}` : ''}</div>
                         </td>
                         <td class="px-6 py-4 text-sm text-slate-600">${al.nivel} ${al.grado}° "${al.grupo}"</td>
                         <td class="px-6 py-4"><span class="px-2.5 py-1 text-xs font-bold rounded-md border ${badgeColor}">${al.estatus}</span></td>
@@ -1380,6 +1392,8 @@
                     form.grupo.value = alumno.grupo;
                     form.tutor.value = alumno.tutor || '';
                     form.telefono.value = alumno.telefono || '';
+                    form.responsable2.value = alumno.responsable2 || '';
+                    form.telefonoResp2.value = alumno.telefonoResp2 || '';
                     form.tipoCuota.value = alumno.tipoCuota || '';
                     form.tipoSangre.value = alumno.tipoSangre || '';
                     form.alergias.value = alumno.alergias || '';
@@ -1441,6 +1455,8 @@
                     grupo: form.grupo.value,
                     tutor: form.tutor.value,
                     telefono: form.telefono.value,
+                    responsable2: form.responsable2.value,
+                    telefonoResp2: form.telefonoResp2.value,
                     tipoCuota: form.tipoCuota.value,
                     tipoSangre: form.tipoSangre.value,
                     alergias: form.alergias.value,
