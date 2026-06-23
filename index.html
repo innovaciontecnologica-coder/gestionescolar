@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Escolar Pro | Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Librerías PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Slate 50 */
+        }
+        
+        /* Animaciones de Vistas */
+        .content-section { 
+            display: none; 
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .content-active { display: block; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Nav Link Activo */
+        .nav-link { transition: all 0.3s ease; }
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fbbf24; /* Amber 400 */
+            border-right: 4px solid #fbbf24;
+        }
+
+        /* Modales Premium */
+        .modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(15, 23, 42, 0.6); 
+            backdrop-filter: blur(4px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .modal-backdrop.active { opacity: 1; pointer-events: auto; }
+        
+        .modal-content {
+            background-color: white; padding: 2rem; border-radius: 1rem; width: 90%; max-width: 600px;
+            transform: scale(0.95) translateY(20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            position: relative; max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .modal-backdrop.active .modal-content { transform: scale(1) translateY(0); }
+
+        /* Scrollbar Estilizado */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Estilos de inputs */
+        .form-input {
+            width: 100%; padding: 0.5rem 0.75rem; font-size: 0.875rem; line-height: 1.25rem;
+            border-radius: 0.5rem; border: 1px solid #e2e8f0; background-color: #f8fafc;
+            transition: all 0.2s; outline: none;
+        }
+        .form-input:focus {
+            background-color: #ffffff; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .pago-anulado {
+            background-color: #fef2f2; text-decoration: line-through; opacity: 0.7;
+        }
+    </style>
+</head>
+<body class="text-slate-800 h-screen overflow-hidden flex">
+
+    <!-- Barra Lateral Premium -->
+    <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col transition-all duration-300 shadow-2xl z-20">
+        <div class="h-20 flex items-center justify-center border-b border-slate-800 px-4 bg-slate-950/50">
+            <h1 class="text-xl font-bold text-white flex items-center gap-3">
+                <div class="bg-indigo-600 p-2 rounded-lg text-white shadow-lg shadow-indigo-500/30">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <div class="flex flex-col leading-tight">
+                    <span class="text-sm font-black tracking-wider text-indigo-400 uppercase">Control</span>
+                    <span class="text-lg">Labastida</span>
+                </div>
+            </h1>
+        </div>
+        
+        <nav class="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
+            <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Principal</p>
+            
+            <a href="#" onclick="changeSection('alumnos')" id="nav-alumnos" class="nav-link active flex items-center px-4 py-3 rounded-xl">
+                <i class="fas fa-users w-6 text-center text-lg"></i>
+                <span class="ml-3 font-medium">Alumnos</span>
+            </a>
+            <a href="#" onclick="changeSection('maestros')" id="nav-maestros" class="nav-link flex items-center px-4 py-3 rounded-xl">
+                <i class="fas fa-chalkboard-teacher w-6 text-center text-lg"></i>
+                <span class="ml-3 font-medium">Maestros</span>
+            </a>
+            
+            <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mt-6 mb-2">Finanzas</p>
+            
+            <a href="#" onclick="changeSection('cuotas')" id="nav-cuotas" class="nav-link flex items-center px-4 py-3 rounded-xl">
+                <i class="fas fa-tags w-6 text-center text-lg"></i>
+                <span class="ml-3 font-medium">Cuotas</span>
+            </a>
+            <a href="#" onclick="changeSection('pagos')" id="nav-pagos" class="nav-link flex items-center px-4 py-3 rounded-xl">
+                <i class="fas fa-wallet w-6 text-center text-lg"></i>
+                <span class="ml-3 font-medium">Pagos</span>
+            </a>
+            <a href="#" onclick="changeSection('caja')" id="nav-caja" class="nav-link flex items-center px-4 py-3 rounded-xl">
+                <i class="fas fa-cash-register w-6 text-center text-lg"></i>
+                <span class="ml-3 font-medium">Caja Chica</span>
+            </a>
+            
+            <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mt-6 mb-2">Sistema</p>
+            
+            <a href="#" onclick="changeSection('acerca')" id="nav-acerca" class="nav-link flex items-center px-4 py-3 rounded-xl">
+                <i class="fas fa-info-circle w-6 text-center text-lg"></i>
+                <span class="ml-3 font-medium">Acerca de</span>
+            </a>
+        </nav>
+        
+        <div class="p-4 border-t border-slate-800">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-sm font-bold text-slate-400">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-white">Admin</p>
+                    <p class="text-xs text-slate-500">Sesión Activa</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Contenido Principal -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-slate-50 relative">
+        <!-- Header superior decorativo -->
+        <header class="h-16 bg-white/80 backdrop-blur border-b border-slate-200 flex items-center justify-between px-8 z-10 sticky top-0">
+            <h2 id="header-title" class="text-xl font-bold text-slate-800">Gestión de Alumnos</h2>
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" placeholder="Búsqueda rápida..." class="pl-9 pr-4 py-2 bg-slate-100 border-transparent rounded-full text-sm focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none w-64 transition-all">
+                </div>
+                <button class="text-slate-400 hover:text-indigo-600 transition-colors relative">
+                    <i class="fas fa-bell text-xl"></i>
+                    <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Contenedor Scrollable -->
+        <div class="flex-1 overflow-y-auto p-6 lg:p-8">
+
+            <!-- Sección Alumnos -->
+            <section id="content-alumnos" class="content-section content-active">
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                    <!-- Formulario Alumnos -->
+                    <div class="xl:col-span-1">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 sticky top-0">
+                            <h3 id="form-alumno-title" class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                                <i class="fas fa-user-plus text-indigo-500"></i> Agregar Alumno
+                            </h3>
+                            
+                            <form id="form-agregar-alumno" class="space-y-5">
+                                <input type="hidden" id="alumno-id-edit" value="">
+                                
+                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Estatus</h4>
+                                    <div class="flex items-center space-x-6">
+                                        <label class="flex items-center cursor-pointer group">
+                                            <input id="estatus-nuevo" name="estatus" type="radio" value="Nuevo Ingreso" required class="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
+                                            <span class="ml-2 text-sm font-medium text-slate-700 group-hover:text-indigo-600 transition-colors">Nuevo Ingreso</span>
+                                        </label>
+                                        <label class="flex items-center cursor-pointer group">
+                                            <input id="estatus-reinscripcion" name="estatus" type="radio" value="Reinscripción" class="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
+                                            <span class="ml-2 text-sm font-medium text-slate-700 group-hover:text-indigo-600 transition-colors">Reinscripción</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Datos Personales</h4>
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label for="nombres" class="block text-xs font-medium text-slate-500 mb-1">Nombres</label>
+                                            <input type="text" id="nombres" name="nombres" required class="form-input">
+                                        </div>
+                                        <div>
+                                            <label for="apellidos" class="block text-xs font-medium text-slate-500 mb-1">Apellidos</label>
+                                            <input type="text" id="apellidos" name="apellidos" required class="form-input">
+                                        </div>
+                                        <div>
+                                            <label for="fechaNacimiento" class="block text-xs font-medium text-slate-500 mb-1">Fecha de Nacimiento</label>
+                                            <input type="date" id="fechaNacimiento" name="fechaNacimiento" required class="form-input">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Escolares y Financieros</h4>
+                                    <div class="grid grid-cols-2 gap-3 mb-3">
+                                        <div class="col-span-2">
+                                            <label for="nivel" class="block text-xs font-medium text-slate-500 mb-1">Nivel</label>
+                                            <select id="nivel" name="nivel" required class="form-input"></select>
+                                        </div>
+                                        <div>
+                                            <label for="grado" class="block text-xs font-medium text-slate-500 mb-1">Grado</label>
+                                            <select id="grado" name="grado" required disabled class="form-input bg-slate-100 text-slate-400 cursor-not-allowed">
+                                                <option value="">...</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="grupo" class="block text-xs font-medium text-slate-500 mb-1">Grupo</label>
+                                            <select id="grupo" name="grupo" required class="form-input">
+                                                <option value="">Select...</option>
+                                                <option value="A">A</option><option value="B">B</option><option value="C">C</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label for="tutor" class="block text-xs font-medium text-slate-500 mb-1">Nombre del Tutor</label>
+                                            <input type="text" id="tutor" name="tutor" class="form-input">
+                                        </div>
+                                        <div>
+                                            <label for="telefono" class="block text-xs font-medium text-slate-500 mb-1">Teléfono Contacto</label>
+                                            <input type="tel" id="telefono" name="telefono" class="form-input">
+                                        </div>
+                                        <div>
+                                            <label for="tipoCuota" class="block text-xs font-medium text-slate-500 mb-1">Tipo de Cuota</label>
+                                            <select id="tipoCuota" name="tipoCuota" required class="form-input">
+                                                <option value="">Cargando...</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Acordeón Médico -->
+                                <div class="border border-red-100 rounded-xl overflow-hidden bg-red-50/30">
+                                    <div id="toggle-medico" class="flex justify-between items-center cursor-pointer p-4 text-red-700 hover:bg-red-50 transition-colors">
+                                        <h4 class="font-semibold text-sm flex items-center gap-2"><i class="fas fa-heartbeat"></i> Info Médica</h4>
+                                        <i id="icono-medico" class="fas fa-chevron-down transition-transform"></i>
+                                    </div>
+                                    <div id="medico-fields" class="hidden p-4 pt-0 space-y-3 border-t border-red-100">
+                                        <div>
+                                            <label for="tipoSangre" class="block text-xs font-medium text-red-700 mb-1">Sangre</label>
+                                            <select id="tipoSangre" name="tipoSangre" class="form-input border-red-200 focus:border-red-500">
+                                                <option value="">...</option><option value="O+">O+</option><option value="O-">O-</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="alergias" class="block text-xs font-medium text-red-700 mb-1">Alergias</label>
+                                            <textarea id="alergias" rows="2" class="form-input border-red-200 focus:border-red-500"></textarea>
+                                        </div>
+                                        <div>
+                                            <label for="padecimientos" class="block text-xs font-medium text-red-700 mb-1">Padecimientos</label>
+                                            <textarea id="padecimientos" rows="2" class="form-input border-red-200 focus:border-red-500"></textarea>
+                                        </div>
+                                        <div>
+                                            <label for="contactoEmergencia" class="block text-xs font-medium text-red-700 mb-1">Contacto Emergencia</label>
+                                            <input type="text" id="contactoEmergencia" class="form-input border-red-200 focus:border-red-500">
+                                        </div>
+                                        <div>
+                                            <label for="telefonoEmergencia" class="block text-xs font-medium text-red-700 mb-1">Tel. Emergencia</label>
+                                            <input type="tel" id="telefonoEmergencia" class="form-input border-red-200 focus:border-red-500">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="alumno-form-buttons" class="space-y-2 pt-2">
+                                    <button type="submit" id="btn-guardar-alumno" class="w-full bg-indigo-600 text-white py-2.5 px-4 rounded-xl font-medium hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-100 transition-all shadow-md shadow-indigo-200 flex justify-center items-center gap-2">
+                                        <i class="fas fa-save"></i> Guardar Alumno
+                                    </button>
+                                    <button type="button" id="btn-cancelar-alumno-edit" class="w-full bg-slate-100 text-slate-700 py-2.5 px-4 rounded-xl font-medium hover:bg-slate-200 transition-all hidden">Cancelar Edición</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Tabla Alumnos -->
+                    <div class="xl:col-span-2">
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-full">
+                            <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-800">Directorio</h3>
+                                    <p class="text-sm text-slate-500 mt-1">Gestión de estudiantes inscritos</p>
+                                </div>
+                                
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span id="contador-alumnos" class="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 mr-2"></span>
+                                    <div class="flex bg-slate-100 p-1 rounded-lg">
+                                        <button id="export-alumnos-pdf-btn" class="text-slate-600 hover:bg-white hover:text-red-500 py-1.5 px-3 rounded-md text-sm font-medium transition-all shadow-sm" title="Exportar PDF"><i class="fas fa-file-pdf"></i></button>
+                                        <button id="export-alumnos-csv-btn" class="text-slate-600 hover:bg-white hover:text-green-600 py-1.5 px-3 rounded-md text-sm font-medium transition-all shadow-sm" title="Exportar CSV"><i class="fas fa-file-excel"></i></button>
+                                        <input type="file" id="csv-file-input-alumno" class="hidden" accept=".csv">
+                                        <button id="import-csv-btn-alumno" class="text-slate-600 hover:bg-white hover:text-indigo-600 py-1.5 px-3 rounded-md text-sm font-medium transition-all shadow-sm" title="Importar CSV"><i class="fas fa-upload"></i></button>
+                                        <button id="info-csv-btn-alumno" class="text-slate-400 hover:text-slate-600 py-1.5 px-2 text-sm transition-colors"><i class="fas fa-info-circle"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Filtros UI Mejorada -->
+                            <div class="p-4 bg-slate-50 border-b border-slate-100">
+                                <form id="form-filtros-alumnos" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                                    <div class="relative">
+                                        <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-sm"></i>
+                                        <input type="text" id="filtro-alumno-nombre" placeholder="Buscar nombre..." class="form-input pl-9 text-sm">
+                                    </div>
+                                    <select id="filtro-alumno-nivel" class="form-input text-sm"></select>
+                                    <select id="filtro-alumno-grado" class="form-input text-sm">
+                                        <option value="">Todos los Grados</option>
+                                    </select>
+                                    <select id="filtro-alumno-estatus" class="form-input text-sm">
+                                        <option value="">Todos los Estatus</option>
+                                        <option value="Nuevo Ingreso">Nuevo Ingreso</option>
+                                        <option value="Reinscripción">Reinscripción</option>
+                                    </select>
+                                    <button type="reset" id="btn-reset-filtros-alumnos" class="col-span-full text-xs text-slate-500 hover:text-indigo-600 text-right uppercase font-bold tracking-wider mt-1">Limpiar Filtros</button>
+                                </form>
+                            </div>
+                            
+                            <div id="import-feedback-alumno" class="px-6 py-2 text-xs font-medium"></div>
+                            
+                            <div class="flex-1 overflow-x-auto p-0">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-white sticky top-0 shadow-sm z-10">
+                                        <tr>
+                                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Alumno</th>
+                                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Grado/Grupo</th>
+                                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Estatus</th>
+                                            <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lista-alumnos" class="divide-y divide-slate-100">
+                                        <!-- JS Dinámico -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Maestros -->
+            <section id="content-maestros" class="content-section">
+                 <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                    <div class="xl:col-span-1">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 sticky top-0">
+                            <h3 id="form-maestro-title" class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                                <i class="fas fa-chalkboard-teacher text-indigo-500"></i> Agregar Maestro
+                            </h3>
+                            <form id="form-agregar-maestro" class="space-y-5">
+                                <input type="hidden" id="maestro-id-edit" value="">
+                                
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Datos Personales</h4>
+                                    <div class="space-y-3">
+                                        <input type="text" id="maestro-nombres" name="nombres" placeholder="Nombres" required class="form-input">
+                                        <input type="text" id="maestro-apellidos" name="apellidos" placeholder="Apellidos" required class="form-input">
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <input type="tel" id="maestro-telefono" name="telefono" placeholder="Teléfono" required class="form-input">
+                                            <input type="email" id="maestro-email" name="email" placeholder="Email" required class="form-input">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                                    <h4 class="text-xs font-bold text-indigo-800 uppercase tracking-wider mb-3">Niveles que Imparte</h4>
+                                    <div id="maestro-niveles-checkboxes" class="grid grid-cols-2 gap-2"></div>
+                                </div>
+
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Datos Fiscales</h4>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <input type="text" id="maestro-rfc" name="rfc" placeholder="RFC" class="form-input uppercase">
+                                        <input type="text" id="maestro-curp" name="curp" placeholder="CURP" class="form-input uppercase">
+                                    </div>
+                                </div>
+
+                                <div id="maestro-form-buttons" class="space-y-2 pt-2">
+                                    <button type="submit" id="btn-guardar-maestro" class="w-full bg-indigo-600 text-white py-2.5 px-4 rounded-xl font-medium hover:bg-indigo-700 transition-all shadow-md flex justify-center items-center gap-2">
+                                        <i class="fas fa-save"></i> Guardar Maestro
+                                    </button>
+                                    <button type="button" id="btn-cancelar-maestro-edit" class="w-full bg-slate-100 text-slate-700 py-2.5 px-4 rounded-xl font-medium hover:bg-slate-200 transition-all hidden">Cancelar</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="xl:col-span-2">
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-full">
+                            <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-800">Plantilla Docente</h3>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span id="contador-maestros" class="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 mr-2"></span>
+                                    <div class="flex bg-slate-100 p-1 rounded-lg">
+                                        <button id="export-maestros-pdf-btn" class="text-slate-600 hover:bg-white hover:text-red-500 py-1.5 px-3 rounded-md text-sm"><i class="fas fa-file-pdf"></i></button>
+                                        <button id="export-maestros-csv-btn" class="text-slate-600 hover:bg-white hover:text-green-600 py-1.5 px-3 rounded-md text-sm"><i class="fas fa-file-excel"></i></button>
+                                        <input type="file" id="csv-file-input-maestro" class="hidden" accept=".csv">
+                                        <button id="import-csv-btn-maestro" class="text-slate-600 hover:bg-white hover:text-indigo-600 py-1.5 px-3 rounded-md text-sm"><i class="fas fa-upload"></i></button>
+                                        <button id="info-csv-btn-maestro" class="text-slate-400 py-1.5 px-2 text-sm"><i class="fas fa-info-circle"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="p-4 bg-slate-50 border-b border-slate-100">
+                                <form id="form-filtros-maestros" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <input type="text" id="filtro-maestro-nombre" placeholder="Buscar maestro..." class="form-input text-sm">
+                                    <select id="filtro-maestro-nivel" class="form-input text-sm"></select>
+                                    <button type="reset" id="btn-reset-filtros-maestros" class="bg-white border border-slate-200 text-slate-600 py-2 px-3 rounded-md hover:bg-slate-50 text-sm font-medium">Limpiar</button>
+                                </form>
+                            </div>
+                            <div id="import-feedback-maestro" class="px-6 py-1 text-xs"></div>
+                            
+                            <div class="flex-1 overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-white sticky top-0 shadow-sm z-10">
+                                        <tr>
+                                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Maestro / RFC</th>
+                                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Niveles</th>
+                                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Contacto</th>
+                                            <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase">Nómina / Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lista-maestros" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Sección Cuotas Anuales -->
+            <section id="content-cuotas" class="content-section">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
+                    <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 rounded-t-2xl">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">Estado de Cuotas Anuales</h2>
+                            <p class="text-sm text-slate-500 mt-1">Control de abonos y saldos pendientes por alumno.</p>
+                        </div>
+                        <button id="btn-admin-cuotas" class="bg-slate-800 text-white py-2 px-4 rounded-xl hover:bg-slate-700 transition-all font-medium text-sm flex items-center gap-2 shadow-md">
+                            <i class="fas fa-cog"></i> Configurar Cuotas
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto p-0">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Alumno</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Cuota Asignada</th>
+                                    <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Total Pagado</th>
+                                    <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Saldo Pendiente</th>
+                                    <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Estatus</th>
+                                    <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Abonos</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-estado-cuotas" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Pagos -->
+            <section id="content-pagos" class="content-section">
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                    <div class="xl:col-span-1">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 sticky top-0">
+                            <h3 id="form-pago-title" class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                                <i class="fas fa-receipt text-indigo-500"></i> Registrar Cobro
+                            </h3>
+                            <form id="form-agregar-pago" class="space-y-5">
+                                <input type="hidden" id="pago-id-edit" value="">
+                                
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Alumno</label>
+                                        <select id="pago-alumno" name="alumno" required class="form-input font-medium"></select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha</label>
+                                        <input type="date" id="pago-fecha" name="fecha" required class="form-input">
+                                    </div>
+                                </div>
+                                
+                                <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                                    <h4 class="text-xs font-bold text-slate-700 uppercase mb-3 flex items-center gap-2"><i class="fas fa-shopping-cart text-slate-400"></i> Conceptos a Cobrar</h4>
+                                    <div id="lista-conceptos-pago" class="space-y-2 mb-3 empty:hidden"></div>
+                                    <div class="flex gap-2">
+                                        <select id="pago-concepto-select" class="form-input text-sm flex-1"></select>
+                                        <input type="number" id="pago-concepto-monto" placeholder="$0.00" step="0.01" class="form-input text-sm w-24">
+                                        <button type="button" id="btn-agregar-concepto" class="bg-slate-800 text-white rounded-lg px-3 hover:bg-slate-700 transition-colors"><i class="fas fa-plus"></i></button>
+                                    </div>
+                                    <div class="mt-3 text-right text-sm">Total a Cobrar: <span id="total-a-pagar" class="font-bold text-lg text-slate-800">$0.00</span></div>
+                                </div>
+                                
+                                <div class="border border-emerald-100 rounded-xl p-4 bg-emerald-50/30">
+                                    <h4 class="text-xs font-bold text-emerald-800 uppercase mb-3 flex items-center gap-2"><i class="fas fa-money-bill-wave"></i> Método de Pago</h4>
+                                    <div id="lista-metodos-pago" class="space-y-2 mb-3 empty:hidden"></div>
+                                    <div class="flex gap-2">
+                                        <select id="pago-metodo-select" class="form-input text-sm flex-1 border-emerald-200">
+                                            <option value="Efectivo">Efectivo</option> <option value="Tarjeta de débito">Tarjeta de débito</option> <option value="Tarjeta de crédito">Tarjeta de crédito</option> <option value="Transferencia">Transferencia</option>
+                                        </select>
+                                        <input type="number" id="pago-metodo-monto" placeholder="$0.00" step="0.01" class="form-input text-sm w-24 border-emerald-200">
+                                        <button type="button" id="btn-agregar-metodo" class="bg-emerald-600 text-white rounded-lg px-3 hover:bg-emerald-700 transition-colors"><i class="fas fa-plus"></i></button>
+                                    </div>
+                                    <div class="mt-3 text-right text-sm">Total Recibido: <span id="total-pagado" class="font-bold text-lg text-emerald-600">$0.00</span></div>
+                                </div>
+                                
+                                <div>
+                                    <textarea id="pago-notas" name="notas" rows="2" placeholder="Notas adicionales (opcional)..." class="form-input text-sm"></textarea>
+                                </div>
+                                
+                                <div id="pago-form-buttons" class="space-y-2 pt-2">
+                                    <button type="submit" id="btn-guardar-pago" class="w-full bg-slate-300 text-slate-500 py-3 px-4 rounded-xl font-bold transition-all cursor-not-allowed" disabled>Completar Transacción</button>
+                                    <button type="button" id="btn-cancelar-pago-edit" class="w-full bg-slate-100 text-slate-700 py-2.5 px-4 rounded-xl font-medium hover:bg-slate-200 transition-all hidden">Cancelar Edición</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="xl:col-span-2">
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-full">
+                            <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                                <h3 class="text-lg font-bold text-slate-800">Historial de Cobros</h3>
+                                <div class="flex items-center gap-2">
+                                    <span id="contador-pagos" class="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 mr-2"></span>
+                                    <div class="flex bg-slate-100 p-1 rounded-lg">
+                                        <button id="export-pagos-pdf-btn" class="text-slate-600 hover:bg-white hover:text-red-500 py-1.5 px-3 rounded-md text-sm"><i class="fas fa-file-pdf"></i></button>
+                                        <button id="export-pagos-csv-btn" class="text-slate-600 hover:bg-white hover:text-green-600 py-1.5 px-3 rounded-md text-sm"><i class="fas fa-file-excel"></i></button>
+                                        <input type="file" id="csv-file-input-pagos" class="hidden" accept=".csv">
+                                        <button id="import-csv-btn-pagos" class="text-slate-600 hover:bg-white hover:text-indigo-600 py-1.5 px-3 rounded-md text-sm"><i class="fas fa-upload"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="p-4 bg-slate-50 border-b border-slate-100">
+                                <form id="form-filtros-pagos" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                                    <select id="filtro-pago-alumno" class="form-input text-sm"></select>
+                                    <div class="flex gap-2 col-span-1 md:col-span-2">
+                                        <input type="date" id="filtro-pago-fecha-inicio" class="form-input text-sm w-1/2">
+                                        <input type="date" id="filtro-pago-fecha-fin" class="form-input text-sm w-1/2">
+                                    </div>
+                                    <button type="reset" id="btn-reset-filtros-pagos" class="bg-white border border-slate-200 text-slate-600 rounded-md hover:bg-slate-50 text-sm font-medium">Limpiar</button>
+                                    <select id="filtro-pago-concepto" class="form-input text-sm hidden"></select>
+                                    <select id="filtro-pago-metodo" class="form-input text-sm hidden"></select>
+                                </form>
+                            </div>
+                            
+                            <div class="flex-1 overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-white sticky top-0 shadow-sm z-10">
+                                        <tr>
+                                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Fecha</th>
+                                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Alumno / Conceptos</th>
+                                            <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase">Total Recibido</th>
+                                            <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lista-pagos" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Caja Chica -->
+            <section id="content-caja" class="content-section">
+                <!-- Tarjetas de Balance Superior -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl"><i class="fas fa-arrow-down"></i></div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-400 uppercase tracking-wider">Ingresos</p>
+                            <p id="caja-total-ingresos" class="text-2xl font-black text-slate-800">$0.00</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-xl"><i class="fas fa-arrow-up"></i></div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-400 uppercase tracking-wider">Gastos</p>
+                            <p id="caja-total-gastos" class="text-2xl font-black text-slate-800">$0.00</p>
+                        </div>
+                    </div>
+                    <div class="bg-indigo-600 rounded-2xl p-6 shadow-lg shadow-indigo-200 flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-bold text-indigo-200 uppercase tracking-wider">Balance Actual</p>
+                            <p id="caja-balance" class="text-3xl font-black text-white">$0.00</p>
+                        </div>
+                        <i class="fas fa-wallet text-indigo-400 text-4xl opacity-50"></i>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                    <div class="xl:col-span-1">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                            <h3 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                                <i class="fas fa-exchange-alt text-indigo-500"></i> Nuevo Movimiento
+                            </h3>
+                            <form id="form-caja-chica" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha</label>
+                                    <input type="date" id="caja-fecha" required class="form-input">
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="col-span-2">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tipo de Movimiento</label>
+                                        <div class="flex p-1 bg-slate-100 rounded-lg">
+                                            <label class="flex-1 text-center">
+                                                <input type="radio" name="caja-tipo" id="caja-tipo-ingreso" value="ingreso" checked class="peer hidden">
+                                                <div class="py-2 text-sm font-medium text-slate-500 rounded-md cursor-pointer peer-checked:bg-white peer-checked:text-emerald-600 peer-checked:shadow-sm transition-all">Ingreso</div>
+                                            </label>
+                                            <label class="flex-1 text-center">
+                                                <input type="radio" name="caja-tipo" id="caja-tipo-gasto" value="gasto" class="peer hidden">
+                                                <div class="py-2 text-sm font-medium text-slate-500 rounded-md cursor-pointer peer-checked:bg-white peer-checked:text-rose-600 peer-checked:shadow-sm transition-all">Gasto</div>
+                                            </label>
+                                        </div>
+                                        <select id="caja-tipo" class="hidden"><option value="ingreso">Ingreso</option><option value="gasto">Gasto</option></select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Concepto / Descripción</label>
+                                    <input type="text" id="caja-concepto" required class="form-input" placeholder="Ej. Compra de material...">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Monto ($)</label>
+                                    <input type="number" id="caja-monto" step="0.01" min="0.01" required class="form-input text-lg font-semibold" placeholder="0.00">
+                                </div>
+                                <button type="submit" class="w-full bg-slate-800 text-white py-3 px-4 rounded-xl font-bold mt-2 hover:bg-slate-700 shadow-md">Registrar Movimiento</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="xl:col-span-2">
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-full">
+                            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                                <h3 class="text-lg font-bold text-slate-800">Registro Histórico</h3>
+                                <div class="flex items-center gap-2">
+                                    <span id="contador-caja" class="text-xs font-bold text-slate-500"></span>
+                                    <div class="flex bg-slate-100 p-1 rounded-lg ml-2">
+                                        <button id="export-caja-pdf-btn" class="text-slate-600 hover:bg-white hover:text-red-500 py-1.5 px-3 rounded-md text-sm"><i class="fas fa-file-pdf"></i></button>
+                                        <button id="export-caja-csv-btn" class="text-slate-600 hover:bg-white hover:text-green-600 py-1.5 px-3 rounded-md text-sm"><i class="fas fa-file-excel"></i></button>
+                                        <input type="file" id="csv-file-input-caja" class="hidden" accept=".csv">
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="import-feedback-caja" class="px-6 py-1 text-xs"></div>
+                            <div class="flex-1 overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-slate-50 sticky top-0 shadow-sm z-10 border-b border-slate-200">
+                                        <tr>
+                                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Fecha</th>
+                                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Concepto</th>
+                                            <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase">Monto</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lista-caja-chica" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Acerca de -->
+            <section id="content-acerca" class="content-section">
+                <div class="bg-white p-12 rounded-3xl shadow-sm border border-slate-200 max-w-3xl mx-auto text-center mt-10">
+                    <div class="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-graduation-cap text-5xl text-indigo-500"></i>
+                    </div>
+                    <h2 class="text-3xl font-black text-slate-800 mb-4">Control Escolar Pro</h2>
+                    <p class="text-slate-500 text-lg mb-8 leading-relaxed">
+                        Sistema integral de gestión educativa optimizado para velocidad, eficiencia y diseño moderno. Sincronización en la nube con Google Sheets.
+                    </p>
+                    <div class="bg-slate-50 rounded-2xl p-6 inline-block text-left border border-slate-100">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Desarrollo y Diseño UI/UX</p>
+                        <h4 class="text-xl font-bold text-indigo-900">Arturo Palacios González</h4>
+                        <p class="text-slate-600 font-medium">Lic. en Intervención Educativa</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Contenedor de Modales (Inyectados desde JS) -->
+    <div id="modal-container" class="modal-backdrop"></div>
+
+    <script type="module">
+        // --- Estado Global de la Aplicación ---
+        let localAlumnos = [], localMaestros = [], localPagos = [], localCuotas = [], localAbonos = [], localCajaChica = [], pagosFiltrados = [], localNomina = [], alumnosFiltrados = [], maestrosFiltrados = [];
+        const NIVELES_ESCOLARES = ["Preescolar", "Primaria", "Secundaria", "Integrado Preescolar", "Integrado Primaria", "Integrado Secundaria"];
+        const CONCEPTOS_PAGO = ["Beca 25%", "Beca 50%", "Beca 75%", "Beca 100%", "Colegiatura Normal", "Convivios", "Descuento 1er Hno.", "Descuento 2do Hno.", "Extemporáneos", "Fotografías", "Guardia", "Libros", "Material Didáctico", "Paseos", "Taller", "Uniformes", "Seguro Escolar"];
+        const METODOS_PAGO = ["Efectivo", "Tarjeta de débito", "Tarjeta de crédito", "Transferencia"];
+        const currency = n => `$${Number(n || 0).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+        // AQUÍ ESTÁ INTEGRADA TU NUEVA URL DE GOOGLE APPS SCRIPT
+        const API_URL = "https://script.google.com/macros/s/AKfycbyAHBC_aq21PrPeKIRbvAn3H3G__bDU9To_2Isi7RBjy3yn-ueHUvX3IwrSB-b0DMfN5A/exec";
+
+        // Helpers de LocalStorage + Sincronización en la Nube
+        function loadData(key) {
+            try { return JSON.parse(localStorage.getItem(key)) || []; } catch (e) { return []; }
+        }
+        function saveData(key, data) {
+            try { 
+                localStorage.setItem(key, JSON.stringify(data)); 
+                // Sincronización silenciosa en la nube
+                if (API_URL) {
+                    fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'syncTable', table: key, rows: data })
+                    }).catch(e => console.error("Error sincronizando a la nube:", e));
+                }
+            } catch (e) { console.error(e); }
+        }
+        function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
+
+        // --- Sistema de Modales Modernizados ---
+        function mostrarMensaje(title, message, type = 'info') {
+            return new Promise((resolve) => {
+                const modalContainer = document.getElementById('modal-container');
+                let iconHtml = '', bgClass = '', textClass = '';
+
+                switch (type) {
+                    case 'success':
+                        iconHtml = `<div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i class="fas fa-check text-green-600 text-xl"></i></div>`;
+                        bgClass = 'bg-green-600 hover:bg-green-700'; textClass = 'text-green-800'; break;
+                    case 'error':
+                        iconHtml = `<div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0"><i class="fas fa-exclamation-triangle text-red-600 text-xl"></i></div>`;
+                        bgClass = 'bg-red-600 hover:bg-red-700'; textClass = 'text-red-800'; break;
+                    case 'confirm':
+                        iconHtml = `<div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0"><i class="fas fa-question text-amber-600 text-xl"></i></div>`;
+                        bgClass = 'bg-amber-600 hover:bg-amber-700'; textClass = 'text-amber-800'; break;
+                    default:
+                        iconHtml = `<div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0"><i class="fas fa-info text-blue-600 text-xl"></i></div>`;
+                        bgClass = 'bg-blue-600 hover:bg-blue-700'; textClass = 'text-blue-800';
+                }
+
+                const buttonsHtml = type === 'confirm'
+                    ? `<button id="modal-cancel-btn" class="px-5 py-2.5 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 font-medium transition-colors">Cancelar</button>
+                       <button id="modal-confirm-btn" class="px-5 py-2.5 rounded-xl text-white ${bgClass} font-medium transition-colors shadow-sm">Confirmar Acción</button>`
+                    : `<button id="modal-ok-btn" class="px-5 py-2.5 rounded-xl text-white ${bgClass} font-medium transition-colors w-full shadow-sm">Entendido</button>`;
+
+                modalContainer.innerHTML = `
+                    <div class="modal-content">
+                        <div class="flex items-start gap-4">
+                            ${iconHtml}
+                            <div class="flex-1 pt-1">
+                                <h3 class="text-xl font-bold ${textClass}">${title}</h3>
+                                <div class="text-slate-600 mt-2 text-sm leading-relaxed">${message}</div>
+                            </div>
+                        </div>
+                        <div class="mt-8 flex justify-end gap-3 ${type !== 'confirm' ? 'justify-center' : ''}">
+                            ${buttonsHtml}
+                        </div>
+                    </div>`;
+                modalContainer.classList.add('active');
+
+                const closeModal = (resolution) => {
+                    modalContainer.classList.remove('active');
+                    // Eliminamos el setTimeout que borraba el HTML para evitar que colisione con el siguiente modal
+                    resolve(resolution);
+                };
+
+                if (type === 'confirm') {
+                    document.getElementById('modal-confirm-btn').onclick = () => closeModal(true);
+                    document.getElementById('modal-cancel-btn').onclick = () => closeModal(false);
+                } else {
+                    document.getElementById('modal-ok-btn').onclick = () => closeModal(true);
+                }
+            });
+        }
+
+        function mostrarPromptModal(title, message) {
+            return new Promise((resolve) => {
+                const modalContainer = document.getElementById('modal-container');
+                modalContainer.innerHTML = `
+                    <div class="modal-content">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0"><i class="fas fa-comment-dots text-amber-600 text-xl"></i></div>
+                            <div class="flex-1 w-full pt-1">
+                                <h3 class="text-xl font-bold text-amber-900">${title}</h3>
+                                <p class="text-slate-600 mt-2 text-sm">${message}</p>
+                                <textarea id="modal-prompt-input" class="mt-4 form-input w-full" rows="3" placeholder="Escribe tu motivo aquí..."></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-end gap-3">
+                            <button id="modal-prompt-cancel-btn" class="px-5 py-2.5 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 font-medium transition-colors">Cancelar</button>
+                            <button id="modal-prompt-confirm-btn" class="px-5 py-2.5 rounded-xl text-white bg-amber-600 hover:bg-amber-700 font-medium transition-colors shadow-sm">Confirmar</button>
+                        </div>
+                    </div>`;
+                modalContainer.classList.add('active');
+                
+                const closeModal = (value) => {
+                    modalContainer.classList.remove('active');
+                    // Eliminamos el setTimeout aquí también
+                    resolve(value);
+                };
+                
+                document.getElementById('modal-prompt-confirm-btn').onclick = () => closeModal(document.getElementById('modal-prompt-input').value);
+                document.getElementById('modal-prompt-cancel-btn').onclick = () => closeModal(null);
+            });
+        }
+
+        // --- STREAMING_CHUNK:Setting up Export and Print logic... ---
+        // Exportaciones CSV
+        function exportarCSV(datos, filename, mapFn, noDataMsg) {
+            if (datos.length === 0) return mostrarMensaje("Información", noDataMsg, "info");
+            const csvRows = mapFn(datos);
+            const csvContent = "\uFEFF" + csvRows.join('\n'); // Para acentos
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `${filename}_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+        }
+        
+        function exportarAlumnosCSV() {
+            exportarCSV(alumnosFiltrados, 'Alumnos', (d) => {
+                const head = "Nombres,Apellidos,Fecha de Nacimiento,Estatus,Nivel,Grado,Grupo,Tutor,Teléfono,Tipo de Cuota";
+                return [head, ...d.map(a => `"${a.nombres}","${a.apellidos}",${a.fechaNacimiento},${a.estatus},${a.nivel},${a.grado},${a.grupo},"${a.tutor||''}",${a.telefono||''},"${a.tipoCuota||''}"`)];
+            }, "No hay alumnos para exportar.");
+        }
+        function exportarMaestrosCSV() {
+            exportarCSV(maestrosFiltrados, 'Maestros', (d) => {
+                const head = "Nombres,Apellidos,Teléfono,Email,Niveles,RFC,CURP";
+                return [head, ...d.map(m => `"${m.nombres}","${m.apellidos}","${m.telefono}","${m.email}","${(m.niveles||[]).join(';')}","${m.rfc||''}","${m.curp||''}"`)];
+            }, "No hay maestros para exportar.");
+        }
+        function exportarPagosCSV() {
+            exportarCSV(pagosFiltrados, 'Pagos', (d) => {
+                const head = "Fecha,Alumno,Total,Estado,Notas";
+                return [head, ...d.map(p => {
+                    const al = localAlumnos.find(a=>a.id===p.alumnoId);
+                    const name = al ? `${al.nombres} ${al.apellidos}` : 'N/A';
+                    return `${p.fecha},"${name}",${p.total},${p.estado||'Activo'},"${p.notas||''}"`;
+                })];
+            }, "No hay pagos para exportar.");
+        }
+        function exportarCajaChicaCSV() {
+            exportarCSV(localCajaChica, 'CajaChica', (d) => {
+                const head = "Fecha,Concepto,Tipo,Monto";
+                return [head, ...d.map(c => `${c.fecha},"${c.concepto}",${c.tipo},${c.monto}`)];
+            }, "No hay movimientos en caja.");
+        }
+
+        // Exportaciones PDF
+        function generarPDF(title, head, bodyRows) {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            pdf.setFontSize(16);
+            pdf.text(title, 14, 20);
+            pdf.setFontSize(10);
+            pdf.text(`Fecha: ${new Date().toLocaleDateString('es-MX')}`, 14, 26);
+            pdf.autoTable({ head: [head], body: bodyRows, startY: 30, theme: 'grid', headStyles: { fillColor: [79, 70, 229] } });
+            pdf.save(`${title.replace(/ /g, '_')}.pdf`);
+        }
+        function exportarAlumnosPDF() {
+            if(alumnosFiltrados.length === 0) return;
+            generarPDF('Reporte de Alumnos', ["Nombre", "Nivel/Grado", "Estatus", "Tutor"], alumnosFiltrados.map(a => [`${a.nombres} ${a.apellidos}`, `${a.nivel} ${a.grado}° ${a.grupo}`, a.estatus, a.tutor||'N/A']));
+        }
+        function exportarMaestrosPDF() {
+            if(maestrosFiltrados.length === 0) return;
+            generarPDF('Reporte de Maestros', ["Nombre", "Niveles", "Contacto"], maestrosFiltrados.map(m => [`${m.nombres} ${m.apellidos}`, (m.niveles||[]).join(', '), `${m.telefono} | ${m.email}`]));
+        }
+        function exportarPagosPDF() {
+             if(pagosFiltrados.length === 0) return;
+             generarPDF('Reporte de Pagos', ["Fecha", "Alumno", "Total", "Estatus"], pagosFiltrados.map(p => {
+                 const al = localAlumnos.find(a=>a.id===p.alumnoId);
+                 return [p.fecha, al ? `${al.nombres} ${al.apellidos}` : 'N/A', currency(p.total), p.estado==='anulado'?'Anulado':'Activo'];
+             }));
+        }
+        function exportarCajaChicaPDF() {
+            if(localCajaChica.length === 0) return;
+            generarPDF('Reporte de Caja Chica', ["Fecha", "Tipo", "Concepto", "Monto"], localCajaChica.map(c => [c.fecha, c.tipo.toUpperCase(), c.concepto, currency(c.monto)]));
+        }
+
+        // Impresión de Tickets
+        function imprimirTicket(pagoId) {
+            const pago = localPagos.find(p => p.id === pagoId);
+            if (!pago) return;
+            const alumno = localAlumnos.find(a => a.id === pago.alumnoId);
+            const nombreAlumno = alumno ? `${alumno.nombres} ${alumno.apellidos}` : 'N/A';
+            const html = `<html><head><style>body{font-family:sans-serif;width:300px;margin:0 auto;padding:20px;text-align:center;}hr{border:0;border-top:1px dashed #000;margin:15px 0;}table{width:100%;text-align:left;}td.r{text-align:right;}</style></head><body onload="window.print();window.close();"><h2>Colegio Labastida</h2><p>Recibo de Pago</p><hr><p>Folio: ${pago.id.substr(0,8).toUpperCase()}<br>Fecha: ${pago.fecha}<br>Alumno: ${nombreAlumno}</p><hr><table>${pago.conceptos.map(c=>`<tr><td>${c.concepto}</td><td class="r">${currency(c.monto)}</td></tr>`).join('')}</table><hr><h3>TOTAL: ${currency(pago.total)}</h3><hr><p>¡Gracias por su pago!</p></body></html>`;
+            const w = window.open('','_blank'); w.document.write(html); w.document.close();
+        }
+
+        // Modales de Nómina (Maestros)
+        function abrirModalNomina(maestroId, maestroNombre) {
+            const mc = document.getElementById('modal-container');
+            const hoy = new Date().toISOString().split("T")[0];
+
+            mc.innerHTML = `
+                <div class="modal-content">
+                    <h2 class="text-xl font-bold text-slate-800 mb-2 flex items-center gap-2"><i class="fas fa-money-check-dollar text-emerald-500"></i> Pago Compensatorio</h2>
+                    <p class="text-sm text-slate-500 mb-6">Maestro: <strong class="text-slate-800">${maestroNombre}</strong></p>
+                    <form id="form-nomina" class="space-y-4">
+                        <input type="hidden" id="nomina-maestro-id" value="${maestroId}">
+                        <input type="hidden" id="nomina-maestro-nombre" value="${maestroNombre}">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha de Pago</label>
+                            <input type="date" id="nomina-fecha" value="${hoy}" required class="form-input">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Monto a Pagar (MXN)</label>
+                            <input type="number" id="nomina-monto" step="0.01" min="0.01" required placeholder="0.00" class="form-input text-lg font-bold text-emerald-700 border-emerald-200">
+                        </div>
+                        <div class="flex justify-end gap-3 mt-6">
+                            <button type="button" id="close-modal-nomina" class="px-5 py-2.5 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 font-medium transition-colors">Cancelar</button>
+                            <button type="submit" class="px-5 py-2.5 rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 font-medium transition-colors shadow-sm">Generar Recibo</button>
+                        </div>
+                    </form>
+                </div>`;
+            mc.classList.add('active');
+            document.getElementById('close-modal-nomina').onclick = () => mc.classList.remove('active');
+
+            document.getElementById('form-nomina').onsubmit = (ev) => {
+                ev.preventDefault();
+                const nominaData = {
+                    id: generateId(), maestroId: document.getElementById('nomina-maestro-id').value,
+                    maestroNombre: document.getElementById('nomina-maestro-nombre').value,
+                    fechaPago: document.getElementById('nomina-fecha').value,
+                    monto: parseFloat(document.getElementById('nomina-monto').value),
+                };
+                localNomina.push(nominaData); saveData('nomina', localNomina);
+                mc.classList.remove('active'); imprimirReciboNomina(nominaData); cargarDatosIniciales();
+            };
+        }
+
+        function abrirModalHistorialNomina(maestroId, maestroNombre) {
+            const mc = document.getElementById('modal-container');
+            const pagos = localNomina.filter(p => p.maestroId === maestroId).sort((a, b) => b.fechaPago.localeCompare(a.fechaPago));
+            
+            const html = pagos.length ? pagos.map(p => `
+                <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                    <td class="py-3 px-4 text-sm font-medium text-slate-600">${new Date(p.fechaPago + 'T00:00:00').toLocaleDateString('es-MX')}</td>
+                    <td class="py-3 px-4 text-right font-bold text-emerald-600">${currency(p.monto)}</td>
+                    <td class="py-3 px-4 text-center"><button data-id="${p.id}" class="reimprimir-nomina-btn w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white transition-colors"><i class="fas fa-print"></i></button></td>
+                </tr>`).join('') : `<tr><td colspan="3" class="text-center py-6 text-slate-400">Sin pagos registrados</td></tr>`;
+
+            mc.innerHTML = `
+                <div class="modal-content">
+                    <h2 class="text-xl font-bold text-slate-800 mb-2">Historial de Nómina</h2>
+                    <p class="text-sm text-slate-500 mb-4">Maestro: <strong class="text-slate-800">${maestroNombre}</strong></p>
+                    <div class="overflow-y-auto max-h-60 border border-slate-200 rounded-xl">
+                        <table class="w-full text-left"><thead class="bg-slate-50 sticky top-0"><tr><th class="py-2 px-4 text-xs font-bold text-slate-500 uppercase">Fecha</th><th class="py-2 px-4 text-right text-xs font-bold text-slate-500 uppercase">Monto</th><th class="py-2 px-4 text-center text-xs font-bold text-slate-500 uppercase">Recibo</th></tr></thead><tbody>${html}</tbody></table>
+                    </div>
+                    <div class="flex justify-end mt-4"><button id="close-modal-historial" class="px-5 py-2.5 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 font-medium transition-colors">Cerrar</button></div>
+                </div>`;
+            mc.classList.add('active');
+            document.getElementById('close-modal-historial').onclick = () => mc.classList.remove('active');
+            mc.querySelectorAll('.reimprimir-nomina-btn').forEach(btn => btn.onclick = (e) => {
+                const pagoData = localNomina.find(p => p.id === e.currentTarget.dataset.id);
+                if (pagoData) imprimirReciboNomina(pagoData);
+            });
+        }
+        
+        function imprimirReciboNomina(data) {
+            const html = `<html><head><style>body{font-family:sans-serif;padding:20px;text-align:center;} .box{border:1px solid #000;padding:20px;max-width:400px;margin:auto;} table{width:100%;text-align:left;} td{padding:5px;}</style></head><body onload="window.print();window.close();"><div class="box"><h3>Colegio Labastida</h3><p>Pago Compensatorio</p><hr><table><tr><td>Fecha:</td><td>${new Date(data.fechaPago + 'T00:00:00').toLocaleDateString('es-MX')}</td></tr><tr><td>Maestro:</td><td>${data.maestroNombre}</td></tr><tr><td>Monto:</td><td><b>${currency(data.monto)}</b></td></tr></table><br><br><hr style="width:200px"><p>Firma del Maestro</p></div></body></html>`;
+            const w = window.open('','_blank'); w.document.write(html); w.document.close();
+        }
+
+        // --- STREAMING_CHUNK:Implementing UI Events and Render functions... ---
+        // Poblado de Contenido Estático
+        const populateStaticContent = () => {
+            const nivelSelects = document.querySelectorAll('#nivel, #filtro-alumno-nivel, #filtro-maestro-nivel');
+            nivelSelects.forEach(select => {
+                select.innerHTML = `<option value="">${select.id.includes('filtro') ? 'Todos los Niveles' : 'Seleccionar Nivel'}</option>` + NIVELES_ESCOLARES.map(n => `<option value="${n}">${n}</option>`).join('');
+            });
+            document.getElementById('maestro-niveles-checkboxes').innerHTML = NIVELES_ESCOLARES.map(nivel => `<label class="flex items-center p-2 rounded hover:bg-white cursor-pointer"><input id="nivel-${nivel.replace(/\s+/g, '')}" name="maestro-nivel" type="checkbox" value="${nivel}" class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"><span class="ml-2 text-sm text-slate-700">${nivel}</span></label>`).join('');
+            document.getElementById('pago-concepto-select').innerHTML = CONCEPTOS_PAGO.map(c => `<option value="${c}">${c}</option>`).join('');
+            
+            // Link radio buttons custom en caja chica al select original
+            document.querySelectorAll('input[name="caja-tipo"]').forEach(radio => {
+                radio.addEventListener('change', (e) => { document.getElementById('caja-tipo').value = e.target.value; });
+            });
+        };
+
+        // Renderizadores con diseño Tailwind inyectado
+        const renderAlumnos = (alumnos) => {
+            const tbody = document.getElementById('lista-alumnos');
+            tbody.innerHTML = alumnos.length ? '' : `<tr><td colspan="4" class="text-center py-8 text-slate-400">No hay alumnos registrados.</td></tr>`;
+            alumnos.forEach(al => {
+                const badgeClass = al.estatus === 'Nuevo Ingreso' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition-colors group">
+                        <td class="px-6 py-4">
+                            <div class="font-bold text-slate-800">${al.nombres} ${al.apellidos}</div>
+                            <div class="text-xs text-slate-500 mt-1"><i class="fas fa-user-circle mr-1"></i> ${al.tutor || 'Sin tutor'}</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">${al.nivel} ${al.grado}° "${al.grupo}"</td>
+                        <td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-xs font-bold border ${badgeClass}">${al.estatus}</span></td>
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button data-id="${al.id}" class="edit-alumno-btn w-8 h-8 rounded-full bg-slate-100 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors"><i class="fas fa-pen text-sm"></i></button>
+                                <button data-id="${al.id}" class="delete-alumno-btn w-8 h-8 rounded-full bg-slate-100 text-red-500 hover:bg-red-500 hover:text-white transition-colors"><i class="fas fa-trash text-sm"></i></button>
+                            </div>
+                        </td>
+                    </tr>`;
+            });
+            document.getElementById('contador-alumnos').textContent = alumnos.length;
+        };
+
+        const renderMaestros = (maestros) => {
+            const tbody = document.getElementById('lista-maestros');
+            tbody.innerHTML = maestros.length ? '' : `<tr><td colspan="4" class="text-center py-8 text-slate-400">No hay maestros registrados.</td></tr>`;
+            maestros.forEach(m => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition-colors group">
+                        <td class="px-6 py-4">
+                            <div class="font-bold text-slate-800">${m.nombres} ${m.apellidos}</div>
+                            <div class="text-xs font-mono text-slate-400 mt-1">${m.rfc || 'Sin RFC'}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex flex-wrap gap-1">
+                                ${(m.niveles||[]).map(n => `<span class="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded border border-indigo-100">${n}</span>`).join('')}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-600">
+                            <div class="flex items-center gap-2"><i class="fas fa-phone w-3 text-slate-400"></i> ${m.telefono}</div>
+                            <div class="flex items-center gap-2 mt-1"><i class="fas fa-envelope w-3 text-slate-400"></i> ${m.email}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex justify-center gap-2">
+                                <button data-id="${m.id}" data-nombre="${m.nombres} ${m.apellidos}" class="pagar-nomina-btn px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white text-xs font-bold transition-colors" title="Pagar">Pago</button>
+                                <button data-id="${m.id}" data-nombre="${m.nombres} ${m.apellidos}" class="historial-nomina-btn px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold transition-colors" title="Historial"><i class="fas fa-history"></i></button>
+                                <button data-id="${m.id}" class="edit-maestro-btn w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors ml-2"><i class="fas fa-pen text-xs"></i></button>
+                                <button data-id="${m.id}" class="delete-maestro-btn w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-colors"><i class="fas fa-trash text-xs"></i></button>
+                            </div>
+                        </td>
+                    </tr>`;
+            });
+            document.getElementById('contador-maestros').textContent = maestros.length;
+        };
+
+        const renderPagos = (pagos) => {
+            const tbody = document.getElementById('lista-pagos');
+            tbody.innerHTML = pagos.length ? '' : `<tr><td colspan="4" class="text-center py-8 text-slate-400">No hay transacciones registradas.</td></tr>`;
+            pagos.sort((a,b) => new Date(b.fecha) - new Date(a.fecha)).forEach(p => {
+                const al = localAlumnos.find(a => a.id === p.alumnoId);
+                const isAnulado = p.estado === 'anulado';
+                const anClass = isAnulado ? 'pago-anulado' : '';
+                
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition-colors ${anClass}">
+                        <td class="px-6 py-4 text-sm font-medium text-slate-700">${new Date(p.fecha).toLocaleDateString('es-MX')}</td>
+                        <td class="px-6 py-4">
+                            <div class="font-bold text-slate-800">${al ? `${al.nombres} ${al.apellidos}` : 'N/A'}</div>
+                            <div class="text-xs text-slate-500 mt-1">${(p.conceptos||[]).map(c=>c.concepto).join(', ')}</div>
+                            ${isAnulado ? `<div class="text-xs font-bold text-red-600 mt-1">Anulado: ${p.motivoAnulacion}</div>` : ''}
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <span class="font-black ${isAnulado ? 'text-slate-400' : 'text-emerald-600'}">${currency(p.total)}</span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex justify-center gap-2">
+                                <button data-id="${p.id}" class="print-ticket-btn w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:bg-indigo-600 hover:text-white transition-colors"><i class="fas fa-print"></i></button>
+                                <button data-id="${p.id}" class="edit-pago-btn w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:bg-amber-500 hover:text-white transition-colors" ${isAnulado?'disabled':''}><i class="fas fa-pen"></i></button>
+                                <button data-id="${p.id}" class="anular-pago-btn w-8 h-8 rounded-lg bg-slate-100 text-red-500 hover:bg-red-600 hover:text-white transition-colors" ${isAnulado?'disabled':''}><i class="fas fa-ban"></i></button>
+                            </div>
+                        </td>
+                    </tr>`;
+            });
+            document.getElementById('contador-pagos').textContent = pagos.length;
+        };
+
+        const renderCajaChica = (movs) => {
+            const tbody = document.getElementById('lista-caja-chica');
+            let tIng=0, tGas=0;
+            tbody.innerHTML = movs.length ? '' : `<tr><td colspan="3" class="text-center py-8 text-slate-400">No hay movimientos.</td></tr>`;
+            movs.sort((a,b) => String(b.fecha).localeCompare(String(a.fecha))).forEach(m => {
+                const isIng = m.tipo === 'ingreso';
+                if(isIng) tIng+=Number(m.monto); else tGas+=Number(m.monto);
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 border-l-4 ${isIng ? 'border-l-emerald-400' : 'border-l-rose-400'}">
+                        <td class="px-6 py-4 text-sm font-medium text-slate-600">${new Date(m.fecha).toLocaleDateString('es-MX')}</td>
+                        <td class="px-6 py-4 text-sm text-slate-800">${m.concepto}</td>
+                        <td class="px-6 py-4 text-right font-bold ${isIng ? 'text-emerald-600' : 'text-rose-600'}">${isIng?'+':'-'} ${currency(m.monto)}</td>
+                    </tr>`;
+            });
+            document.getElementById('caja-total-ingresos').textContent = currency(tIng);
+            document.getElementById('caja-total-gastos').textContent = currency(tGas);
+            document.getElementById('caja-balance').textContent = currency(tIng - tGas);
+            document.getElementById('contador-caja').textContent = `${movs.length} Registros`;
+        };
+        
+        // Estado de Cuotas
+        const renderEstadoDeCuotas = () => {
+            const tbody = document.getElementById('lista-estado-cuotas');
+            tbody.innerHTML = '';
+            localAlumnos.forEach(alumno => {
+                const cuota = localCuotas.find(c => c.nombre === alumno.tipoCuota);
+                if(!cuota) return;
+                const costo = Number(cuota.costo);
+                const abonos = localAbonos.filter(a => a.alumnoId === alumno.id);
+                const pagado = abonos.reduce((s, a) => s + Number(a.monto), 0);
+                const saldo = costo - pagado;
+                const isPagado = saldo <= 0;
+                
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-6 py-4 font-bold text-slate-800">${alumno.nombres} ${alumno.apellidos}</td>
+                        <td class="px-6 py-4"><div class="text-sm font-medium text-indigo-700">${cuota.nombre}</div><div class="text-xs text-slate-400">${currency(costo)}</div></td>
+                        <td class="px-6 py-4 text-right font-bold text-emerald-600">${currency(pagado)}</td>
+                        <td class="px-6 py-4 text-right font-bold ${isPagado?'text-slate-400':'text-rose-600'}">${currency(saldo)}</td>
+                        <td class="px-6 py-4 text-center"><span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${isPagado?'bg-emerald-100 text-emerald-700':'bg-amber-100 text-amber-700'}">${isPagado?'Pagado':'Pendiente'}</span></td>
+                        <td class="px-6 py-4 text-center">
+                            <button data-alumno-id="${alumno.id}" class="ver-historial-abonos-btn px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-bold mr-1" ${abonos.length?'':'disabled'}><i class="fas fa-eye"></i></button>
+                            <button data-alumno-id="${alumno.id}" class="abrir-modal-abono-btn px-4 py-1.5 rounded-lg text-white text-xs font-bold ${!isPagado && abonos.length<3 ? 'bg-indigo-600 hover:bg-indigo-700 shadow-md':'bg-slate-300 cursor-not-allowed'}" ${!isPagado && abonos.length<3 ? '':'disabled'}>Abonar</button>
+                        </td>
+                    </tr>`;
+            });
+        };
+
+        // Modal de Configuración de Cuotas
+        document.getElementById('btn-admin-cuotas').addEventListener('click', () => {
+            const mc = document.getElementById('modal-container');
+            mc.innerHTML = `
+                <div class="modal-content" style="max-width: 800px;">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2"><i class="fas fa-tags text-indigo-500"></i> Configurar Cuotas</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+                        <div class="md:col-span-2 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                            <form id="form-cuota" class="space-y-4">
+                                <div><label class="block text-xs font-bold text-slate-500 mb-1">Nombre (Ej. Cuota 2024)</label><input type="text" id="c-nom" required class="form-input"></div>
+                                <div><label class="block text-xs font-bold text-slate-500 mb-1">Costo Anual</label><input type="number" id="c-cos" required class="form-input" step="0.01"></div>
+                                <button class="w-full bg-slate-800 text-white py-2.5 rounded-xl font-bold hover:bg-slate-700">Agregar Cuota</button>
+                            </form>
+                        </div>
+                        <div class="md:col-span-3 border border-slate-200 rounded-2xl overflow-hidden">
+                            <table class="w-full text-left">
+                                <thead class="bg-slate-100"><tr><th class="p-3 text-xs font-bold text-slate-500">Nombre</th><th class="p-3 text-xs font-bold text-slate-500">Costo</th><th class="p-3"></th></tr></thead>
+                                <tbody id="t-cuotas" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <button id="close-modal-btn" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200"><i class="fas fa-times"></i></button>
+                </div>`;
+            mc.classList.add('active');
+            
+            const renderC = () => {
+                document.getElementById('t-cuotas').innerHTML = localCuotas.map(c => `<tr><td class="p-3 font-medium">${c.nombre}</td><td class="p-3">${currency(c.costo)}</td><td class="p-3 text-right"><button data-id="${c.id}" class="rm-cuota text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button></td></tr>`).join('');
+                document.querySelectorAll('.rm-cuota').forEach(b => b.onclick = (e) => {
+                    localCuotas = localCuotas.filter(c => c.id !== e.currentTarget.dataset.id);
+                    saveData('cuotas', localCuotas); renderC(); cargarDatosIniciales();
+                });
+            };
+            renderC();
+            
+            document.getElementById('form-cuota').onsubmit = (e) => {
+                e.preventDefault();
+                localCuotas.push({ id: generateId(), nombre: document.getElementById('c-nom').value, costo: document.getElementById('c-cos').value });
+                saveData('cuotas', localCuotas); renderC(); document.getElementById('form-cuota').reset(); cargarDatosIniciales();
+            };
+            document.getElementById('close-modal-btn').onclick = () => mc.classList.remove('active');
+        });
+
+        // Modales de Abonos
+        document.getElementById('lista-estado-cuotas').addEventListener('click', (e) => {
+            const btnAb = e.target.closest('.abrir-modal-abono-btn');
+            const btnHi = e.target.closest('.ver-historial-abonos-btn');
+            const mc = document.getElementById('modal-container');
+            
+            if(btnAb) {
+                const al = localAlumnos.find(a=>a.id === btnAb.dataset.alumnoId);
+                const cu = localCuotas.find(c=>c.nombre === al.tipoCuota);
+                const abonos = localAbonos.filter(a=>a.alumnoId === al.id);
+                const pagado = abonos.reduce((s,a)=>s+Number(a.monto),0);
+                const saldo = cu.costo - pagado;
+                
+                const isUltimo = abonos.length === 2;
+                const minMax = isUltimo ? `value="${saldo}" readonly` : `max="${saldo}"`;
+                
+                mc.innerHTML = `
+                    <div class="modal-content">
+                        <h2 class="text-xl font-bold text-slate-800 mb-2">Registrar Abono</h2>
+                        <p class="text-sm text-slate-500 mb-6">${al.nombres} ${al.apellidos} | Saldo: <strong class="text-rose-600">${currency(saldo)}</strong></p>
+                        ${isUltimo ? `<div class="bg-amber-50 text-amber-800 p-3 rounded-xl text-sm mb-4 border border-amber-200">Este es el último abono (3/3), debe liquidar el total.</div>` : ''}
+                        <form id="f-ab">
+                            <div class="space-y-4">
+                                <input type="date" id="a-fec" value="${new Date().toISOString().split('T')[0]}" required class="form-input">
+                                <input type="number" id="a-mon" step="0.01" required class="form-input text-lg font-bold" ${minMax} placeholder="Monto">
+                                <select id="a-met" class="form-input"><option>Efectivo</option><option>Tarjeta</option><option>Transferencia</option></select>
+                                <div class="flex justify-end gap-2 mt-4">
+                                    <button type="button" class="btn-cancel px-4 py-2 bg-slate-100 rounded-xl text-slate-600">Cancelar</button>
+                                    <button type="submit" class="px-4 py-2 bg-indigo-600 rounded-xl text-white font-bold shadow-md">Guardar</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>`;
+                mc.classList.add('active');
+                mc.querySelector('.btn-cancel').onclick = () => mc.classList.remove('active');
+                document.getElementById('f-ab').onsubmit = (ev) => {
+                    ev.preventDefault();
+                    localAbonos.push({ id: generateId(), alumnoId: al.id, monto: document.getElementById('a-mon').value, metodo: document.getElementById('a-met').value, fechaAbono: document.getElementById('a-fec').value });
+                    saveData('abonos', localAbonos); cargarDatosIniciales(); mc.classList.remove('active');
+                };
+            }
+            if(btnHi) {
+                mostrarMensaje("Historial de Abonos", "El registro en PDF está en desarrollo para este módulo.", "info");
+            }
+        });
+
+        // --- STREAMING_CHUNK:Loading Initial Data and Syncing... ---
+        // Main App Logic Init
+        function cargarDatosIniciales() {
+            localAlumnos = loadData('alumnos'); localMaestros = loadData('maestros');
+            localCuotas = loadData('cuotas'); localPagos = loadData('pagos');
+            localAbonos = loadData('abonos'); localCajaChica = loadData('cajaChica');
+            localNomina = loadData('nomina');
+            
+            alumnosFiltrados = [...localAlumnos]; maestrosFiltrados = [...localMaestros]; pagosFiltrados = [...localPagos];
+            
+            renderAlumnos(alumnosFiltrados); renderMaestros(maestrosFiltrados);
+            renderPagos(pagosFiltrados); renderCajaChica(localCajaChica);
+            renderEstadoDeCuotas();
+            
+            // Llenar selectores dinámicos
+            const pAl = document.getElementById('pago-alumno');
+            pAl.innerHTML = '<option value="">Selecciona un alumno...</option>' + localAlumnos.map(a => `<option value="${a.id}">${a.nombres} ${a.apellidos}</option>`).join('');
+            
+            const pCu = document.getElementById('tipoCuota');
+            if(pCu) pCu.innerHTML = '<option value="">Selecciona...</option>' + localCuotas.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
+        }
+
+        // Lógica de Arranque y Sincronización
+        async function inicializarApp() {
+            // 1. Cargar rápido lo que ya hay guardado en el navegador
+            cargarDatosIniciales();
+            
+            // 2. Traer los datos frescos de Google Sheets (Sincronización)
+            if (API_URL) {
+                const toast = document.createElement('div');
+                toast.innerHTML = `<div class="fixed bottom-6 right-6 bg-indigo-600 text-white px-5 py-3 rounded-2xl shadow-2xl text-sm flex items-center gap-3 z-[2000] transition-all" id="sync-toast"><i class="fas fa-sync fa-spin"></i> Conectando con BD...</div>`;
+                document.body.appendChild(toast);
+                
+                try {
+                    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAll' }) });
+                    const json = await res.json();
+                    if(json.success) {
+                        const d = json.data;
+                        localStorage.setItem('alumnos', JSON.stringify(d.alumnos || []));
+                        localStorage.setItem('maestros', JSON.stringify(d.maestros || []));
+                        localStorage.setItem('cuotas', JSON.stringify(d.cuotas || []));
+                        localStorage.setItem('pagos', JSON.stringify(d.pagos || []));
+                        localStorage.setItem('abonos', JSON.stringify(d.abonos || []));
+                        localStorage.setItem('cajaChica', JSON.stringify(d.cajaChica || []));
+                        localStorage.setItem('nomina', JSON.stringify(d.nomina || []));
+                        
+                        cargarDatosIniciales(); 
+                        
+                        const toastEl = document.getElementById('sync-toast');
+                        toastEl.innerHTML = `<i class="fas fa-check"></i> Sistema Sincronizado`;
+                        toastEl.classList.replace('bg-indigo-600', 'bg-emerald-600');
+                        setTimeout(() => toastEl.remove(), 3000);
+                    }
+                } catch(e) {
+                    const toastEl = document.getElementById('sync-toast');
+                    toastEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Fuera de Línea - Cambios locales`;
+                    toastEl.classList.replace('bg-indigo-600', 'bg-rose-600');
+                    setTimeout(() => toastEl.remove(), 4000);
+                }
+            }
+        }
+
+        // Conectar Eventos Generales
+        document.addEventListener('DOMContentLoaded', () => {
+            populateStaticContent();
+            inicializarApp();
+            
+            // --- LÓGICA DE GRADOS DINÁMICOS ---
+            const actualizarGrados = (selectNivelId, selectGradoId) => {
+                const nivel = document.getElementById(selectNivelId).value;
+                const gradoSelect = document.getElementById(selectGradoId);
+                gradoSelect.innerHTML = '<option value="">...</option>';
+                
+                if (!nivel) {
+                    gradoSelect.disabled = true;
+                    gradoSelect.classList.add('bg-slate-100', 'text-slate-400', 'cursor-not-allowed');
+                    return;
+                }
+                
+                let grados = [];
+                if (nivel.includes('Preescolar') || nivel.includes('Secundaria')) grados = [1, 2, 3];
+                if (nivel.includes('Primaria')) grados = [1, 2, 3, 4, 5, 6];
+                
+                grados.forEach(g => {
+                    const option = document.createElement('option');
+                    option.value = g; option.textContent = `${g}°`;
+                    gradoSelect.appendChild(option);
+                });
+                
+                gradoSelect.disabled = false;
+                gradoSelect.classList.remove('bg-slate-100', 'text-slate-400', 'cursor-not-allowed');
+            };
+
+            // Asignar eventos para que al cambiar Nivel se actualice Grado
+            document.getElementById('nivel').addEventListener('change', () => actualizarGrados('nivel', 'grado'));
+            document.getElementById('filtro-alumno-nivel').addEventListener('change', () => actualizarGrados('filtro-alumno-nivel', 'filtro-alumno-grado'));
+
+            // Toggle Médico
+            document.getElementById('toggle-medico').onclick = () => {
+                document.getElementById('medico-fields').classList.toggle('hidden');
+                document.getElementById('icono-medico').classList.toggle('fa-chevron-up');
+            };
+
+            // --- LÓGICA DE TABLAS (Botones Editar/Eliminar/Nómina) ---
+            
+            // Eventos para la tabla de Alumnos
+            document.getElementById('lista-alumnos').addEventListener('click', async (e) => {
+                const editBtn = e.target.closest('.edit-alumno-btn');
+                const deleteBtn = e.target.closest('.delete-alumno-btn');
+
+                if (editBtn) {
+                    const id = editBtn.dataset.id;
+                    const alumno = localAlumnos.find(a => a.id === id);
+                    if (!alumno) return;
+
+                    const form = document.getElementById('form-agregar-alumno');
+                    document.getElementById('alumno-id-edit').value = alumno.id;
+                    
+                    if(alumno.estatus === 'Nuevo Ingreso') document.getElementById('estatus-nuevo').checked = true;
+                    if(alumno.estatus === 'Reinscripción') document.getElementById('estatus-reinscripcion').checked = true;
+                    
+                    form.nombres.value = alumno.nombres;
+                    form.apellidos.value = alumno.apellidos;
+                    form.fechaNacimiento.value = alumno.fechaNacimiento;
+                    
+                    form.nivel.value = alumno.nivel;
+                    actualizarGrados('nivel', 'grado'); // Forzar actualización de combo grados
+                    setTimeout(() => { form.grado.value = alumno.grado; }, 50); // Pequeño delay para que pinte las opciones antes de seleccionar
+                    
+                    form.grupo.value = alumno.grupo;
+                    form.tutor.value = alumno.tutor || '';
+                    form.telefono.value = alumno.telefono || '';
+                    form.tipoCuota.value = alumno.tipoCuota || '';
+                    form.tipoSangre.value = alumno.tipoSangre || '';
+                    form.alergias.value = alumno.alergias || '';
+                    form.padecimientos.value = alumno.padecimientos || '';
+                    form.contactoEmergencia.value = alumno.contactoEmergencia || '';
+                    form.telefonoEmergencia.value = alumno.telefonoEmergencia || '';
+
+                    document.getElementById('form-alumno-title').innerHTML = `<i class="fas fa-user-edit text-amber-500"></i> Editando Alumno`;
+                    const btnGuardar = document.getElementById('btn-guardar-alumno');
+                    btnGuardar.innerHTML = '<i class="fas fa-save"></i> Actualizar Alumno';
+                    btnGuardar.classList.replace('bg-indigo-600', 'bg-amber-500');
+                    btnGuardar.classList.replace('hover:bg-indigo-700', 'hover:bg-amber-600');
+                    btnGuardar.classList.replace('shadow-indigo-200', 'shadow-amber-200');
+                    document.getElementById('btn-cancelar-alumno-edit').classList.remove('hidden');
+                    
+                    document.querySelector('.overflow-y-auto').scrollTo({top: 0, behavior: 'smooth'});
+                }
+
+                if (deleteBtn) {
+                    const id = deleteBtn.dataset.id;
+                    const alumno = localAlumnos.find(a => a.id === id);
+                    const confirmed = await mostrarMensaje("Confirmar Eliminación", `¿Estás seguro de eliminar a <strong>${alumno.nombres} ${alumno.apellidos}</strong>?`, "confirm");
+                    if (confirmed) {
+                        localAlumnos = localAlumnos.filter(a => a.id !== id);
+                        saveData('alumnos', localAlumnos);
+                        cargarDatosIniciales();
+                    }
+                }
+            });
+
+            // Cancelar edición de Alumnos
+            document.getElementById('btn-cancelar-alumno-edit').addEventListener('click', () => {
+                document.getElementById('form-agregar-alumno').reset();
+                document.getElementById('alumno-id-edit').value = '';
+                document.getElementById('form-alumno-title').innerHTML = '<i class="fas fa-user-plus text-indigo-500"></i> Agregar Alumno';
+                const btnGuardar = document.getElementById('btn-guardar-alumno');
+                btnGuardar.innerHTML = '<i class="fas fa-save"></i> Guardar Alumno';
+                btnGuardar.classList.replace('bg-amber-500', 'bg-indigo-600');
+                btnGuardar.classList.replace('hover:bg-amber-600', 'hover:bg-indigo-700');
+                btnGuardar.classList.replace('shadow-amber-200', 'shadow-indigo-200');
+                document.getElementById('btn-cancelar-alumno-edit').classList.add('hidden');
+                
+                document.getElementById('grado').innerHTML = '<option value="">...</option>';
+                document.getElementById('grado').disabled = true;
+                document.getElementById('grado').classList.add('bg-slate-100', 'text-slate-400', 'cursor-not-allowed');
+            });
+
+            // Eventos para la tabla de Maestros
+            document.getElementById('lista-maestros').addEventListener('click', async (e) => {
+                const editBtn = e.target.closest('.edit-maestro-btn');
+                const deleteBtn = e.target.closest('.delete-maestro-btn');
+                const nominaBtn = e.target.closest('.pagar-nomina-btn');
+                const historialBtn = e.target.closest('.historial-nomina-btn');
+
+                if (nominaBtn) abrirModalNomina(nominaBtn.dataset.id, nominaBtn.dataset.nombre);
+                if (historialBtn) abrirModalHistorialNomina(historialBtn.dataset.id, historialBtn.dataset.nombre);
+
+                if (editBtn) {
+                    const id = editBtn.dataset.id;
+                    const maestro = localMaestros.find(m => m.id === id);
+                    if (!maestro) return;
+
+                    const form = document.getElementById('form-agregar-maestro');
+                    document.getElementById('maestro-id-edit').value = maestro.id;
+                    document.getElementById('maestro-nombres').value = maestro.nombres;
+                    document.getElementById('maestro-apellidos').value = maestro.apellidos;
+                    document.getElementById('maestro-telefono').value = maestro.telefono || '';
+                    document.getElementById('maestro-email').value = maestro.email || '';
+                    document.getElementById('maestro-rfc').value = maestro.rfc || '';
+                    document.getElementById('maestro-curp').value = maestro.curp || '';
+                    
+                    document.querySelectorAll('input[name="maestro-nivel"]').forEach(cb => {
+                        cb.checked = (maestro.niveles || []).includes(cb.value);
+                    });
+
+                    document.getElementById('form-maestro-title').innerHTML = `<i class="fas fa-user-edit text-amber-500"></i> Editando Maestro`;
+                    const btnGuardar = document.getElementById('btn-guardar-maestro');
+                    btnGuardar.innerHTML = '<i class="fas fa-save"></i> Actualizar Maestro';
+                    btnGuardar.classList.replace('bg-indigo-600', 'bg-amber-500');
+                    btnGuardar.classList.replace('hover:bg-indigo-700', 'hover:bg-amber-600');
+                    document.getElementById('btn-cancelar-maestro-edit').classList.remove('hidden');
+                    document.querySelector('.overflow-y-auto').scrollTo({top: 0, behavior: 'smooth'});
+                }
+
+                if (deleteBtn) {
+                    const id = deleteBtn.dataset.id;
+                    const maestro = localMaestros.find(m => m.id === id);
+                    const confirmed = await mostrarMensaje("Confirmar Eliminación", `¿Eliminar a <strong>${maestro.nombres} ${maestro.apellidos}</strong>?`, "confirm");
+                    if (confirmed) {
+                        localMaestros = localMaestros.filter(m => m.id !== id);
+                        saveData('maestros', localMaestros);
+                        cargarDatosIniciales();
+                    }
+                }
+            });
+
+            // Cancelar edición de Maestros
+            document.getElementById('btn-cancelar-maestro-edit').addEventListener('click', () => {
+                document.getElementById('form-agregar-maestro').reset();
+                document.getElementById('maestro-id-edit').value = '';
+                document.getElementById('form-maestro-title').innerHTML = '<i class="fas fa-chalkboard-teacher text-indigo-500"></i> Agregar Maestro';
+                const btnGuardar = document.getElementById('btn-guardar-maestro');
+                btnGuardar.innerHTML = '<i class="fas fa-save"></i> Guardar Maestro';
+                btnGuardar.classList.replace('bg-amber-500', 'bg-indigo-600');
+                btnGuardar.classList.replace('hover:bg-amber-600', 'hover:bg-indigo-700');
+                document.getElementById('btn-cancelar-maestro-edit').classList.add('hidden');
+            });
+
+            // Setup Listeners Form Alumnos
+            document.getElementById('form-agregar-alumno').onsubmit = (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const estatusInput = form.querySelector('input[name="estatus"]:checked');
+                const alumnoData = {
+                    id: document.getElementById('alumno-id-edit').value || generateId(),
+                    estatus: estatusInput ? estatusInput.value : '',
+                    nombres: form.nombres.value,
+                    apellidos: form.apellidos.value,
+                    fechaNacimiento: form.fechaNacimiento.value,
+                    nivel: form.nivel.value,
+                    grado: form.grado.value,
+                    grupo: form.grupo.value,
+                    tutor: form.tutor.value,
+                    telefono: form.telefono.value,
+                    tipoCuota: form.tipoCuota.value,
+                    tipoSangre: form.tipoSangre.value,
+                    alergias: form.alergias.value,
+                    padecimientos: form.padecimientos.value,
+                    contactoEmergencia: form.contactoEmergencia.value,
+                    telefonoEmergencia: form.telefonoEmergencia.value,
+                };
+                
+                const index = localAlumnos.findIndex(a => a.id === alumnoData.id);
+                if (index > -1) localAlumnos[index] = alumnoData;
+                else localAlumnos.push(alumnoData);
+                
+                saveData('alumnos', localAlumnos);
+                cargarDatosIniciales();
+                
+                // Usamos la lógica del botón cancelar para resetear el formulario a su estado original
+                document.getElementById('btn-cancelar-alumno-edit').click();
+                mostrarMensaje('Éxito', 'Alumno guardado correctamente.', 'success');
+            };
+            
+            
+            // --- LÓGICA DE MAESTROS ---
+            document.getElementById('form-agregar-maestro').onsubmit = (e) => {
+                e.preventDefault();
+                const niveles = Array.from(document.querySelectorAll('input[name="maestro-nivel"]:checked')).map(cb => cb.value);
+                if(niveles.length === 0) return mostrarMensaje('Error', 'Debes seleccionar al menos un nivel.', 'error');
+                
+                const data = {
+                    id: document.getElementById('maestro-id-edit').value || generateId(),
+                    nombres: document.getElementById('maestro-nombres').value,
+                    apellidos: document.getElementById('maestro-apellidos').value,
+                    telefono: document.getElementById('maestro-telefono').value,
+                    email: document.getElementById('maestro-email').value,
+                    rfc: document.getElementById('maestro-rfc').value,
+                    curp: document.getElementById('maestro-curp').value,
+                    niveles: niveles
+                };
+                
+                const idx = localMaestros.findIndex(m => m.id === data.id);
+                if(idx > -1) localMaestros[idx] = data; else localMaestros.push(data);
+                
+                saveData('maestros', localMaestros); cargarDatosIniciales();
+                
+                // Reset de form a su estado base
+                document.getElementById('btn-cancelar-maestro-edit').click();
+                mostrarMensaje('Éxito', 'Maestro guardado correctamente.', 'success');
+            };
+
+            // --- LÓGICA DE PAGOS ---
+            let pagoConceptosTemp = [];
+            let pagoMetodosTemp = [];
+            const btnGuardarPago = document.getElementById('btn-guardar-pago');
+            
+            const checkPagoValido = () => {
+                const tPagar = pagoConceptosTemp.reduce((s, c) => s + c.monto, 0);
+                const tPagado = pagoMetodosTemp.reduce((s, m) => s + m.monto, 0);
+                const isValido = document.getElementById('pago-alumno').value && 
+                                 document.getElementById('pago-fecha').value && 
+                                 tPagar > 0 && tPagado > 0 && Math.abs(tPagar - tPagado) < 0.01;
+                
+                if (isValido) {
+                    btnGuardarPago.disabled = false;
+                    btnGuardarPago.classList.remove('bg-slate-300', 'text-slate-500', 'cursor-not-allowed');
+                    btnGuardarPago.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700', 'shadow-md');
+                } else {
+                    btnGuardarPago.disabled = true;
+                    btnGuardarPago.classList.add('bg-slate-300', 'text-slate-500', 'cursor-not-allowed');
+                    btnGuardarPago.classList.remove('bg-indigo-600', 'text-white', 'hover:bg-indigo-700', 'shadow-md');
+                }
+            };
+
+            const renderConceptosPago = () => {
+                const wrap = document.getElementById('lista-conceptos-pago');
+                wrap.innerHTML = '';
+                let total = 0;
+                pagoConceptosTemp.forEach((c, idx) => {
+                    total += c.monto;
+                    wrap.innerHTML += `
+                        <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-200 text-sm shadow-sm">
+                            <span class="font-medium text-slate-700">${c.concepto}</span>
+                            <div class="flex items-center gap-3">
+                                <span class="font-bold text-slate-800">${currency(c.monto)}</span>
+                                <button type="button" data-idx="${idx}" class="rm-concepto text-red-500 hover:text-red-700 w-6 h-6 rounded-md hover:bg-red-50 flex items-center justify-center transition-colors"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>`;
+                });
+                document.getElementById('total-a-pagar').textContent = currency(total);
+                checkPagoValido();
+            };
+
+            const renderMetodosPago = () => {
+                const wrap = document.getElementById('lista-metodos-pago');
+                wrap.innerHTML = '';
+                let total = 0;
+                pagoMetodosTemp.forEach((m, idx) => {
+                    total += m.monto;
+                    wrap.innerHTML += `
+                        <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-emerald-200 text-sm shadow-sm">
+                            <span class="font-medium text-emerald-800">${m.metodo}</span>
+                            <div class="flex items-center gap-3">
+                                <span class="font-bold text-emerald-700">${currency(m.monto)}</span>
+                                <button type="button" data-idx="${idx}" class="rm-metodo text-red-500 hover:text-red-700 w-6 h-6 rounded-md hover:bg-red-50 flex items-center justify-center transition-colors"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>`;
+                });
+                document.getElementById('total-pagado').textContent = currency(total);
+                checkPagoValido();
+            };
+
+            document.getElementById('btn-agregar-concepto').addEventListener('click', () => {
+                const concepto = document.getElementById('pago-concepto-select').value;
+                const monto = parseFloat(document.getElementById('pago-concepto-monto').value);
+                if (!concepto || isNaN(monto) || monto <= 0) return mostrarMensaje('Aviso', 'Ingresa un concepto y un monto válido.', 'info');
+                pagoConceptosTemp.push({ concepto, monto });
+                document.getElementById('pago-concepto-monto').value = '';
+                renderConceptosPago();
+            });
+
+            document.getElementById('btn-agregar-metodo').addEventListener('click', () => {
+                const metodo = document.getElementById('pago-metodo-select').value;
+                const monto = parseFloat(document.getElementById('pago-metodo-monto').value);
+                if (!metodo || isNaN(monto) || monto <= 0) return mostrarMensaje('Aviso', 'Ingresa un método y un monto válido.', 'info');
+                pagoMetodosTemp.push({ metodo, monto });
+                document.getElementById('pago-metodo-monto').value = '';
+                renderMetodosPago();
+            });
+
+            document.getElementById('lista-conceptos-pago').addEventListener('click', (e) => {
+                const btn = e.target.closest('.rm-concepto');
+                if(!btn) return;
+                pagoConceptosTemp.splice(btn.dataset.idx, 1);
+                renderConceptosPago();
+            });
+
+            document.getElementById('lista-metodos-pago').addEventListener('click', (e) => {
+                const btn = e.target.closest('.rm-metodo');
+                if(!btn) return;
+                pagoMetodosTemp.splice(btn.dataset.idx, 1);
+                renderMetodosPago();
+            });
+
+            document.getElementById('pago-alumno').addEventListener('change', checkPagoValido);
+            document.getElementById('pago-fecha').addEventListener('change', checkPagoValido);
+
+            document.getElementById('form-agregar-pago').onsubmit = (e) => {
+                e.preventDefault();
+                const tPagar = pagoConceptosTemp.reduce((s, c) => s + c.monto, 0);
+                const tPagado = pagoMetodosTemp.reduce((s, m) => s + m.monto, 0);
+                if (Math.abs(tPagar - tPagado) >= 0.01) return mostrarMensaje('Error', 'El Total a Pagar y el Total Recibido deben coincidir exactamente.', 'error');
+
+                const data = {
+                    id: document.getElementById('pago-id-edit').value || generateId(),
+                    alumnoId: document.getElementById('pago-alumno').value,
+                    fecha: document.getElementById('pago-fecha').value,
+                    conceptos: [...pagoConceptosTemp],
+                    metodosDePago: [...pagoMetodosTemp],
+                    total: tPagar,
+                    notas: document.getElementById('pago-notas').value,
+                    estado: 'activo'
+                };
+                
+                const idx = localPagos.findIndex(p => p.id === data.id);
+                if(idx > -1) localPagos[idx] = data; else localPagos.push(data);
+                
+                saveData('pagos', localPagos); cargarDatosIniciales();
+                e.target.reset(); document.getElementById('pago-id-edit').value = '';
+                pagoConceptosTemp = []; pagoMetodosTemp = [];
+                renderConceptosPago(); renderMetodosPago();
+                mostrarMensaje('Éxito', 'Transacción registrada correctamente.', 'success');
+            };
+
+            // Acciones en la lista de Pagos (Anular e Imprimir)
+            document.getElementById('lista-pagos').addEventListener('click', async (e) => {
+                const btnAnular = e.target.closest('.anular-pago-btn');
+                const btnPrint = e.target.closest('.print-ticket-btn');
+                
+                if (btnAnular && !btnAnular.disabled) {
+                    const id = btnAnular.dataset.id;
+                    const confirmed = await mostrarMensaje("Anular Pago", "¿Estás seguro de anular esta transacción? Requerirá un motivo.", "confirm");
+                    if (confirmed) {
+                        const motivo = await mostrarPromptModal("Motivo de Anulación", "Escribe la razón para anular el recibo:");
+                        if (motivo && motivo.trim() !== '') {
+                            const p = localPagos.find(x => x.id === id);
+                            p.estado = 'anulado'; p.motivoAnulacion = motivo;
+                            saveData('pagos', localPagos); cargarDatosIniciales();
+                        } else if (motivo !== null) {
+                            mostrarMensaje("Error", "Debes ingresar un motivo válido.", "error");
+                        }
+                    }
+                }
+                if (btnPrint) imprimirTicket(btnPrint.dataset.id);
+            });
+
+            // --- LÓGICA DE CAJA CHICA ---
+            document.getElementById('form-caja-chica').onsubmit = (e) => {
+                e.preventDefault();
+                const data = {
+                    id: generateId(),
+                    fecha: document.getElementById('caja-fecha').value,
+                    tipo: document.getElementById('caja-tipo').value,
+                    concepto: document.getElementById('caja-concepto').value,
+                    monto: parseFloat(document.getElementById('caja-monto').value)
+                };
+                localCajaChica.push(data);
+                saveData('cajaChica', localCajaChica); cargarDatosIniciales();
+                e.target.reset();
+                mostrarMensaje('Éxito', 'Movimiento de caja registrado.', 'success');
+            };
+
+            // Lógica de exportación de botones
+            document.getElementById('export-alumnos-csv-btn').onclick = exportarAlumnosCSV;
+            document.getElementById('export-alumnos-pdf-btn').onclick = exportarAlumnosPDF;
+            document.getElementById('export-maestros-csv-btn').onclick = exportarMaestrosCSV;
+            document.getElementById('export-maestros-pdf-btn').onclick = exportarMaestrosPDF;
+            document.getElementById('export-pagos-csv-btn').onclick = exportarPagosCSV;
+            document.getElementById('export-pagos-pdf-btn').onclick = exportarPagosPDF;
+            document.getElementById('export-caja-csv-btn').onclick = exportarCajaChicaCSV;
+            document.getElementById('export-caja-pdf-btn').onclick = exportarCajaChicaPDF;
+        });
+
+    </script>
+    <script>
+        // Navegación Sidebar Simple
+        function changeSection(sectionName) {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('content-active'));
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            document.getElementById('content-' + sectionName).classList.add('content-active');
+            document.getElementById('nav-' + sectionName).classList.add('active');
+            
+            const titles = { 'alumnos':'Gestión de Alumnos', 'maestros':'Plantilla Docente', 'cuotas':'Cuotas Anuales', 'pagos':'Registro de Pagos', 'caja':'Caja Chica', 'acerca':'Acerca del Sistema' };
+            document.getElementById('header-title').textContent = titles[sectionName];
+        }
+        window.changeSection = changeSection;
+    </script>
+</body>
+</html>
