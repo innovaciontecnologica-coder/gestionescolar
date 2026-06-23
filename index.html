@@ -125,6 +125,10 @@
                 <i class="fas fa-cash-register w-6 text-center text-lg"></i>
                 <span class="ml-3 font-medium">Caja Chica</span>
             </a>
+            <a href="#" onclick="changeSection('eventos')" id="nav-eventos" class="nav-link flex items-center px-4 py-3 rounded-xl">
+                <i class="fas fa-ticket-alt w-6 text-center text-lg"></i>
+                <span class="ml-3 font-medium">Eventos Especiales</span>
+            </a>
             
             <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mt-6 mb-2">Sistema</p>
             
@@ -691,6 +695,84 @@
                 </div>
             </section>
 
+            <!-- Sección Eventos Especiales -->
+            <section id="content-eventos" class="content-section">
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                    <!-- Formulario de Venta (Punto de Venta) -->
+                    <div class="xl:col-span-1">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 sticky top-0">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                    <i class="fas fa-store text-indigo-500"></i> Punto de Venta
+                                </h3>
+                                <button id="btn-admin-eventos" class="text-xs bg-slate-800 hover:bg-slate-700 text-white py-1.5 px-3 rounded-lg font-medium transition-colors shadow-sm"><i class="fas fa-cogs"></i> Eventos</button>
+                            </div>
+                            
+                            <form id="form-vender-evento" class="space-y-4">
+                                <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                                    <label class="block text-xs font-bold text-indigo-800 uppercase mb-2">1. Seleccionar Evento</label>
+                                    <select id="venta-evento-select" required class="form-input border-indigo-200 text-sm font-medium">
+                                        <option value="">Cargando eventos...</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">2. Alumno Inscrito</label>
+                                    <select id="venta-evento-alumno" required class="form-input text-sm">
+                                        <option value="">Seleccione un alumno...</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">3. Paquete a Comprar</label>
+                                    <select id="venta-paquete-select" required disabled class="form-input text-sm bg-slate-100 text-slate-400 cursor-not-allowed">
+                                        <option value="">Primero seleccione un evento</option>
+                                    </select>
+                                </div>
+
+                                <div class="border-t border-slate-100 pt-4 mt-2">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <span class="text-sm font-bold text-slate-500">Total a Pagar:</span>
+                                        <span id="venta-evento-total" class="text-2xl font-black text-emerald-600">$0.00</span>
+                                    </div>
+                                    <button type="submit" id="btn-guardar-venta-evento" disabled class="w-full bg-slate-300 text-slate-500 py-3 px-4 rounded-xl font-bold transition-all cursor-not-allowed flex justify-center items-center gap-2">
+                                        <i class="fas fa-ticket-alt"></i> Registrar Venta
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Historial de Ventas -->
+                    <div class="xl:col-span-2">
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-full">
+                            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-800">Boletos Vendidos</h3>
+                                    <p class="text-sm text-slate-500 mt-1">Historial de accesos y paquetes comprados.</p>
+                                </div>
+                                <span id="contador-ventas-eventos" class="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100"></span>
+                            </div>
+                            
+                            <div class="flex-1 overflow-x-auto p-0">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-slate-50 sticky top-0 border-b border-slate-200 z-10">
+                                        <tr>
+                                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Fecha Venta</th>
+                                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Alumno</th>
+                                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Evento / Paquete</th>
+                                            <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Monto</th>
+                                            <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lista-ventas-eventos" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- Sección Acerca de -->
             <section id="content-acerca" class="content-section">
                 <div class="bg-white p-12 rounded-3xl shadow-sm border border-slate-200 max-w-3xl mx-auto text-center mt-10">
@@ -717,13 +799,14 @@
     <script type="module">
         // --- Estado Global de la Aplicación ---
         let localAlumnos = [], localMaestros = [], localPagos = [], localCuotas = [], localAbonos = [], localCajaChica = [], pagosFiltrados = [], localNomina = [], alumnosFiltrados = [], maestrosFiltrados = [];
+        let localEventos = [], localVentasEventos = []; // Nuevos para eventos
         const NIVELES_ESCOLARES = ["Preescolar", "Primaria", "Secundaria", "Integrado Preescolar", "Integrado Primaria", "Integrado Secundaria"];
         const CONCEPTOS_PAGO = ["Beca 25%", "Beca 50%", "Beca 75%", "Beca 100%", "Colegiatura Normal", "Convivios", "Descuento 1er Hno.", "Descuento 2do Hno.", "Extemporáneos", "Fotografías", "Guardia", "Libros", "Material Didáctico", "Paseos", "Taller", "Uniformes", "Seguro Escolar"];
         const METODOS_PAGO = ["Efectivo", "Tarjeta de débito", "Tarjeta de crédito", "Transferencia"];
         const currency = n => `$${Number(n || 0).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
         // URL DE GOOGLE APPS SCRIPT
-        const API_URL = "https://script.google.com/macros/s/AKfycbyAHBC_aq21PrPeKIRbvAn3H3G__bDU9To_2Isi7RBjy3yn-ueHUvX3IwrSB-b0DMfN5A/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbw2BW70IL-7ElsU-F_5EOeDQ6ftrqSUT9X546veNnnCpQ7FGM-4lC_LCOPCGzQ9XIQO-Q/exec";
 
         // Helpers de LocalStorage + Sincronización en la Nube
         function loadData(key) {
@@ -742,7 +825,7 @@
         }
         function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
 
-        // --- Sistema de Modales Modernizados ---
+        // Sistema de Modales Modernizados
         function mostrarMensaje(title, message, type = 'info') {
             return new Promise((resolve) => {
                 const modalContainer = document.getElementById('modal-container');
@@ -827,8 +910,7 @@
             });
         }
 
-        // --- STREAMING_CHUNK:Defining PDF generation logic... ---
-        // Exportaciones CSV y PDF (Reusando tu lógica probada)
+        // Exportaciones CSV y PDF
         function exportarCSV(datos, filename, mapFn, noDataMsg) {
             if (datos.length === 0) return mostrarMensaje("Información", noDataMsg, "info");
             const csvRows = mapFn(datos);
@@ -866,7 +948,7 @@
             const w = window.open('','_blank'); w.document.write(html); w.document.close();
         }
 
-        // --- Recibo de Nómina Ultra-Profesional con quiebre de página ---
+        // --- Recibo de Nómina Profesional con quiebre de página ---
         function imprimirReciboNomina(nominaData) {
             const montoFormateado = currency(nominaData.monto);
             const fechaFormateada = new Date(nominaData.fechaPago + 'T00:00:00').toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -959,7 +1041,6 @@
             printWindow.document.close();
         }
 
-        // --- STREAMING_CHUNK:Adding Modals and Event Listeners... ---
         // INICIALIZACIÓN Y RENDERIZADO VISUAL
         function inicializarCatalogos() {
             const opcionesNivel = `<option value="">Seleccionar...</option>` + NIVELES_ESCOLARES.map(n => `<option value="${n}">${n}</option>`).join('');
@@ -983,7 +1064,6 @@
             document.getElementById('filtro-pago-metodo').innerHTML = `<option value="">Todos</option>` + opcionesMetodos;
         }
 
-        // LA FUNCIÓN DE GRADO MEJORADA Y TOTALMENTE REPARADA
         function actualizarGrados(nivelId, gradoId) {
             const selectNivel = document.getElementById(nivelId);
             const selectGrado = document.getElementById(gradoId);
@@ -1006,7 +1086,6 @@
                 selectGrado.innerHTML += `<option value="${g}">${g}°</option>`;
             });
             
-            // Aquí se remueven correctamente las clases de bloqueo
             selectGrado.disabled = false; 
             selectGrado.classList.remove('bg-slate-100', 'text-slate-400', 'cursor-not-allowed');
         }
@@ -1275,6 +1354,8 @@
                     localStorage.setItem('nomina', JSON.stringify(res.data.nomina || []));
                     localStorage.setItem('cuotas', JSON.stringify(res.data.cuotas || []));
                     localStorage.setItem('abonos', JSON.stringify(res.data.abonos || []));
+                    localStorage.setItem('eventos', JSON.stringify(res.data.eventos || [])); // Eventos Nuevos
+                    localStorage.setItem('ventasEventos', JSON.stringify(res.data.ventasEventos || [])); // Eventos Nuevos
                 }
                 btnHeader.innerHTML = titleOriginal;
                 cargarDatosIniciales();
@@ -1284,11 +1365,10 @@
             }
         }
 
-        // ================== EVENT LISTENERS ==================
-        
+        // ================== EVENT LISTENERS GENERALES ==================
         document.addEventListener('DOMContentLoaded', () => {
             inicializarCatalogos();
-            descargarDatosNube(); // Fuerza la carga antes de interactuar
+            descargarDatosNube();
             
             // Toggle Acordeón Médico
             document.getElementById('toggle-medico').onclick = () => {
@@ -1433,7 +1513,6 @@
                 btnGuardar.classList.replace('hover:bg-amber-600', 'hover:bg-indigo-700');
                 document.getElementById('btn-cancelar-alumno-edit').classList.add('hidden');
                 
-                // Restablecer el selector de grado al cancelar
                 const selectGrado = document.getElementById('grado');
                 selectGrado.innerHTML = '<option value="">...</option>';
                 selectGrado.disabled = true;
@@ -1673,10 +1752,294 @@
                 });
                 document.getElementById('caja-total-ingresos').textContent = currency(ing); document.getElementById('caja-total-gastos').textContent = currency(gas); document.getElementById('caja-balance').textContent = currency(ing - gas); document.getElementById('contador-caja').textContent = `${localCajaChica.length} Reg`;
             };
-            // Sobrescribimos cargarDatosIniciales para inyectar renderCaja al final
+            // Sobrescribimos cargarDatosIniciales para inyectar renderCaja y Eventos al final
             const originalCargar = cargarDatosIniciales;
-            cargarDatosIniciales = function() { originalCargar(); renderCaja(); };
-        });
+            cargarDatosIniciales = function() { 
+                originalCargar(); 
+                
+                // Cargas inyectadas dinámicamente
+                localEventos = loadData('eventos');
+                localVentasEventos = loadData('ventasEventos');
+                renderCaja(); 
+                
+                // Llenar selector de alumnos en Eventos Especiales
+                const selectVentaAlumno = document.getElementById('venta-evento-alumno');
+                if (selectVentaAlumno) {
+                    selectVentaAlumno.innerHTML = '<option value="">Seleccione un alumno...</option>';
+                    localAlumnos.sort((a,b) => a.nombres.localeCompare(b.nombres)).forEach(al => {
+                        selectVentaAlumno.innerHTML += `<option value="${al.id}">${al.nombres} ${al.apellidos}</option>`;
+                    });
+                }
+                actualizarSelectEventos();
+                renderVentasEventos();
+            };
+
+            // === EVENTOS ESPECIALES (KERMESES, ETC) ===
+            
+            // Administrar Eventos (Modal)
+            document.getElementById('btn-admin-eventos').addEventListener('click', () => {
+                let paquetesTemp = [];
+                const mc = document.getElementById('modal-container');
+                const hoy = new Date().toISOString().split("T")[0];
+                
+                mc.innerHTML = `
+                    <div class="modal-content" style="max-width: 800px;">
+                        <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="fas fa-calendar-alt text-indigo-500"></i> Administrador de Eventos</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Formulario de Creación -->
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <h3 class="text-sm font-bold text-slate-700 uppercase mb-3">Crear Nuevo Evento</h3>
+                                <div class="space-y-3">
+                                    <input type="text" id="nuevo-evento-nombre" placeholder="Nombre del Evento (Ej. Kermés Primavera)" class="form-input text-sm">
+                                    <input type="date" id="nuevo-evento-fecha" value="${hoy}" class="form-input text-sm">
+                                    
+                                    <div class="border border-indigo-100 rounded-lg p-3 bg-indigo-50/30">
+                                        <p class="text-xs font-bold text-indigo-800 mb-2">Paquetes Disponibles</p>
+                                        <div class="flex gap-2 mb-2">
+                                            <input type="text" id="temp-paquete-nombre" placeholder="Ej. Boleto + Comida" class="form-input text-sm flex-1">
+                                            <input type="number" id="temp-paquete-costo" placeholder="$ Costo" class="form-input text-sm w-24">
+                                            <button type="button" id="btn-add-paquete-temp" class="bg-indigo-600 text-white rounded-lg px-3 hover:bg-indigo-700 transition-colors"><i class="fas fa-plus"></i></button>
+                                        </div>
+                                        <div id="lista-paquetes-temp" class="space-y-1 text-sm max-h-32 overflow-y-auto"></div>
+                                    </div>
+                                    <button type="button" id="btn-guardar-evento" class="w-full bg-slate-800 text-white py-2 rounded-lg font-bold hover:bg-slate-700 transition-all">Registrar Evento en Catálogo</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Lista de Eventos Creados -->
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-700 uppercase mb-3">Eventos Vigentes</h3>
+                                <div class="overflow-y-auto max-h-80 border border-slate-200 rounded-xl">
+                                    <table class="w-full text-left text-sm">
+                                        <thead class="bg-slate-100 sticky top-0 text-slate-500 uppercase text-xs">
+                                            <tr><th class="p-3">Evento</th><th class="p-3 text-center">Acción</th></tr>
+                                        </thead>
+                                        <tbody id="lista-eventos-modal" class="divide-y divide-slate-100"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-end"><button id="btn-cerrar-admin-eventos" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-colors">Cerrar Panel</button></div>
+                    </div>
+                `;
+                mc.classList.add('active');
+
+                const renderPaquetesTemp = () => {
+                    const wrap = document.getElementById('lista-paquetes-temp');
+                    wrap.innerHTML = paquetesTemp.length === 0 ? '<p class="text-xs text-slate-400 italic">No hay paquetes aún.</p>' : '';
+                    paquetesTemp.forEach((p, idx) => {
+                        wrap.innerHTML += `<div class="flex justify-between items-center bg-white p-2 rounded border border-slate-200"><span class="font-medium">${p.nombre}</span> <div class="flex items-center gap-2"><span class="font-bold text-emerald-600">${currency(p.costo)}</span> <button class="text-red-500 hover:text-red-700 px-1 rm-pkt" data-idx="${idx}"><i class="fas fa-times"></i></button></div></div>`;
+                    });
+                };
+
+                const renderEventosCat = () => {
+                    const tbody = document.getElementById('lista-eventos-modal');
+                    tbody.innerHTML = localEventos.length === 0 ? '<tr><td colspan="2" class="p-4 text-center text-slate-400">No hay eventos configurados.</td></tr>' : '';
+                    localEventos.forEach(ev => {
+                        const count = ev.paquetes.length;
+                        tbody.innerHTML += `<tr class="hover:bg-slate-50"><td class="p-3"><div class="font-bold text-slate-800">${ev.concepto}</div><div class="text-xs text-slate-500">${ev.fecha} | ${count} Paquete(s)</div></td><td class="p-3 text-center"><button class="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors rm-evento" data-id="${ev.id}"><i class="fas fa-trash"></i></button></td></tr>`;
+                    });
+                };
+                renderEventosCat();
+
+                document.getElementById('btn-add-paquete-temp').addEventListener('click', () => {
+                    const n = document.getElementById('temp-paquete-nombre').value;
+                    const c = parseFloat(document.getElementById('temp-paquete-costo').value);
+                    if(!n || isNaN(c) || c < 0) return mostrarMensaje('Error', 'Ingresa un nombre y un costo válido para el paquete.', 'error');
+                    paquetesTemp.push({ id: generateId(), nombre: n, costo: c });
+                    document.getElementById('temp-paquete-nombre').value = '';
+                    document.getElementById('temp-paquete-costo').value = '';
+                    renderPaquetesTemp();
+                });
+
+                document.getElementById('lista-paquetes-temp').addEventListener('click', (e) => {
+                    const btn = e.target.closest('.rm-pkt');
+                    if(btn) { paquetesTemp.splice(btn.dataset.idx, 1); renderPaquetesTemp(); }
+                });
+
+                document.getElementById('btn-guardar-evento').addEventListener('click', () => {
+                    const nom = document.getElementById('nuevo-evento-nombre').value;
+                    const fec = document.getElementById('nuevo-evento-fecha').value;
+                    if(!nom || !fec || paquetesTemp.length === 0) return mostrarMensaje('Error', 'Se requiere nombre, fecha y al menos un paquete.', 'error');
+                    
+                    localEventos.push({ id: generateId(), concepto: nom, fecha: fec, paquetes: [...paquetesTemp], estado: 'activo' });
+                    saveData('eventos', localEventos);
+                    
+                    document.getElementById('nuevo-evento-nombre').value = '';
+                    paquetesTemp = []; renderPaquetesTemp(); renderEventosCat(); actualizarSelectEventos();
+                    mostrarMensaje('Éxito', 'Evento registrado correctamente.', 'success');
+                });
+
+                document.getElementById('lista-eventos-modal').addEventListener('click', async (e) => {
+                    const btn = e.target.closest('.rm-evento');
+                    if(btn) {
+                        if(await mostrarMensaje('Confirmar', '¿Eliminar este evento del catálogo?', 'confirm')) {
+                            localEventos = localEventos.filter(x => x.id !== btn.dataset.id);
+                            saveData('eventos', localEventos); renderEventosCat(); actualizarSelectEventos();
+                        }
+                    }
+                });
+
+                document.getElementById('btn-cerrar-admin-eventos').onclick = () => mc.classList.remove('active');
+            });
+
+            // Lógica Punto de Venta Eventos
+            function actualizarSelectEventos() {
+                const selectEv = document.getElementById('venta-evento-select');
+                if(!selectEv) return;
+                selectEv.innerHTML = '<option value="">Seleccione un evento...</option>';
+                localEventos.filter(e => e.estado === 'activo').forEach(ev => {
+                    selectEv.innerHTML += `<option value="${ev.id}">${ev.concepto} (${ev.fecha})</option>`;
+                });
+            }
+
+            let paqueteSeleccionadoObj = null;
+
+            document.getElementById('venta-evento-select').addEventListener('change', (e) => {
+                const evId = e.target.value;
+                const selectPkt = document.getElementById('venta-paquete-select');
+                document.getElementById('venta-evento-total').textContent = "$0.00";
+                paqueteSeleccionadoObj = null;
+                validarBtnVentaEvento();
+
+                if(!evId) {
+                    selectPkt.innerHTML = '<option value="">Primero seleccione un evento</option>';
+                    selectPkt.disabled = true; selectPkt.classList.add('bg-slate-100', 'text-slate-400', 'cursor-not-allowed');
+                    return;
+                }
+                
+                const evento = localEventos.find(x => x.id === evId);
+                selectPkt.innerHTML = '<option value="">Seleccione paquete/boleto...</option>';
+                evento.paquetes.forEach(p => {
+                    selectPkt.innerHTML += `<option value="${p.id}">${p.nombre} - ${currency(p.costo)}</option>`;
+                });
+                selectPkt.disabled = false; selectPkt.classList.remove('bg-slate-100', 'text-slate-400', 'cursor-not-allowed');
+            });
+
+            document.getElementById('venta-paquete-select').addEventListener('change', (e) => {
+                const pktId = e.target.value;
+                const evId = document.getElementById('venta-evento-select').value;
+                if(!pktId || !evId) {
+                    document.getElementById('venta-evento-total').textContent = "$0.00";
+                    paqueteSeleccionadoObj = null;
+                } else {
+                    const evento = localEventos.find(x => x.id === evId);
+                    paqueteSeleccionadoObj = evento.paquetes.find(p => p.id === pktId);
+                    document.getElementById('venta-evento-total').textContent = currency(paqueteSeleccionadoObj.costo);
+                }
+                validarBtnVentaEvento();
+            });
+
+            document.getElementById('venta-evento-alumno').addEventListener('change', validarBtnVentaEvento);
+
+            function validarBtnVentaEvento() {
+                const btn = document.getElementById('btn-guardar-venta-evento');
+                const alId = document.getElementById('venta-evento-alumno').value;
+                if(alId && paqueteSeleccionadoObj) {
+                    btn.disabled = false; btn.classList.remove('bg-slate-300', 'text-slate-500', 'cursor-not-allowed');
+                    btn.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700', 'shadow-md');
+                } else {
+                    btn.disabled = true; btn.classList.add('bg-slate-300', 'text-slate-500', 'cursor-not-allowed');
+                    btn.classList.remove('bg-indigo-600', 'text-white', 'hover:bg-indigo-700', 'shadow-md');
+                }
+            }
+
+            document.getElementById('form-vender-evento').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const venta = {
+                    id: generateId(),
+                    eventoId: document.getElementById('venta-evento-select').value,
+                    alumnoId: document.getElementById('venta-evento-alumno').value,
+                    paqueteId: paqueteSeleccionadoObj.id,
+                    monto: paqueteSeleccionadoObj.costo,
+                    fechaVenta: new Date().toISOString().split("T")[0],
+                    estado: 'activo'
+                };
+                localVentasEventos.push(venta);
+                saveData('ventasEventos', localVentasEventos);
+                
+                document.getElementById('form-vender-evento').reset();
+                document.getElementById('venta-paquete-select').disabled = true;
+                document.getElementById('venta-paquete-select').classList.add('bg-slate-100', 'cursor-not-allowed');
+                document.getElementById('venta-evento-total').textContent = "$0.00";
+                paqueteSeleccionadoObj = null; validarBtnVentaEvento();
+                
+                renderVentasEventos();
+                mostrarMensaje('¡Venta Exitosa!', 'El boleto ha sido registrado.', 'success');
+            });
+
+            function renderVentasEventos() {
+                const tbody = document.getElementById('lista-ventas-eventos');
+                tbody.innerHTML = '';
+                document.getElementById('contador-ventas-eventos').textContent = `${localVentasEventos.length} Ventas`;
+                
+                if(localVentasEventos.length === 0) return tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400 text-sm">No hay boletos vendidos aún.</td></tr>';
+                
+                localVentasEventos.sort((a,b) => new Date(b.fechaVenta) - new Date(a.fechaVenta)).forEach(v => {
+                    const alumno = localAlumnos.find(a => a.id === v.alumnoId);
+                    const evento = localEventos.find(e => e.id === v.eventoId);
+                    const paquete = evento ? evento.paquetes.find(p => p.id === v.paqueteId) : null;
+                    
+                    const nomAl = alumno ? `${alumno.nombres} ${alumno.apellidos}` : 'N/A';
+                    const nomEv = evento ? evento.concepto : 'Evento Borrado';
+                    const nomPkt = paquete ? paquete.nombre : 'N/A';
+                    
+                    const rowClass = v.estado === 'anulado' ? 'pago-anulado' : 'hover:bg-slate-50 transition-colors';
+                    
+                    tbody.innerHTML += `
+                        <tr class="${rowClass}">
+                            <td class="px-6 py-4 text-sm text-slate-600">${v.fechaVenta}</td>
+                            <td class="px-6 py-4 font-medium text-slate-800">${nomAl}</td>
+                            <td class="px-6 py-4 text-sm text-slate-600"><strong>${nomEv}</strong><br><span class="text-xs text-slate-500">${nomPkt}</span></td>
+                            <td class="px-6 py-4 text-right font-bold text-emerald-600">${currency(v.monto)}</td>
+                            <td class="px-6 py-4 text-center">
+                                <button data-id="${v.id}" class="print-boleto-btn text-slate-500 hover:text-indigo-600 p-2"><i class="fas fa-print"></i></button>
+                                <button data-id="${v.id}" class="anular-boleto-btn text-red-500 hover:text-red-700 p-2" ${v.estado === 'anulado' ? 'disabled' : ''}><i class="fas fa-ban"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            document.getElementById('lista-ventas-eventos').addEventListener('click', async (e) => {
+                const btnPrint = e.target.closest('.print-boleto-btn');
+                const btnAnular = e.target.closest('.anular-boleto-btn');
+                
+                if(btnPrint) {
+                    const v = localVentasEventos.find(x => x.id === btnPrint.dataset.id);
+                    imprimirBoletoEvento(v);
+                }
+                if(btnAnular && !btnAnular.disabled) {
+                    const v = localVentasEventos.find(x => x.id === btnAnular.dataset.id);
+                    const motivo = await mostrarPromptModal("Anular Boleto", "¿Cuál es el motivo para cancelar esta venta?");
+                    if(motivo) {
+                        v.estado = 'anulado'; v.motivoAnulacion = motivo;
+                        saveData('ventasEventos', localVentasEventos); renderVentasEventos();
+                    }
+                }
+            });
+
+            function imprimirBoletoEvento(venta) {
+                const alumno = localAlumnos.find(a => a.id === venta.alumnoId);
+                const evento = localEventos.find(e => e.id === venta.eventoId);
+                const paquete = evento.paquetes.find(p => p.id === venta.paqueteId);
+                
+                const html = `<html><head><style>body{font-family:sans-serif;width:300px;margin:0 auto;padding:20px;text-align:center;}hr{border:0;border-top:2px dashed #000;margin:15px 0;}.ev{font-size:18px;font-weight:bold;margin:10px 0;}.pkt{font-size:16px;background:#eee;padding:10px;border-radius:5px;}td.r{text-align:right;}table{width:100%;}</style></head><body onload="window.print();window.close();">
+                    <h2>Colegio Labastida</h2><p>Boleto / Ticket de Acceso</p><hr>
+                    <div class="ev">${evento.concepto}</div>
+                    <p>Fecha del Evento: ${evento.fecha}</p>
+                    <div class="pkt">${paquete.nombre}</div>
+                    <hr>
+                    <p><strong>Alumno:</strong> ${alumno.nombres} ${alumno.apellidos}</p>
+                    <p><strong>Folio:</strong> ${venta.id.substring(0,8).toUpperCase()}</p>
+                    <table><tr><td>TOTAL PAGADO:</td><td class="r"><strong>${currency(venta.monto)}</strong></td></tr></table>
+                    <hr><p>¡Conserva este boleto para el evento!</p>
+                </body></html>`;
+                const w = window.open('','_blank'); w.document.write(html); w.document.close();
+            }
+
+        }); // FIN DE DOMContentLoaded
 
     </script>
     <script>
@@ -1687,8 +2050,8 @@
             document.getElementById('content-' + sectionName).classList.add('content-active');
             document.getElementById('nav-' + sectionName).classList.add('active');
             
-            const titles = { 'alumnos':'Gestión de Alumnos', 'maestros':'Plantilla Docente', 'cuotas':'Cuotas Anuales', 'pagos':'Registro de Pagos', 'caja':'Caja Chica', 'acerca':'Acerca del Sistema' };
-            document.getElementById('header-title').textContent = titles[sectionName];
+            const titles = { 'alumnos':'Gestión de Alumnos', 'maestros':'Plantilla Docente', 'cuotas':'Cuotas Anuales', 'pagos':'Registro de Pagos', 'caja':'Caja Chica', 'eventos':'Eventos Especiales', 'acerca':'Acerca del Sistema' };
+            document.getElementById('header-title').innerText = titles[sectionName] || 'Control Escolar Pro';
         }
         window.changeSection = changeSection;
     </script>
