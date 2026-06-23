@@ -944,369 +944,369 @@
         }
 
         function abrirModalHistorialNomina(maestroId, maestroNombre) {
-            const mc = document.getElementById('modal-container');
-            const pagos = localNomina.filter(p => p.maestroId === maestroId).sort((a, b) => b.fechaPago.localeCompare(a.fechaPago));
-            
-            const html = pagos.length ? pagos.map(p => `
-                <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                    <td class="py-3 px-4 text-sm font-medium text-slate-600">${new Date(p.fechaPago + 'T00:00:00').toLocaleDateString('es-MX')}</td>
-                    <td class="py-3 px-4 text-right font-bold text-emerald-600">${currency(p.monto)}</td>
-                    <td class="py-3 px-4 text-center"><button data-id="${p.id}" class="reimprimir-nomina-btn w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white transition-colors"><i class="fas fa-print"></i></button></td>
-                </tr>`).join('') : `<tr><td colspan="3" class="text-center py-6 text-slate-400">Sin pagos registrados</td></tr>`;
+            const modalContainer = document.getElementById('modal-container');
+            const pagosDelMaestro = localNomina
+                .filter(p => p.maestroId === maestroId)
+                .sort((a, b) => b.fechaPago.localeCompare(a.fechaPago)); // Sort by date descending
 
-            mc.innerHTML = `
+            let historialHtml = '';
+            if (pagosDelMaestro.length === 0) {
+                historialHtml = '<tr><td colspan="3" class="text-center py-4 text-gray-500">No hay pagos registrados para este maestro.</td></tr>';
+            } else {
+                historialHtml = pagosDelMaestro.map(pago => `
+                    <tr class="border-b">
+                        <td class="px-4 py-2">${new Date(pago.fechaPago + 'T00:00:00').toLocaleDateString('es-MX')}</td>
+                        <td class="px-4 py-2 text-right font-medium text-emerald-600">${currency(pago.monto)}</td>
+                        <td class="px-4 py-2 text-center">
+                            <button data-id="${pago.id}" class="reimprimir-nomina-btn bg-slate-100 text-blue-600 p-2 rounded-lg hover:bg-blue-600 hover:text-white transition-colors" title="Reimprimir Recibo">
+                                <i class="fas fa-print"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            modalContainer.innerHTML = `
                 <div class="modal-content">
-                    <h2 class="text-xl font-bold text-slate-800 mb-2">Historial de Nómina</h2>
-                    <p class="text-sm text-slate-500 mb-4">Maestro: <strong class="text-slate-800">${maestroNombre}</strong></p>
-                    <div class="overflow-y-auto max-h-60 border border-slate-200 rounded-xl">
-                        <table class="w-full text-left"><thead class="bg-slate-50 sticky top-0"><tr><th class="py-2 px-4 text-xs font-bold text-slate-500 uppercase">Fecha</th><th class="py-2 px-4 text-right text-xs font-bold text-slate-500 uppercase">Monto</th><th class="py-2 px-4 text-center text-xs font-bold text-slate-500 uppercase">Recibo</th></tr></thead><tbody>${html}</tbody></table>
+                    <h2 class="text-2xl font-bold text-slate-800 mb-2">Historial de Pagos</h2>
+                    <p class="mb-6 text-sm text-slate-500">Maestro: <strong class="text-slate-800">${maestroNombre}</strong></p>
+                    <div class="overflow-y-auto max-h-80 border border-slate-200 rounded-xl">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 sticky top-0">
+                                <tr>
+                                    <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">Fecha de Pago</th>
+                                    <th class="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">Monto</th>
+                                    <th class="px-4 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">Recibo</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-slate-100">${historialHtml}</tbody>
+                        </table>
                     </div>
-                    <div class="flex justify-end mt-4"><button id="close-modal-historial" class="px-5 py-2.5 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 font-medium transition-colors">Cerrar</button></div>
-                </div>`;
-            mc.classList.add('active');
-            document.getElementById('close-modal-historial').onclick = () => mc.classList.remove('active');
-            mc.querySelectorAll('.reimprimir-nomina-btn').forEach(btn => btn.onclick = (e) => {
-                const pagoData = localNomina.find(p => p.id === e.currentTarget.dataset.id);
-                if (pagoData) imprimirReciboNomina(pagoData);
-            });
-        }
-        
-        function imprimirReciboNomina(data) {
-            const html = `<html><head><style>body{font-family:sans-serif;padding:20px;text-align:center;} .box{border:1px solid #000;padding:20px;max-width:400px;margin:auto;} table{width:100%;text-align:left;} td{padding:5px;}</style></head><body onload="window.print();window.close();"><div class="box"><h3>Colegio Labastida</h3><p>Pago Compensatorio</p><hr><table><tr><td>Fecha:</td><td>${new Date(data.fechaPago + 'T00:00:00').toLocaleDateString('es-MX')}</td></tr><tr><td>Maestro:</td><td>${data.maestroNombre}</td></tr><tr><td>Monto:</td><td><b>${currency(data.monto)}</b></td></tr></table><br><br><hr style="width:200px"><p>Firma del Maestro</p></div></body></html>`;
-            const w = window.open('','_blank'); w.document.write(html); w.document.close();
-        }
-
-        // --- STREAMING_CHUNK:Implementing UI Events and Render functions... ---
-        // Poblado de Contenido Estático
-        const populateStaticContent = () => {
-            const nivelSelects = document.querySelectorAll('#nivel, #filtro-alumno-nivel, #filtro-maestro-nivel');
-            nivelSelects.forEach(select => {
-                select.innerHTML = `<option value="">${select.id.includes('filtro') ? 'Todos los Niveles' : 'Seleccionar Nivel'}</option>` + NIVELES_ESCOLARES.map(n => `<option value="${n}">${n}</option>`).join('');
-            });
-            document.getElementById('maestro-niveles-checkboxes').innerHTML = NIVELES_ESCOLARES.map(nivel => `<label class="flex items-center p-2 rounded hover:bg-white cursor-pointer"><input id="nivel-${nivel.replace(/\s+/g, '')}" name="maestro-nivel" type="checkbox" value="${nivel}" class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"><span class="ml-2 text-sm text-slate-700">${nivel}</span></label>`).join('');
-            document.getElementById('pago-concepto-select').innerHTML = CONCEPTOS_PAGO.map(c => `<option value="${c}">${c}</option>`).join('');
-            
-            // Link radio buttons custom en caja chica al select original
-            document.querySelectorAll('input[name="caja-tipo"]').forEach(radio => {
-                radio.addEventListener('change', (e) => { document.getElementById('caja-tipo').value = e.target.value; });
-            });
-        };
-
-        // Renderizadores con diseño Tailwind inyectado
-        const renderAlumnos = (alumnos) => {
-            const tbody = document.getElementById('lista-alumnos');
-            tbody.innerHTML = alumnos.length ? '' : `<tr><td colspan="4" class="text-center py-8 text-slate-400">No hay alumnos registrados.</td></tr>`;
-            alumnos.forEach(al => {
-                const badgeClass = al.estatus === 'Nuevo Ingreso' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition-colors group">
-                        <td class="px-6 py-4">
-                            <div class="font-bold text-slate-800">${al.nombres} ${al.apellidos}</div>
-                            <div class="text-xs text-slate-500 mt-1"><i class="fas fa-user-circle mr-1"></i> ${al.tutor || 'Sin tutor'}</div>
-                        </td>
-                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">${al.nivel} ${al.grado}° "${al.grupo}"</td>
-                        <td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-xs font-bold border ${badgeClass}">${al.estatus}</span></td>
-                        <td class="px-6 py-4 text-center">
-                            <div class="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button data-id="${al.id}" class="edit-alumno-btn w-8 h-8 rounded-full bg-slate-100 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors"><i class="fas fa-pen text-sm"></i></button>
-                                <button data-id="${al.id}" class="delete-alumno-btn w-8 h-8 rounded-full bg-slate-100 text-red-500 hover:bg-red-500 hover:text-white transition-colors"><i class="fas fa-trash text-sm"></i></button>
-                            </div>
-                        </td>
-                    </tr>`;
-            });
-            document.getElementById('contador-alumnos').textContent = alumnos.length;
-        };
-
-        const renderMaestros = (maestros) => {
-            const tbody = document.getElementById('lista-maestros');
-            tbody.innerHTML = maestros.length ? '' : `<tr><td colspan="4" class="text-center py-8 text-slate-400">No hay maestros registrados.</td></tr>`;
-            maestros.forEach(m => {
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition-colors group">
-                        <td class="px-6 py-4">
-                            <div class="font-bold text-slate-800">${m.nombres} ${m.apellidos}</div>
-                            <div class="text-xs font-mono text-slate-400 mt-1">${m.rfc || 'Sin RFC'}</div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex flex-wrap gap-1">
-                                ${(m.niveles||[]).map(n => `<span class="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded border border-indigo-100">${n}</span>`).join('')}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-sm text-slate-600">
-                            <div class="flex items-center gap-2"><i class="fas fa-phone w-3 text-slate-400"></i> ${m.telefono}</div>
-                            <div class="flex items-center gap-2 mt-1"><i class="fas fa-envelope w-3 text-slate-400"></i> ${m.email}</div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex justify-center gap-2">
-                                <button data-id="${m.id}" data-nombre="${m.nombres} ${m.apellidos}" class="pagar-nomina-btn px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white text-xs font-bold transition-colors" title="Pagar">Pago</button>
-                                <button data-id="${m.id}" data-nombre="${m.nombres} ${m.apellidos}" class="historial-nomina-btn px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold transition-colors" title="Historial"><i class="fas fa-history"></i></button>
-                                <button data-id="${m.id}" class="edit-maestro-btn w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors ml-2"><i class="fas fa-pen text-xs"></i></button>
-                                <button data-id="${m.id}" class="delete-maestro-btn w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-colors"><i class="fas fa-trash text-xs"></i></button>
-                            </div>
-                        </td>
-                    </tr>`;
-            });
-            document.getElementById('contador-maestros').textContent = maestros.length;
-        };
-
-        const renderPagos = (pagos) => {
-            const tbody = document.getElementById('lista-pagos');
-            tbody.innerHTML = pagos.length ? '' : `<tr><td colspan="4" class="text-center py-8 text-slate-400">No hay transacciones registradas.</td></tr>`;
-            pagos.sort((a,b) => new Date(b.fecha) - new Date(a.fecha)).forEach(p => {
-                const al = localAlumnos.find(a => a.id === p.alumnoId);
-                const isAnulado = p.estado === 'anulado';
-                const anClass = isAnulado ? 'pago-anulado' : '';
-                
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition-colors ${anClass}">
-                        <td class="px-6 py-4 text-sm font-medium text-slate-700">${new Date(p.fecha).toLocaleDateString('es-MX')}</td>
-                        <td class="px-6 py-4">
-                            <div class="font-bold text-slate-800">${al ? `${al.nombres} ${al.apellidos}` : 'N/A'}</div>
-                            <div class="text-xs text-slate-500 mt-1">${(p.conceptos||[]).map(c=>c.concepto).join(', ')}</div>
-                            ${isAnulado ? `<div class="text-xs font-bold text-red-600 mt-1">Anulado: ${p.motivoAnulacion}</div>` : ''}
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                            <span class="font-black ${isAnulado ? 'text-slate-400' : 'text-emerald-600'}">${currency(p.total)}</span>
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            <div class="flex justify-center gap-2">
-                                <button data-id="${p.id}" class="print-ticket-btn w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:bg-indigo-600 hover:text-white transition-colors"><i class="fas fa-print"></i></button>
-                                <button data-id="${p.id}" class="edit-pago-btn w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:bg-amber-500 hover:text-white transition-colors" ${isAnulado?'disabled':''}><i class="fas fa-pen"></i></button>
-                                <button data-id="${p.id}" class="anular-pago-btn w-8 h-8 rounded-lg bg-slate-100 text-red-500 hover:bg-red-600 hover:text-white transition-colors" ${isAnulado?'disabled':''}><i class="fas fa-ban"></i></button>
-                            </div>
-                        </td>
-                    </tr>`;
-            });
-            document.getElementById('contador-pagos').textContent = pagos.length;
-        };
-
-        const renderCajaChica = (movs) => {
-            const tbody = document.getElementById('lista-caja-chica');
-            let tIng=0, tGas=0;
-            tbody.innerHTML = movs.length ? '' : `<tr><td colspan="3" class="text-center py-8 text-slate-400">No hay movimientos.</td></tr>`;
-            movs.sort((a,b) => String(b.fecha).localeCompare(String(a.fecha))).forEach(m => {
-                const isIng = m.tipo === 'ingreso';
-                if(isIng) tIng+=Number(m.monto); else tGas+=Number(m.monto);
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 border-l-4 ${isIng ? 'border-l-emerald-400' : 'border-l-rose-400'}">
-                        <td class="px-6 py-4 text-sm font-medium text-slate-600">${new Date(m.fecha).toLocaleDateString('es-MX')}</td>
-                        <td class="px-6 py-4 text-sm text-slate-800">${m.concepto}</td>
-                        <td class="px-6 py-4 text-right font-bold ${isIng ? 'text-emerald-600' : 'text-rose-600'}">${isIng?'+':'-'} ${currency(m.monto)}</td>
-                    </tr>`;
-            });
-            document.getElementById('caja-total-ingresos').textContent = currency(tIng);
-            document.getElementById('caja-total-gastos').textContent = currency(tGas);
-            document.getElementById('caja-balance').textContent = currency(tIng - tGas);
-            document.getElementById('contador-caja').textContent = `${movs.length} Registros`;
-        };
-        
-        // Estado de Cuotas
-        const renderEstadoDeCuotas = () => {
-            const tbody = document.getElementById('lista-estado-cuotas');
-            tbody.innerHTML = '';
-            localAlumnos.forEach(alumno => {
-                const cuota = localCuotas.find(c => c.nombre === alumno.tipoCuota);
-                if(!cuota) return;
-                const costo = Number(cuota.costo);
-                const abonos = localAbonos.filter(a => a.alumnoId === alumno.id);
-                const pagado = abonos.reduce((s, a) => s + Number(a.monto), 0);
-                const saldo = costo - pagado;
-                const isPagado = saldo <= 0;
-                
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50">
-                        <td class="px-6 py-4 font-bold text-slate-800">${alumno.nombres} ${alumno.apellidos}</td>
-                        <td class="px-6 py-4"><div class="text-sm font-medium text-indigo-700">${cuota.nombre}</div><div class="text-xs text-slate-400">${currency(costo)}</div></td>
-                        <td class="px-6 py-4 text-right font-bold text-emerald-600">${currency(pagado)}</td>
-                        <td class="px-6 py-4 text-right font-bold ${isPagado?'text-slate-400':'text-rose-600'}">${currency(saldo)}</td>
-                        <td class="px-6 py-4 text-center"><span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${isPagado?'bg-emerald-100 text-emerald-700':'bg-amber-100 text-amber-700'}">${isPagado?'Pagado':'Pendiente'}</span></td>
-                        <td class="px-6 py-4 text-center">
-                            <button data-alumno-id="${alumno.id}" class="ver-historial-abonos-btn px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-bold mr-1" ${abonos.length?'':'disabled'}><i class="fas fa-eye"></i></button>
-                            <button data-alumno-id="${alumno.id}" class="abrir-modal-abono-btn px-4 py-1.5 rounded-lg text-white text-xs font-bold ${!isPagado && abonos.length<3 ? 'bg-indigo-600 hover:bg-indigo-700 shadow-md':'bg-slate-300 cursor-not-allowed'}" ${!isPagado && abonos.length<3 ? '':'disabled'}>Abonar</button>
-                        </td>
-                    </tr>`;
-            });
-        };
-
-        // Modal de Configuración de Cuotas
-        document.getElementById('btn-admin-cuotas').addEventListener('click', () => {
-            const mc = document.getElementById('modal-container');
-            mc.innerHTML = `
-                <div class="modal-content" style="max-width: 800px;">
-                    <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2"><i class="fas fa-tags text-indigo-500"></i> Configurar Cuotas</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
-                        <div class="md:col-span-2 bg-slate-50 p-5 rounded-2xl border border-slate-200">
-                            <form id="form-cuota" class="space-y-4">
-                                <div><label class="block text-xs font-bold text-slate-500 mb-1">Nombre (Ej. Cuota 2024)</label><input type="text" id="c-nom" required class="form-input"></div>
-                                <div><label class="block text-xs font-bold text-slate-500 mb-1">Costo Anual</label><input type="number" id="c-cos" required class="form-input" step="0.01"></div>
-                                <button class="w-full bg-slate-800 text-white py-2.5 rounded-xl font-bold hover:bg-slate-700">Agregar Cuota</button>
-                            </form>
-                        </div>
-                        <div class="md:col-span-3 border border-slate-200 rounded-2xl overflow-hidden">
-                            <table class="w-full text-left">
-                                <thead class="bg-slate-100"><tr><th class="p-3 text-xs font-bold text-slate-500">Nombre</th><th class="p-3 text-xs font-bold text-slate-500">Costo</th><th class="p-3"></th></tr></thead>
-                                <tbody id="t-cuotas" class="divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
+                    <div class="mt-6 flex justify-end">
+                        <button id="close-modal-btn" class="px-5 py-2.5 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 font-medium transition-colors">Cerrar Historial</button>
                     </div>
-                    <button id="close-modal-btn" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200"><i class="fas fa-times"></i></button>
                 </div>`;
-            mc.classList.add('active');
             
-            const renderC = () => {
-                document.getElementById('t-cuotas').innerHTML = localCuotas.map(c => `<tr><td class="p-3 font-medium">${c.nombre}</td><td class="p-3">${currency(c.costo)}</td><td class="p-3 text-right"><button data-id="${c.id}" class="rm-cuota text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button></td></tr>`).join('');
-                document.querySelectorAll('.rm-cuota').forEach(b => b.onclick = (e) => {
-                    localCuotas = localCuotas.filter(c => c.id !== e.currentTarget.dataset.id);
-                    saveData('cuotas', localCuotas); renderC(); cargarDatosIniciales();
+            modalContainer.classList.add('active');
+            document.getElementById('close-modal-btn').onclick = () => modalContainer.classList.remove('active');
+
+            // Add event listener for re-print buttons
+            modalContainer.querySelectorAll('.reimprimir-nomina-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const pagoId = e.currentTarget.dataset.id;
+                    const pagoData = localNomina.find(p => p.id === pagoId);
+                    if (pagoData) {
+                        imprimirReciboNomina(pagoData);
+                    }
                 });
-            };
-            renderC();
-            
-            document.getElementById('form-cuota').onsubmit = (e) => {
-                e.preventDefault();
-                localCuotas.push({ id: generateId(), nombre: document.getElementById('c-nom').value, costo: document.getElementById('c-cos').value });
-                saveData('cuotas', localCuotas); renderC(); document.getElementById('form-cuota').reset(); cargarDatosIniciales();
-            };
-            document.getElementById('close-modal-btn').onclick = () => mc.classList.remove('active');
-        });
+            });
+        }
 
-        // Modales de Abonos
-        document.getElementById('lista-estado-cuotas').addEventListener('click', (e) => {
-            const btnAb = e.target.closest('.abrir-modal-abono-btn');
-            const btnHi = e.target.closest('.ver-historial-abonos-btn');
-            const mc = document.getElementById('modal-container');
-            
-            if(btnAb) {
-                const al = localAlumnos.find(a=>a.id === btnAb.dataset.alumnoId);
-                const cu = localCuotas.find(c=>c.nombre === al.tipoCuota);
-                const abonos = localAbonos.filter(a=>a.alumnoId === al.id);
-                const pagado = abonos.reduce((s,a)=>s+Number(a.monto),0);
-                const saldo = cu.costo - pagado;
-                
-                const isUltimo = abonos.length === 2;
-                const minMax = isUltimo ? `value="${saldo}" readonly` : `max="${saldo}"`;
-                
-                mc.innerHTML = `
-                    <div class="modal-content">
-                        <h2 class="text-xl font-bold text-slate-800 mb-2">Registrar Abono</h2>
-                        <p class="text-sm text-slate-500 mb-6">${al.nombres} ${al.apellidos} | Saldo: <strong class="text-rose-600">${currency(saldo)}</strong></p>
-                        ${isUltimo ? `<div class="bg-amber-50 text-amber-800 p-3 rounded-xl text-sm mb-4 border border-amber-200">Este es el último abono (3/3), debe liquidar el total.</div>` : ''}
-                        <form id="f-ab">
-                            <div class="space-y-4">
-                                <input type="date" id="a-fec" value="${new Date().toISOString().split('T')[0]}" required class="form-input">
-                                <input type="number" id="a-mon" step="0.01" required class="form-input text-lg font-bold" ${minMax} placeholder="Monto">
-                                <select id="a-met" class="form-input"><option>Efectivo</option><option>Tarjeta</option><option>Transferencia</option></select>
-                                <div class="flex justify-end gap-2 mt-4">
-                                    <button type="button" class="btn-cancel px-4 py-2 bg-slate-100 rounded-xl text-slate-600">Cancelar</button>
-                                    <button type="submit" class="px-4 py-2 bg-indigo-600 rounded-xl text-white font-bold shadow-md">Guardar</button>
+        function imprimirReciboNomina(nominaData) {
+            const montoFormateado = currency(nominaData.monto);
+            const fechaFormateada = new Date(nominaData.fechaPago + 'T00:00:00').toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+            // Genera un folio seguro a partir del ID
+            const folio = nominaData.id ? nominaData.id.substring(0, 8).toUpperCase() : Date.now().toString(36).substring(0,8).toUpperCase();
+
+            const reciboHTML = `
+                <!DOCTYPE html>
+                <html lang="es-MX">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Recibo de Pago - ${nominaData.maestroNombre}</title>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@600&display=swap');
+                        
+                        body { 
+                            font-family: 'Inter', sans-serif; 
+                            background-color: #f3f4f6; 
+                            margin: 0; 
+                            padding: 40px; 
+                            color: #1f2937;
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
+                        .page {
+                            max-width: 800px;
+                            margin: 0 auto;
+                            background: white;
+                            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                        }
+                        .recibo { 
+                            padding: 40px; 
+                            border-bottom: 2px dashed #cbd5e1;
+                            position: relative;
+                            overflow: hidden;
+                        }
+                        .recibo:last-child {
+                            border-bottom: none;
+                        }
+                        .header {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: flex-start;
+                            border-bottom: 3px solid #1e3a8a;
+                            padding-bottom: 20px;
+                            margin-bottom: 30px;
+                        }
+                        .logo-text {
+                            font-family: 'Playfair Display', serif;
+                            color: #1e3a8a;
+                            margin: 0;
+                            font-size: 26px;
+                            line-height: 1.2;
+                            letter-spacing: -0.5px;
+                        }
+                        .sub-logo {
+                            font-size: 11px;
+                            color: #6b7280;
+                            margin-top: 6px;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
+                        }
+                        .receipt-info {
+                            text-align: right;
+                        }
+                        .receipt-title {
+                            font-size: 20px;
+                            font-weight: 700;
+                            color: #374151;
+                            margin: 0 0 5px 0;
+                            text-transform: uppercase;
+                            letter-spacing: 2px;
+                        }
+                        .folio {
+                            font-size: 14px;
+                            color: #dc2626;
+                            font-weight: 700;
+                        }
+                        .copy-badge {
+                            display: inline-block;
+                            padding: 5px 12px;
+                            background-color: #f3f4f6;
+                            color: #4b5563;
+                            font-size: 10px;
+                            font-weight: 700;
+                            text-transform: uppercase;
+                            border-radius: 6px;
+                            margin-bottom: 12px;
+                            border: 1px solid #e5e7eb;
+                        }
+                        .content-grid {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 20px;
+                            margin-bottom: 35px;
+                        }
+                        .info-group {
+                            background-color: #f8fafc;
+                            padding: 16px;
+                            border-radius: 8px;
+                            border-left: 4px solid #3b82f6;
+                        }
+                        .info-label {
+                            font-size: 11px;
+                            color: #6b7280;
+                            text-transform: uppercase;
+                            font-weight: 700;
+                            margin-bottom: 6px;
+                            letter-spacing: 0.5px;
+                        }
+                        .info-value {
+                            font-size: 16px;
+                            font-weight: 600;
+                            color: #0f172a;
+                        }
+                        .amount-box {
+                            background-color: #ecfdf5;
+                            border-left-color: #10b981;
+                            text-align: right;
+                        }
+                        .amount-value {
+                            color: #047857;
+                            font-size: 28px;
+                            font-weight: 800;
+                            letter-spacing: -0.5px;
+                        }
+                        .concept-area {
+                            margin-bottom: 50px;
+                            background-color: #ffffff;
+                            padding: 20px;
+                            border: 1px solid #e2e8f0;
+                            border-radius: 8px;
+                        }
+                        .concept-text {
+                            font-size: 15px;
+                            line-height: 1.7;
+                            color: #334155;
+                        }
+                        .signatures {
+                            display: flex;
+                            justify-content: center;
+                            margin-top: 40px;
+                        }
+                        .signature-box {
+                            text-align: center;
+                            width: 320px;
+                        }
+                        .signature-line {
+                            border-bottom: 1px solid #0f172a;
+                            margin-bottom: 12px;
+                            height: 40px;
+                        }
+                        .signature-name {
+                            font-weight: 700;
+                            font-size: 14px;
+                            color: #0f172a;
+                            margin: 0;
+                            text-transform: uppercase;
+                        }
+                        .signature-role {
+                            font-size: 12px;
+                            color: #64748b;
+                            margin: 4px 0 0 0;
+                        }
+                        .watermark {
+                            position: absolute;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%) rotate(-35deg);
+                            font-size: 140px;
+                            color: rgba(226, 232, 240, 0.4);
+                            font-weight: 900;
+                            z-index: 0;
+                            pointer-events: none;
+                        }
+                        .content-wrapper {
+                            position: relative;
+                            z-index: 1;
+                        }
+                        .footer {
+                            text-align: center;
+                            font-size: 11px;
+                            color: #94a3b8;
+                            margin-top: 40px;
+                            border-top: 1px solid #f1f5f9;
+                            padding-top: 15px;
+                        }
+                        @media print {
+                            body { padding: 0; background-color: white; }
+                            .page { box-shadow: none; max-width: 100%; }
+                            @page { margin: 1cm; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="page">
+                        <!-- COPIA 1: MAESTRO -->
+                        <div class="recibo">
+                            <div class="watermark">ORIGINAL</div>
+                            <div class="content-wrapper">
+                                <div class="header">
+                                    <div>
+                                        <h1 class="logo-text">Colegio Labastida<br>Francisco de Paula</h1>
+                                        <div class="sub-logo"><i class="fas fa-map-marker-alt"></i> Coba No. 600 Col. Vista Azul, Querétaro, Qro.</div>
+                                    </div>
+                                    <div class="receipt-info">
+                                        <div class="copy-badge">Copia del Maestro</div>
+                                        <h2 class="receipt-title">Recibo de Pago</h2>
+                                        <div class="folio">FOLIO: ${folio}</div>
+                                    </div>
+                                </div>
+
+                                <div class="content-grid">
+                                    <div class="info-group">
+                                        <div class="info-label">Fecha de Emisión</div>
+                                        <div class="info-value">${fechaFormateada}</div>
+                                    </div>
+                                    <div class="info-group amount-box">
+                                        <div class="info-label">Monto Total (MXN)</div>
+                                        <div class="amount-value">${montoFormateado}</div>
+                                    </div>
+                                </div>
+
+                                <div class="concept-area">
+                                    <div class="info-label" style="margin-bottom: 10px;">Concepto del Pago</div>
+                                    <div class="concept-text">
+                                        Recibí del <strong>Colegio Labastida Francisco de Paula, S.C.</strong>, la cantidad estipulada en la parte superior, por concepto de <strong>Pago Compensatorio</strong> a favor del C. <strong>${nominaData.maestroNombre}</strong>.
+                                    </div>
+                                </div>
+
+                                <div class="signatures">
+                                    <div class="signature-box">
+                                        <div class="signature-line"></div>
+                                        <p class="signature-name">${nominaData.maestroNombre}</p>
+                                        <p class="signature-role">Firma de Conformidad / Recibido</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="footer">Este documento es un comprobante de pago interno válido únicamente con la firma correspondiente.</div>
+                            </div>
+                        </div>
+
+                        <!-- COPIA 2: ARCHIVO / COLEGIO -->
+                        <div class="recibo" style="background-color: #f8fafc;">
+                            <div class="watermark" style="color: rgba(203, 213, 225, 0.4);">COPIA</div>
+                            <div class="content-wrapper">
+                                <div class="header" style="border-bottom-color: #64748b;">
+                                    <div>
+                                        <h1 class="logo-text" style="color: #475569;">Colegio Labastida<br>Francisco de Paula</h1>
+                                        <div class="sub-logo">Coba No. 600 Col. Vista Azul, Querétaro, Qro.</div>
+                                    </div>
+                                    <div class="receipt-info">
+                                        <div class="copy-badge" style="background-color: #e2e8f0; color: #334155;">Copia Archivo Contable</div>
+                                        <h2 class="receipt-title" style="color: #475569;">Recibo de Pago</h2>
+                                        <div class="folio" style="color: #475569;">FOLIO: ${folio}</div>
+                                    </div>
+                                </div>
+
+                                <div class="content-grid">
+                                    <div class="info-group" style="border-left-color: #94a3b8; background-color: #ffffff;">
+                                        <div class="info-label">Fecha de Emisión</div>
+                                        <div class="info-value">${fechaFormateada}</div>
+                                    </div>
+                                    <div class="info-group amount-box" style="background-color: #f1f5f9; border-left-color: #64748b;">
+                                        <div class="info-label">Monto Total (MXN)</div>
+                                        <div class="amount-value" style="color: #0f172a;">${montoFormateado}</div>
+                                    </div>
+                                </div>
+
+                                <div class="concept-area" style="background-color: transparent;">
+                                    <div class="info-label" style="margin-bottom: 10px;">Concepto del Pago</div>
+                                    <div class="concept-text">
+                                        Se entregó al C. <strong>${nominaData.maestroNombre}</strong>, la cantidad estipulada en la parte superior, por concepto de <strong>Pago Compensatorio</strong>.
+                                    </div>
+                                </div>
+
+                                <div class="signatures">
+                                    <div class="signature-box">
+                                        <div class="signature-line"></div>
+                                        <p class="signature-name">${nominaData.maestroNombre}</p>
+                                        <p class="signature-role">Firma de Recibido</p>
+                                    </div>
                                 </div>
                             </div>
-                        </form>
-                    </div>`;
-                mc.classList.add('active');
-                mc.querySelector('.btn-cancel').onclick = () => mc.classList.remove('active');
-                document.getElementById('f-ab').onsubmit = (ev) => {
-                    ev.preventDefault();
-                    localAbonos.push({ id: generateId(), alumnoId: al.id, monto: document.getElementById('a-mon').value, metodo: document.getElementById('a-met').value, fechaAbono: document.getElementById('a-fec').value });
-                    saveData('abonos', localAbonos); cargarDatosIniciales(); mc.classList.remove('active');
-                };
-            }
-            if(btnHi) {
-                mostrarMensaje("Historial de Abonos", "El registro en PDF está en desarrollo para este módulo.", "info");
-            }
-        });
+                        </div>
+                    </div>
+                    <script>
+                        window.onload = function() {
+                            // Delay para asegurar que las fuentes de Google carguen antes de imprimir
+                            setTimeout(function() {
+                                window.print();
+                                setTimeout(function() { window.close(); }, 500);
+                            }, 600);
+                        }
+                    <\/script>
+                </body>
+                </html>
+            `;
 
-        // --- STREAMING_CHUNK:Loading Initial Data and Syncing... ---
-        // Main App Logic Init
-        function cargarDatosIniciales() {
-            localAlumnos = loadData('alumnos'); localMaestros = loadData('maestros');
-            localCuotas = loadData('cuotas'); localPagos = loadData('pagos');
-            localAbonos = loadData('abonos'); localCajaChica = loadData('cajaChica');
-            localNomina = loadData('nomina');
-            
-            alumnosFiltrados = [...localAlumnos]; maestrosFiltrados = [...localMaestros]; pagosFiltrados = [...localPagos];
-            
-            renderAlumnos(alumnosFiltrados); renderMaestros(maestrosFiltrados);
-            renderPagos(pagosFiltrados); renderCajaChica(localCajaChica);
-            renderEstadoDeCuotas();
-            
-            // Llenar selectores dinámicos
-            const pAl = document.getElementById('pago-alumno');
-            pAl.innerHTML = '<option value="">Selecciona un alumno...</option>' + localAlumnos.map(a => `<option value="${a.id}">${a.nombres} ${a.apellidos}</option>`).join('');
-            
-            const pCu = document.getElementById('tipoCuota');
-            if(pCu) pCu.innerHTML = '<option value="">Selecciona...</option>' + localCuotas.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(reciboHTML);
+            printWindow.document.close();
         }
-
-        // Lógica de Arranque y Sincronización
-        async function inicializarApp() {
-            // 1. Cargar rápido lo que ya hay guardado en el navegador
-            cargarDatosIniciales();
-            
-            // 2. Traer los datos frescos de Google Sheets (Sincronización)
-            if (API_URL) {
-                const toast = document.createElement('div');
-                toast.innerHTML = `<div class="fixed bottom-6 right-6 bg-indigo-600 text-white px-5 py-3 rounded-2xl shadow-2xl text-sm flex items-center gap-3 z-[2000] transition-all" id="sync-toast"><i class="fas fa-sync fa-spin"></i> Conectando con BD...</div>`;
-                document.body.appendChild(toast);
-                
-                try {
-                    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAll' }) });
-                    const json = await res.json();
-                    if(json.success) {
-                        const d = json.data;
-                        localStorage.setItem('alumnos', JSON.stringify(d.alumnos || []));
-                        localStorage.setItem('maestros', JSON.stringify(d.maestros || []));
-                        localStorage.setItem('cuotas', JSON.stringify(d.cuotas || []));
-                        localStorage.setItem('pagos', JSON.stringify(d.pagos || []));
-                        localStorage.setItem('abonos', JSON.stringify(d.abonos || []));
-                        localStorage.setItem('cajaChica', JSON.stringify(d.cajaChica || []));
-                        localStorage.setItem('nomina', JSON.stringify(d.nomina || []));
-                        
-                        cargarDatosIniciales(); 
-                        
-                        const toastEl = document.getElementById('sync-toast');
-                        toastEl.innerHTML = `<i class="fas fa-check"></i> Sistema Sincronizado`;
-                        toastEl.classList.replace('bg-indigo-600', 'bg-emerald-600');
-                        setTimeout(() => toastEl.remove(), 3000);
-                    }
-                } catch(e) {
-                    const toastEl = document.getElementById('sync-toast');
-                    toastEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Fuera de Línea - Cambios locales`;
-                    toastEl.classList.replace('bg-indigo-600', 'bg-rose-600');
-                    setTimeout(() => toastEl.remove(), 4000);
-                }
-            }
-        }
-
-        // Conectar Eventos Generales
-        document.addEventListener('DOMContentLoaded', () => {
-            populateStaticContent();
-            inicializarApp();
-            
-            // --- LÓGICA DE GRADOS DINÁMICOS ---
-            const actualizarGrados = (selectNivelId, selectGradoId) => {
-                const nivel = document.getElementById(selectNivelId).value;
-                const gradoSelect = document.getElementById(selectGradoId);
-                gradoSelect.innerHTML = '<option value="">...</option>';
-                
-                if (!nivel) {
-                    gradoSelect.disabled = true;
-                    gradoSelect.classList.add('bg-slate-100', 'text-slate-400', 'cursor-not-allowed');
-                    return;
-                }
-                
-                let grados = [];
-                if (nivel.includes('Preescolar') || nivel.includes('Secundaria')) grados = [1, 2, 3];
-                if (nivel.includes('Primaria')) grados = [1, 2, 3, 4, 5, 6];
-                
-                grados.forEach(g => {
-                    const option = document.createElement('option');
-                    option.value = g; option.textContent = `${g}°`;
-                    gradoSelect.appendChild(option);
-                });
-                
-                gradoSelect.disabled = false;
-                gradoSelect.classList.remove('bg-slate-100', 'text-slate-400', 'cursor-not-allowed');
+        
+        // --- Lógica Principal ---
             };
 
             // Asignar eventos para que al cambiar Nivel se actualice Grado
