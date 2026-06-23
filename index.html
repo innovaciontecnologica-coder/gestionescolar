@@ -774,7 +774,7 @@
 
                 const closeModal = (resolution) => {
                     modalContainer.classList.remove('active');
-                    setTimeout(() => modalContainer.innerHTML = '', 300);
+                    // Eliminamos el setTimeout que borraba el HTML para evitar que colisione con el siguiente modal
                     resolve(resolution);
                 };
 
@@ -806,11 +806,13 @@
                         </div>
                     </div>`;
                 modalContainer.classList.add('active');
+                
                 const closeModal = (value) => {
                     modalContainer.classList.remove('active');
-                    setTimeout(() => modalContainer.innerHTML = '', 300);
+                    // Eliminamos el setTimeout aquí también
                     resolve(value);
                 };
+                
                 document.getElementById('modal-prompt-confirm-btn').onclick = () => closeModal(document.getElementById('modal-prompt-input').value);
                 document.getElementById('modal-prompt-cancel-btn').onclick = () => closeModal(null);
             });
