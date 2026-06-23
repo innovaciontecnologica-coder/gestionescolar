@@ -573,7 +573,7 @@
                                         </tr>
                                     </thead>
                                     <tbody id="lista-pagos" class="divide-y divide-slate-100"></tbody>
-                                </table>
+                                end</table>
                             </div>
                         </div>
                     </div>
@@ -608,10 +608,11 @@
                 <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
                     <div class="xl:col-span-1">
                         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                            <h3 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <h3 id="form-caja-title" class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                                 <i class="fas fa-exchange-alt text-indigo-500"></i> Nuevo Movimiento
                             </h3>
                             <form id="form-caja-chica" class="space-y-4">
+                                <input type="hidden" id="caja-id-edit" value="">
                                 <div>
                                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha</label>
                                     <input type="date" id="caja-fecha" required class="form-input">
@@ -629,7 +630,6 @@
                                                 <div class="py-2 text-sm font-medium text-slate-500 rounded-md cursor-pointer peer-checked:bg-white peer-checked:text-rose-600 peer-checked:shadow-sm transition-all">Gasto</div>
                                             </label>
                                         </div>
-                                        <select id="caja-tipo" class="hidden"><option value="ingreso">Ingreso</option><option value="gasto">Gasto</option></select>
                                     </div>
                                 </div>
                                 <div>
@@ -640,7 +640,10 @@
                                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Monto ($)</label>
                                     <input type="number" id="caja-monto" step="0.01" min="0.01" required class="form-input text-lg font-semibold" placeholder="0.00">
                                 </div>
-                                <button type="submit" class="w-full bg-slate-800 text-white py-3 px-4 rounded-xl font-bold mt-2 hover:bg-slate-700 shadow-md">Registrar Movimiento</button>
+                                <div class="space-y-2 pt-2">
+                                    <button type="submit" id="btn-guardar-caja" class="w-full bg-slate-800 text-white py-3 px-4 rounded-xl font-bold hover:bg-slate-700 shadow-md">Registrar Movimiento</button>
+                                    <button type="button" id="btn-cancelar-caja-edit" class="w-full bg-slate-100 text-slate-700 py-2.5 px-4 rounded-xl font-medium hover:bg-slate-200 transition-all hidden">Cancelar Edición</button>
+                                </div>
                             </form>
                         </div>
                     </div>
@@ -661,11 +664,12 @@
                             <div id="import-feedback-caja" class="px-6 py-1 text-xs"></div>
                             <div class="flex-1 overflow-x-auto">
                                 <table class="w-full text-left border-collapse">
-                                    <thead class="bg-slate-50 sticky top-0 shadow-sm z-10 border-b border-slate-200">
+                                    <thead class="bg-slate-50 episticky top-0 shadow-sm z-10 border-b border-slate-200">
                                         <tr>
                                             <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Fecha</th>
                                             <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Concepto</th>
                                             <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase">Monto</th>
+                                            <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase">Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody id="lista-caja-chica" class="divide-y divide-slate-100"></tbody>
@@ -777,12 +781,14 @@
         let localAlumnos = [], localMaestros = [], localPagos = [], localCuotas = [], localAbonos = [], localCajaChica = [], pagosFiltrados = [], localNomina = [], alumnosFiltrados = [], maestrosFiltrados = [];
         let localEventos = [], localVentasEventos = []; 
         const NIVELES_ESCOLARES = ["Preescolar", "Primaria", "Secundaria", "Integrado Preescolar", "Integrado Primaria", "Integrado Secundaria"];
-        const CONCEPTOS_PAGO = ["Beca 25%", "Beca 50%", "Beca 75%", "Beca 100%", "Colegiatura Normal", "Convivios", "Descuento 1er Hno.", "Descuento 2do Hno.", "Extemporáneos", "Fotografías", "Guardia", "Libros", "Material Didáctico", "Paseos", "Taller", "Uniformes", "Seguro Escolar"];
+        
+        // Catálogo Limpio de Conceptos sin Becas ni Colegiaturas
+        const CONCEPTOS_PAGO = ["Convivios", "Extemporáneos", "Fotografías", "Guardia", "Libros", "Material Didáctico", "Paseos", "Taller", "Uniformes", "Seguro Escolar"];
         const METODOS_PAGO = ["Efectivo", "Tarjeta de débito", "Tarjeta de crédito", "Transferencia"];
         const currency = n => `$${Number(n || 0).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
-        // URL DE GOOGLE APPS SCRIPT
-        const API_URL = "https://script.google.com/macros/s/AKfycbyEt1xcg7jl_3SgvZMgIrl6vK1pX-6dEVYVDR7ociBgyOSiOZfgJI-4jDw1jtrmtds/exec";
+        // URL DE GOOGLE APPS SCRIPT DEFINITIVA
+        const API_URL = "https://script.google.com/macros/s/AKfycbyWGZ8S-RuUt7_PnAwdBmBGMvwtf-25h6wpgmc1Z1_ib41jr_LT5YAUOqneqYtzG__E/exec";
 
         // Helpers de LocalStorage + Sincronización en la Nube
         function loadData(key) {
@@ -1287,7 +1293,7 @@
             localAbonos = loadData('abonos');
             
             alumnosFiltrados = [...localAlumnos];
-            maestrosFiltrados = [...localMaestros];
+            maestrosFiltrados = [...localMaresDocentes || localMaestros];
             pagosFiltrados = [...localPagos];
 
             renderAlumnos(alumnosFiltrados);
@@ -1327,8 +1333,9 @@
                     localStorage.setItem('nomina', JSON.stringify(res.data.nomina || []));
                     localStorage.setItem('cuotas', JSON.stringify(res.data.cuotas || []));
                     localStorage.setItem('abonos', JSON.stringify(res.data.abonos || []));
-                    localStorage.setItem('eventos', JSON.stringify(res.data.eventos || [])); // Eventos Nuevos
-                    localStorage.setItem('ventasEventos', JSON.stringify(res.data.ventasEventos || [])); // Eventos Nuevos
+                    localStorage.setItem('eventos', JSON.stringify(res.data.eventos || [])); 
+                    localStorage.setItem('ventasEventos', JSON.stringify(res.data.ventasEventos || [])); 
+                    localStorage.setItem('cajaChica', JSON.stringify(res.data.cajaChica || [])); 
                 }
                 btnHeader.innerHTML = titleOriginal;
                 cargarDatosIniciales();
@@ -1655,9 +1662,24 @@
             const btnGuardarPago = document.getElementById('btn-guardar-pago');
 
             const checkPagoValido = () => {
-                const tPagar = pagoConceptosTemp.reduce((s, c) => s + c.monto, 0); const tPagado = pagoMetodosTemp.reduce((s, m) => s + m.monto, 0);
-                const isValido = document.getElementById('pago-alumno').value && document.getElementById('pago-fecha').value && tPagar > 0 && tPagado > 0 && Math.abs(tPagar - tPagado) < 0.01;
-                if (isValido) { btnGuardarPago.disabled = false; btnGuardarPago.classList.remove('bg-slate-300', 'text-slate-500', 'cursor-not-allowed'); btnGuardarPago.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700', 'shadow-md'); } else { btnGuardarPago.disabled = true; btnGuardarPago.classList.add('bg-slate-300', 'text-slate-500', 'cursor-not-allowed'); btnGuardarPago.classList.remove('bg-indigo-600', 'text-white', 'hover:bg-indigo-700', 'shadow-md'); }
+                const tPagar = Math.round(pagoConceptosTemp.reduce((s, c) => s + c.monto, 0) * 100) / 100; 
+                const tPagado = Math.round(pagoMetodosTemp.reduce((s, m) => s + m.monto, 0) * 100) / 100;
+                
+                const tieneAlumno = document.getElementById('pago-alumno').value !== "";
+                const tieneFecha = document.getElementById('pago-fecha').value !== "";
+                
+                // Validación exacta redondeada a centavos para desbloquear botón
+                const isValido = tieneAlumno && tieneFecha && tPagar > 0 && tPagado > 0 && tPagar === tPagado;
+                
+                if (isValido) { 
+                    btnGuardarPago.disabled = false; 
+                    btnGuardarPago.classList.remove('bg-slate-300', 'text-slate-500', 'cursor-not-allowed'); 
+                    btnGuardarPago.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700', 'shadow-md', 'cursor-pointer'); 
+                } else { 
+                    btnGuardarPago.disabled = true; 
+                    btnGuardarPago.classList.add('bg-slate-300', 'text-slate-500', 'cursor-not-allowed'); 
+                    btnGuardarPago.classList.remove('bg-indigo-600', 'text-white', 'hover:bg-indigo-700', 'shadow-md', 'cursor-pointer'); 
+                }
             };
 
             const renderConceptosPago = () => {
@@ -1672,7 +1694,7 @@
                 document.getElementById('total-pagado').textContent = currency(total); checkPagoValido();
             };
 
-            document.getElementById('btn-agregar-concepto').addEventListener('click', () => { const concepto = document.getElementById('pago-concepto-select').value; const monto = parseFloat(document.getElementById('pago-concepto-monto').value); if (!concepto || isNaN(monto) || monto <= 0) return mostrarMensaje('Aviso', 'Ingresa un concepto y un monto.', 'info'); pagoConceptosTemp.push({ concepto, monto }); document.getElementById('pago-concepto-monto').value = ''; renderConceptosPago(); });
+            document.getElementById('btn-agregar-concepto').addEventListener('click', () => { const concepto = document.getElementById('pago-concepto-select').value; const monto = parseFloat(document.getElementById('pago-concepto-monto').value); if (!concepto || isNaN(monto) || monto <= 0) return mostrarMensaje('Aviso', 'Ingresa un concepto y un monto.', 'info'); pagoConceptosTemp.push({ concepto, monto }); document.getElementById('pago-concepto-monto').value = ''; valoresCamposCobro(); renderConceptosPago(); });
             document.getElementById('btn-agregar-metodo').addEventListener('click', () => { const metodo = document.getElementById('pago-metodo-select').value; const monto = parseFloat(document.getElementById('pago-metodo-monto').value); if (!metodo || isNaN(monto) || monto <= 0) return mostrarMensaje('Aviso', 'Ingresa un método y un monto.', 'info'); pagoMetodosTemp.push({ metodo, monto }); document.getElementById('pago-metodo-monto').value = ''; renderMetodosPago(); });
             document.getElementById('lista-conceptos-pago').addEventListener('click', (e) => { const btn = e.target.closest('.rm-concepto'); if(!btn) return; pagoConceptosTemp.splice(btn.dataset.idx, 1); renderConceptosPago(); });
             document.getElementById('lista-metodos-pago').addEventListener('click', (e) => { const btn = e.target.closest('.rm-metodo'); if(!btn) return; pagoMetodosTemp.splice(btn.dataset.idx, 1); renderMetodosPago(); });
@@ -1710,32 +1732,121 @@
                 document.getElementById('form-pago-title').innerHTML = '<i class="fas fa-receipt text-indigo-500"></i> Registrar Cobro'; document.getElementById('btn-cancelar-pago-edit').classList.add('hidden');
             });
 
-            // === EVENTOS DE CAJA CHICA ===
+            // === EVENTOS DE CAJA CHICA CORREGIDOS ===
             document.getElementById('form-caja-chica').onsubmit = (e) => {
                 e.preventDefault();
-                localCajaChica.push({ id: generateId(), fecha: document.getElementById('caja-fecha').value, tipo: document.getElementById('caja-tipo').value, concepto: document.getElementById('caja-concepto').value, monto: parseFloat(document.getElementById('caja-monto').value) });
-                saveData('cajaChica', localCajaChica); cargarDatosIniciales(); e.target.reset(); mostrarMensaje('Éxito', 'Movimiento registrado en caja.', 'success');
+                // Lee el radio button seleccionado en lugar del select oculto viejo
+                const tipoMovimiento = document.querySelector('input[name="caja-tipo"]:checked').value;
+                const cajaId = document.getElementById('caja-id-edit').value;
+                
+                const movimiento = { 
+                    id: cajaId || generateId(), 
+                    fecha: document.getElementById('caja-fecha').value, 
+                    tipo: tipoMovimiento, 
+                    concepto: document.getElementById('caja-concepto').value, 
+                    monto: parseFloat(document.getElementById('caja-monto').value) 
+                };
+                
+                if (cajaId) {
+                    const idx = localCajaChica.findIndex(c => c.id === cajaId);
+                    if (idx > -1) localCajaChica[idx] = movimiento;
+                } else {
+                    localCajaChica.push(movimiento);
+                }
+                
+                saveData('cajaChica', localCajaChica); 
+                cargarDatosIniciales(); 
+                document.getElementById('btn-cancelar-caja-edit').click();
+                mostrarMensaje('Éxito', 'Movimiento de caja guardado con éxito.', 'success');
             };
 
             const renderCaja = () => {
-                const tbody = document.getElementById('lista-caja-chica'); let ing = 0, gas = 0; tbody.innerHTML = '';
-                localCajaChica.sort((a,b)=>b.fecha.localeCompare(a.fecha)).forEach(c => {
-                    if (c.tipo === 'ingreso') ing += c.monto; else gas += c.monto;
-                    tbody.innerHTML += `<tr class="hover:bg-slate-50"><td class="px-6 py-4 text-sm">${c.fecha}</td><td class="px-6 py-4 text-sm">${c.concepto}</td><td class="px-6 py-4 text-right font-bold ${c.tipo==='ingreso'?'text-emerald-600':'text-rose-600'}">${c.tipo==='ingreso'?'+':'-'} ${currency(c.monto)}</td></tr>`;
+                const tbody = document.getElementById('lista-caja-chica'); 
+                let ing = 0, gas = 0; 
+                tbody.innerHTML = '';
+                
+                localCajaChica.sort((a,b) => b.fecha.localeCompare(a.fecha)).forEach(c => {
+                    if (c.tipo === 'ingreso') ing += Number(c.monto || 0); 
+                    else gas += Number(c.monto || 0);
+                    
+                    // Condicionamos los botones: solo permite editar si es un "ingreso"
+                    const esIngreso = c.tipo === 'ingreso';
+                    const editButton = esIngreso 
+                        ? `<button data-id="${c.id}" class="edit-caja-btn text-indigo-500 hover:bg-indigo-50 p-1.5 rounded-lg transition-colors"><i class="fas fa-edit"></i></button>`
+                        : `<button disabled class="text-slate-300 cursor-not-allowed p-1.5" title="Gastos no editables, use anular"><i class="fas fa-edit"></i></button>`;
+                        
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-6 py-4 text-sm">${c.fecha}</td>
+                            <td class="px-6 py-4 text-sm">${c.concepto}</td>
+                            <td class="px-6 py-4 text-right font-bold ${esIngreso ? 'text-emerald-600' : 'text-rose-600'}">
+                                ${esIngreso ? '+' : '-'} ${currency(c.monto)}
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                ${editButton}
+                                <button data-id="${c.id}" class="delete-caja-btn text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors" title="Anular Movimiento"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>`;
                 });
-                document.getElementById('caja-total-ingresos').textContent = currency(ing); document.getElementById('caja-total-gastos').textContent = currency(gas); document.getElementById('caja-balance').textContent = currency(ing - gas); document.getElementById('contador-caja').textContent = `${localCajaChica.length} Reg`;
+                
+                document.getElementById('caja-total-ingresos').textContent = currency(ing); 
+                document.getElementById('caja-total-gastos').textContent = currency(gas); 
+                document.getElementById('caja-balance').textContent = currency(ing - gas); 
+                document.getElementById('contador-caja').textContent = `${localCajaChica.length} Reg`;
             };
-            // Sobrescribimos cargarDatosIniciales para inyectar renderCaja y Eventos al final
+
+            // Eventos de la tabla de caja chica
+            document.getElementById('lista-caja-chica').addEventListener('click', async (e) => {
+                const editBtn = e.target.closest('.edit-caja-btn');
+                const deleteBtn = e.target.closest('.delete-caja-btn');
+                
+                if (editBtn) {
+                    const mov = localCajaChica.find(c => c.id === editBtn.dataset.id);
+                    if (!mov) return;
+                    
+                    document.getElementById('caja-id-edit').value = mov.id;
+                    document.getElementById('caja-fecha').value = mov.fecha;
+                    document.getElementById('caja-concepto').value = mov.concepto;
+                    document.getElementById('caja-monto').value = mov.monto;
+                    
+                    if (mov.tipo === 'ingreso') document.getElementById('caja-tipo-ingreso').checked = true;
+                    else document.getElementById('caja-tipo-gasto').checked = true;
+                    
+                    document.getElementById('form-caja-title').innerHTML = `<i class="fas fa-edit text-amber-500"></i> Editando Ingreso`;
+                    document.getElementById('btn-guardar-caja').textContent = 'Actualizar Movimiento';
+                    document.getElementById('btn-guardar-caja').classList.replace('bg-slate-800', 'bg-amber-500');
+                    document.getElementById('btn-cancelar-caja-edit').classList.remove('hidden');
+                }
+                
+                if (deleteBtn) {
+                    if (await mostrarMensaje('Confirmar Anulación', '¿Seguro que deseas eliminar/anular este registro de caja?', 'confirm')) {
+                        localCajaChica = localCajaChica.filter(c => c.id !== deleteBtn.dataset.id);
+                        saveData('cajaChica', localCajaChica);
+                        cargarDatosIniciales();
+                    }
+                }
+            });
+
+            document.getElementById('btn-cancelar-caja-edit').addEventListener('click', () => {
+                document.getElementById('form-caja-chica').reset();
+                document.getElementById('caja-id-edit').value = '';
+                document.getElementById('caja-tipo-ingreso').checked = true;
+                document.getElementById('form-caja-title').innerHTML = `<i class="fas fa-exchange-alt text-indigo-500"></i> Nuevo Movimiento`;
+                document.getElementById('btn-guardar-caja').textContent = 'Registrar Movimiento';
+                document.getElementById('btn-guardar-caja').classList.replace('bg-amber-500', 'bg-slate-800');
+                document.getElementById('btn-cancelar-caja-edit').classList.add('hidden');
+            });
+
+            // Re-inyectamos las lógicas al cargador maestro de datos
             const originalCargar = cargarDatosIniciales;
             cargarDatosIniciales = function() { 
+                localCajaChica = loadData('cajaChica');
                 originalCargar(); 
                 
-                // Cargas inyectadas dinámicamente
                 localEventos = loadData('eventos');
                 localVentasEventos = loadData('ventasEventos');
                 renderCaja(); 
                 
-                // Llenar selector de alumnos en Eventos Especiales
                 const selectVentaAlumno = document.getElementById('venta-evento-alumno');
                 if (selectVentaAlumno) {
                     selectVentaAlumno.innerHTML = '<option value="">Seleccione un alumno...</option>';
@@ -1748,8 +1859,6 @@
             };
 
             // === EVENTOS ESPECIALES (KERMESES, ETC) ===
-            
-            // Administrar Eventos (Modal)
             document.getElementById('btn-admin-eventos').addEventListener('click', () => {
                 let paquetesTemp = [];
                 const mc = document.getElementById('modal-container');
@@ -1855,7 +1964,6 @@
                 document.getElementById('btn-cerrar-admin-eventos').onclick = () => mc.classList.remove('active');
             });
 
-            // Lógica Punto de Venta Eventos
             function actualizarSelectEventos() {
                 const selectEv = document.getElementById('venta-evento-select');
                 if(!selectEv) return;
