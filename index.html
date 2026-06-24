@@ -154,10 +154,13 @@
                     <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
                     <input type="text" placeholder="Búsqueda rápida..." class="pl-9 pr-4 py-2 bg-slate-100 border-transparent rounded-full text-sm focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none w-64 transition-all">
                 </div>
-                <button class="text-slate-400 hover:text-indigo-600 transition-colors relative">
-                    <i class="fas fa-bell text-xl"></i>
-                    <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                <button onclick="syncAllTables(true)" class="px-4 h-9 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-medium text-sm rounded-lg flex items-center gap-2 border border-indigo-200 transition-colors shadow-sm ml-2">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Forzar Guardado (Nube)
                 </button>
+                <div class="h-6 w-[1px] bg-slate-200 ml-2"></div>
+                <span id="status-badge" class="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-500 flex items-center gap-1.5 ml-2 border border-slate-200">
+                    <span class="w-2 h-2 rounded-full bg-slate-400"></span> Local / Desconectado
+                </span>
             </div>
         </header>
 
@@ -266,7 +269,15 @@
                                         <div>
                                             <label for="tipoSangre" class="block text-xs font-medium text-red-700 mb-1">Sangre</label>
                                             <select id="tipoSangre" name="tipoSangre" class="form-input border-red-200 focus:border-red-500">
-                                                <option value="">...</option><option value="O+">O+</option><option value="O-">O-</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option>
+                                                <option value="">...</option>
+                                                <option value="O+">O+</option>
+                                                <option value="O-">O-</option>
+                                                <option value="A+">A+</option>
+                                                <option value="A-">A-</option>
+                                                <option value="B+">B+</option>
+                                                <option value="B-">B-</option>
+                                                <option value="AB+">AB+</option>
+                                                <option value="AB-">AB-</option>
                                             </select>
                                         </div>
                                         <div>
@@ -313,7 +324,6 @@
                                         <button id="export-alumnos-csv-btn" class="text-slate-600 hover:bg-white hover:text-green-600 py-1.5 px-3 rounded-md text-sm font-medium transition-all shadow-sm" title="Exportar CSV"><i class="fas fa-file-excel"></i></button>
                                         <input type="file" id="csv-file-input-alumno" class="hidden" accept=".csv">
                                         <button id="import-csv-btn-alumno" class="text-slate-600 hover:bg-white hover:text-indigo-600 py-1.5 px-3 rounded-md text-sm font-medium transition-all shadow-sm" title="Importar CSV"><i class="fas fa-upload"></i></button>
-                                        <button id="info-csv-btn-alumno" class="text-slate-400 hover:text-slate-600 py-1.5 px-2 text-sm transition-colors"><i class="fas fa-info-circle"></i></button>
                                     </div>
                                 </div>
                             </div>
@@ -337,8 +347,6 @@
                                 </form>
                             </div>
                             
-                            <div id="import-feedback-alumno" class="px-6 py-2 text-xs font-medium"></div>
-                            
                             <div class="flex-1 overflow-x-auto p-0">
                                 <table class="w-full text-left border-collapse">
                                     <thead class="bg-white sticky top-0 shadow-sm z-10">
@@ -350,7 +358,7 @@
                                         </tr>
                                     </thead>
                                     <tbody id="lista-alumnos" class="divide-y divide-slate-100">
-                                        </tbody>
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
@@ -411,13 +419,6 @@
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span id="contador-maestros" class="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 mr-2"></span>
-                                    <div class="flex bg-slate-100 p-1 rounded-lg">
-                                        <button id="export-maestros-pdf-btn" class="text-slate-600 hover:bg-white hover:text-red-500 py-1.5 px-3 rounded-md text-sm"><i class="fas fa-file-pdf"></i></button>
-                                        <button id="export-maestros-csv-btn" class="text-slate-600 hover:bg-white hover:text-green-600 py-1.5 px-3 rounded-md text-sm"><i class="fas fa-file-excel"></i></button>
-                                        <input type="file" id="csv-file-input-maestro" class="hidden" accept=".csv">
-                                        <button id="import-csv-btn-maestro" class="text-slate-600 hover:bg-white hover:text-indigo-600 py-1.5 px-3 rounded-md text-sm"><i class="fas fa-upload"></i></button>
-                                        <button id="info-csv-btn-maestro" class="text-slate-400 py-1.5 px-2 text-sm"><i class="fas fa-info-circle"></i></button>
-                                    </div>
                                 </div>
                             </div>
                             
@@ -428,7 +429,6 @@
                                     <button type="reset" id="btn-reset-filtros-maestros" class="bg-white border border-slate-200 text-slate-600 py-2 px-3 rounded-md hover:bg-slate-50 text-sm font-medium">Limpiar</button>
                                 </form>
                             </div>
-                            <div id="import-feedback-maestro" class="px-6 py-1 text-xs"></div>
                             
                             <div class="flex-1 overflow-x-auto">
                                 <table class="w-full text-left border-collapse">
@@ -540,12 +540,6 @@
                                 <h3 class="text-lg font-bold text-slate-800">Historial de Cobros</h3>
                                 <div class="flex items-center gap-2">
                                     <span id="contador-pagos" class="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 mr-2"></span>
-                                    <div class="flex bg-slate-100 p-1 rounded-lg">
-                                        <button id="export-pagos-pdf-btn" class="text-slate-600 hover:bg-white hover:text-red-500 py-1.5 px-3 rounded-md text-sm"><i class="fas fa-file-pdf"></i></button>
-                                        <button id="export-pagos-csv-btn" class="text-slate-600 hover:bg-white hover:text-green-600 py-1.5 px-3 rounded-md text-sm"><i class="fas fa-file-excel"></i></button>
-                                        <input type="file" id="csv-file-input-pagos" class="hidden" accept=".csv">
-                                        <button id="import-csv-btn-pagos" class="text-slate-600 hover:bg-white hover:text-indigo-600 py-1.5 px-3 rounded-md text-sm"><i class="fas fa-upload"></i></button>
-                                    </div>
                                 </div>
                             </div>
                             
@@ -608,10 +602,11 @@
                 <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
                     <div class="xl:col-span-1">
                         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                            <h3 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <h3 id="form-caja-title" class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                                 <i class="fas fa-exchange-alt text-indigo-500"></i> Nuevo Movimiento
                             </h3>
                             <form id="form-caja-chica" class="space-y-4">
+                                <input type="hidden" id="caja-id-edit" value="">
                                 <div>
                                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha</label>
                                     <input type="date" id="caja-fecha" required class="form-input">
@@ -629,7 +624,6 @@
                                                 <div class="py-2 text-sm font-medium text-slate-500 rounded-md cursor-pointer peer-checked:bg-white peer-checked:text-rose-600 peer-checked:shadow-sm transition-all">Gasto</div>
                                             </label>
                                         </div>
-                                        <select id="caja-tipo" class="hidden"><option value="ingreso">Ingreso</option><option value="gasto">Gasto</option></select>
                                     </div>
                                 </div>
                                 <div>
@@ -640,7 +634,10 @@
                                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Monto ($)</label>
                                     <input type="number" id="caja-monto" step="0.01" min="0.01" required class="form-input text-lg font-semibold" placeholder="0.00">
                                 </div>
-                                <button type="submit" class="w-full bg-slate-800 text-white py-3 px-4 rounded-xl font-bold mt-2 hover:bg-slate-700 shadow-md">Registrar Movimiento</button>
+                                <div class="space-y-2 pt-2">
+                                    <button type="submit" id="btn-guardar-caja" class="w-full bg-slate-800 text-white py-3 px-4 rounded-xl font-bold hover:bg-slate-700 shadow-md">Registrar Movimiento</button>
+                                    <button type="button" id="btn-cancelar-caja-edit" class="w-full bg-slate-100 text-slate-700 py-2.5 px-4 rounded-xl font-medium hover:bg-slate-200 transition-all hidden">Cancelar Edición</button>
+                                </div>
                             </form>
                         </div>
                     </div>
@@ -651,14 +648,8 @@
                                 <h3 class="text-lg font-bold text-slate-800">Registro Histórico</h3>
                                 <div class="flex items-center gap-2">
                                     <span id="contador-caja" class="text-xs font-bold text-slate-500"></span>
-                                    <div class="flex bg-slate-100 p-1 rounded-lg ml-2">
-                                        <button id="export-caja-pdf-btn" class="text-slate-600 hover:bg-white hover:text-red-500 py-1.5 px-3 rounded-md text-sm"><i class="fas fa-file-pdf"></i></button>
-                                        <button id="export-caja-csv-btn" class="text-slate-600 hover:bg-white hover:text-green-600 py-1.5 px-3 rounded-md text-sm"><i class="fas fa-file-excel"></i></button>
-                                        <input type="file" id="csv-file-input-caja" class="hidden" accept=".csv">
-                                    </div>
                                 </div>
                             </div>
-                            <div id="import-feedback-caja" class="px-6 py-1 text-xs"></div>
                             <div class="flex-1 overflow-x-auto">
                                 <table class="w-full text-left border-collapse">
                                     <thead class="bg-slate-50 sticky top-0 shadow-sm z-10 border-b border-slate-200">
@@ -666,6 +657,7 @@
                                             <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Fecha</th>
                                             <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Concepto</th>
                                             <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase">Monto</th>
+                                            <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase">Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody id="lista-caja-chica" class="divide-y divide-slate-100"></tbody>
@@ -777,31 +769,42 @@
         let localAlumnos = [], localMaestros = [], localPagos = [], localCuotas = [], localAbonos = [], localCajaChica = [], pagosFiltrados = [], localNomina = [], alumnosFiltrados = [], maestrosFiltrados = [];
         let localEventos = [], localVentasEventos = []; 
         const NIVELES_ESCOLARES = ["Preescolar", "Primaria", "Secundaria", "Integrado Preescolar", "Integrado Primaria", "Integrado Secundaria"];
+        
+        // CORRECCIÓN 1: CONCEPTOS ORIGINALES RESTAURADOS AL 100%
         const CONCEPTOS_PAGO = ["Beca 25%", "Beca 50%", "Beca 75%", "Beca 100%", "Colegiatura Normal", "Convivios", "Descuento 1er Hno.", "Descuento 2do Hno.", "Extemporáneos", "Fotografías", "Guardia", "Libros", "Material Didáctico", "Paseos", "Taller", "Uniformes", "Seguro Escolar"];
         const METODOS_PAGO = ["Efectivo", "Tarjeta de débito", "Tarjeta de crédito", "Transferencia"];
         const currency = n => `$${Number(n || 0).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
-        // URL DE GOOGLE APPS SCRIPT
-        const API_URL = "https://script.google.com/macros/s/AKfycbyZS0SSh4jKIWs5CVAC50QiZ3i-wt5ho_pwRbN_tnPQXczqEWdPtxOd9kxXfq5kmFMi_Q/exec";
+        // CORRECCIÓN 2: URL DEFINITIVA DE PRODUCCIÓN 
+        const API_URL = "https://script.google.com/macros/s/AKfycbzfl93q0aGFUpXY3LYTzCBreU2xEQ6eDosTSQzVZ9IGjpKebovDTjXKe6aNoSpDOeRe7w/exec";
 
-        // Helpers de LocalStorage + Sincronización en la Nube
+        let autoSaveTimeout = null;
+
         function loadData(key) {
             try { return JSON.parse(localStorage.getItem(key)) || []; } catch (e) { return []; }
         }
+        
+        // CORRECCIÓN 3: FUNCIÓN AUTO-GUARDADO INTELIGENTE (DEBOUNCE)
         function saveData(key, data) {
             try { 
                 localStorage.setItem(key, JSON.stringify(data)); 
-                if (API_URL) {
-                    fetch(API_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: 'syncTable', table: key, rows: data })
-                    }).catch(e => console.error("Error sincronizando a la nube:", e));
+                renderAll();
+                
+                const badge = document.getElementById('status-badge');
+                if (badge) {
+                    badge.className = "px-2.5 py-1 text-xs font-semibold rounded-full bg-orange-50 text-orange-600 flex items-center gap-1.5 border border-orange-100";
+                    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-orange-400 animate-ping"></span> Cambios pendientes...`;
                 }
+
+                if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+                autoSaveTimeout = setTimeout(() => {
+                    syncAllTables(false);
+                }, 2500);
             } catch (e) { console.error(e); }
         }
+        
         function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
 
-        // Sistema de Modales Modernizados
         function mostrarMensaje(title, message, type = 'info') {
             return new Promise((resolve) => {
                 const modalContainer = document.getElementById('modal-container');
@@ -886,7 +889,6 @@
             });
         }
 
-        // Exportaciones CSV y PDF
         function exportarCSV(datos, filename, mapFn, noDataMsg) {
             if (datos.length === 0) return mostrarMensaje("Información", noDataMsg, "info");
             const csvRows = mapFn(datos);
@@ -924,7 +926,6 @@
             const w = window.open('','_blank'); w.document.write(html); w.document.close();
         }
 
-        // --- Recibo de Nómina Profesional con quiebre de página ---
         function imprimirReciboNomina(nominaData) {
             const montoFormateado = currency(nominaData.monto);
             const fechaFormateada = new Date(nominaData.fechaPago + 'T00:00:00').toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -950,8 +951,6 @@
                         .linea-firma { border-top: 1px solid #0f172a; width: 350px; margin: 0 auto 10px auto; }
                         .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-35deg); font-size: 120px; color: rgba(226, 232, 240, 0.4); z-index: -1; font-weight: 900; }
                         .copy-bg { background-color: #f8fafc; }
-                        
-                        /* Configuración estricta para impresión */
                         @media print {
                             @page { margin: 0; size: letter portrait; }
                             body { margin: 0; }
@@ -1014,7 +1013,6 @@
             printWindow.document.close();
         }
 
-        // INICIALIZACIÓN Y RENDERIZADO VISUAL
         function inicializarCatalogos() {
             const opcionesNivel = `<option value="">Seleccionar...</option>` + NIVELES_ESCOLARES.map(n => `<option value="${n}">${n}</option>`).join('');
             document.getElementById('nivel').innerHTML = opcionesNivel;
@@ -1028,13 +1026,11 @@
                 </label>
             `).join('');
 
-            const opcionesConceptos = CONCEPTOS_PAGO.map(c => `<option value="${c}">${c}</option>`).join('');
-            document.getElementById('pago-concepto-select').innerHTML = opcionesConceptos;
-            document.getElementById('filtro-pago-concepto').innerHTML = `<option value="">Todos</option>` + opcionesConceptos;
+            document.getElementById('pago-concepto-select').innerHTML = CONCEPTOS_PAGO.map(c => `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('filtro-pago-concepto').innerHTML = `<option value="">Todos</option>` + CONCEPTOS_PAGO.map(c => `<option value="${c}">${c}</option>`).join('');
             
-            const opcionesMetodos = METODOS_PAGO.map(m => `<option value="${m}">${m}</option>`).join('');
-            document.getElementById('pago-metodo-select').innerHTML = opcionesMetodos;
-            document.getElementById('filtro-pago-metodo').innerHTML = `<option value="">Todos</option>` + opcionesMetodos;
+            document.getElementById('pago-metodo-select').innerHTML = METODOS_PAGO.map(m => `<option value="${m}">${m}</option>`).join('');
+            document.getElementById('filtro-pago-metodo').innerHTML = `<option value="">Todos</option>` + METODOS_PAGO.map(m => `<option value="${m}">${m}</option>`).join('');
         }
 
         function actualizarGrados(nivelId, gradoId) {
@@ -1070,13 +1066,24 @@
             }
         }
 
-        function renderAlumnos(datos) {
+        function renderAlumnos() {
             const tbody = document.getElementById('lista-alumnos');
             tbody.innerHTML = '';
-            document.getElementById('contador-alumnos').textContent = `${datos.length} Alumnos`;
-            if(datos.length === 0) return tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400 text-sm">No hay alumnos registrados.</td></tr>';
             
-            datos.forEach(al => {
+            const query = document.getElementById('filtro-alumno-nombre').value.toLowerCase();
+            const filtrados = localAlumnos.filter(a => 
+                `${a.nombres} ${a.apellidos}`.toLowerCase().includes(query) || 
+                (a.tutor && a.tutor.toLowerCase().includes(query))
+            );
+
+            document.getElementById('contador-alumnos').textContent = `${filtrados.length} Alumnos`;
+            
+            if(filtrados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400 text-sm">No hay alumnos registrados.</td></tr>';
+                return;
+            }
+            
+            filtrados.forEach(al => {
                 const badgeColor = al.estatus === 'Nuevo Ingreso' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-amber-50 text-amber-700 border-amber-100';
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50 transition-colors">
@@ -1094,13 +1101,16 @@
             });
         }
 
-        function renderMaestros(datos) {
+        function renderMaestros() {
             const tbody = document.getElementById('lista-maestros');
             tbody.innerHTML = '';
-            document.getElementById('contador-maestros').textContent = `${datos.length} Maestros`;
-            if(datos.length === 0) return tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400 text-sm">No hay maestros registrados.</td></tr>';
+            document.getElementById('contador-maestros').textContent = `${localMaestros.length} Maestros`;
+            if(localMaestros.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400 text-sm">No hay maestros registrados.</td></tr>';
+                return;
+            }
             
-            datos.forEach(m => {
+            localMaestros.forEach(m => {
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50 transition-colors">
                         <td class="px-6 py-4">
@@ -1119,13 +1129,16 @@
             });
         }
 
-        function renderPagos(datos) {
+        function renderPagos() {
             const tbody = document.getElementById('lista-pagos');
             tbody.innerHTML = '';
-            document.getElementById('contador-pagos').textContent = `${datos.length} Transacciones`;
-            if(datos.length === 0) return tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400 text-sm">No hay transacciones registradas.</td></tr>';
+            document.getElementById('contador-pagos').textContent = `${localPagos.length} Transacciones`;
+            if(localPagos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400 text-sm">No hay transacciones registradas.</td></tr>';
+                return;
+            }
             
-            datos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach(p => {
+            localPagos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach(p => {
                 const alumno = localAlumnos.find(al => al.id === p.alumnoId);
                 const nombreAl = alumno ? `${alumno.nombres} ${alumno.apellidos}` : 'Desconocido';
                 const conceptos = (p.conceptos || []).map(c => `• ${c.concepto}`).join('<br>');
@@ -1187,7 +1200,6 @@
             });
         }
 
-        // VENTANA PARA PAGAR CUOTA
         window.abrirModalAbono = (alumnoId) => {
             const alumno = localAlumnos.find(a => a.id === alumnoId);
             const cuota = localCuotas.find(c => c.nombre === alumno.tipoCuota);
@@ -1277,7 +1289,6 @@
             document.getElementById('btn-cerrar-historial-abono').onclick = () => mc.classList.remove('active');
         };
 
-        // CARGA LOCAL DE DATOS A LAS TABLAS
         function cargarDatosIniciales() {
             localAlumnos = loadData('alumnos');
             localMaestros = loadData('maestros');
@@ -1290,29 +1301,15 @@
             maestrosFiltrados = [...localMaestros];
             pagosFiltrados = [...localPagos];
 
-            renderAlumnos(alumnosFiltrados);
-            renderMaestros(maestrosFiltrados);
-            renderPagos(pagosFiltrados);
-            cargarCuotasEnFormulario();
-            renderEstadoDeCuotas();
-
-            // Llenar selector de alumnos en la pestaña de Pagos
-            const selectAlumno = document.getElementById('pago-alumno');
-            if (selectAlumno) {
-                selectAlumno.innerHTML = '<option value="">Seleccione un alumno...</option>';
-                localAlumnos.sort((a,b) => a.nombres.localeCompare(b.nombres)).forEach(al => {
-                    selectAlumno.innerHTML += `<option value="${al.id}">${al.nombres} ${al.apellidos}</option>`;
-                });
-            }
+            renderAll();
         }
 
-        // DESCARGA MAESTRA AL INICIAR
         async function descargarDatosNube() {
             try {
                 if(!API_URL) return cargarDatosIniciales();
-                const btnHeader = document.getElementById('header-title');
-                const titleOriginal = btnHeader.innerHTML;
-                btnHeader.innerHTML = titleOriginal + ' <i class="fas fa-sync fa-spin text-sm text-indigo-400 ml-2" title="Conectando BD..."></i>';
+                const badge = document.getElementById('status-badge');
+                badge.className = "px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-50 text-amber-600 flex items-center gap-1.5 border border-amber-100";
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Conectando Nube...`;
                 
                 const response = await fetch(API_URL, {
                     method: 'POST',
@@ -1327,15 +1324,62 @@
                     localStorage.setItem('nomina', JSON.stringify(res.data.nomina || []));
                     localStorage.setItem('cuotas', JSON.stringify(res.data.cuotas || []));
                     localStorage.setItem('abonos', JSON.stringify(res.data.abonos || []));
-                    localStorage.setItem('eventos', JSON.stringify(res.data.eventos || [])); // Eventos Nuevos
-                    localStorage.setItem('ventasEventos', JSON.stringify(res.data.ventasEventos || [])); // Eventos Nuevos
+                    localStorage.setItem('eventos', JSON.stringify(res.data.eventos || []));
+                    localStorage.setItem('ventasEventos', JSON.stringify(res.data.ventasEventos || []));
+                    localStorage.setItem('cajaChica', JSON.stringify(res.data.cajaChica || []));
+                    
+                    badge.className = "px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-600 flex items-center gap-1.5 border border-emerald-100";
+                    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Nube Sincronizada`;
                 }
-                btnHeader.innerHTML = titleOriginal;
                 cargarDatosIniciales();
             } catch(e) {
                 console.warn("Offline", e);
+                const badge = document.getElementById('status-badge');
+                badge.className = "px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-500 flex items-center gap-1.5 border border-slate-200";
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-400"></span> Local / Desconectado`;
                 cargarDatosIniciales();
             }
+        }
+
+        async function syncAllTables(isManual = false) {
+            const badge = document.getElementById('status-badge');
+            badge.className = "px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-600 flex items-center gap-1.5 border border-blue-100";
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-blue-500 animate-spin"></span> Guardando en Nube...`;
+            
+            let errors = 0;
+            const tablesToSync = ["alumnos", "maestros", "cuotas", "abonos", "pagos", "cajaChica", "eventos", "ventasEventos", "nomina"];
+            
+            for (let table of tablesToSync) {
+                let localDataBlock = loadData(table);
+                try {
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        body: JSON.stringify({ action: 'syncTable', table: table, rows: localDataBlock })
+                    });
+                } catch (e) { errors++; }
+            }
+            
+            if(errors === 0) {
+                badge.className = "px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-600 flex items-center gap-1.5 border border-emerald-100";
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Nube Sincronizada`;
+                if(isManual) await mostrarMensaje("Éxito", "Toda la información fue guardada en Google Sheets.", "success");
+            } else {
+                badge.className = "px-2.5 py-1 text-xs font-semibold rounded-full bg-red-50 text-red-600 flex items-center gap-1.5 border border-red-100";
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> Error de guardado`;
+            }
+        }
+
+        function renderAll() {
+            renderAlumnos();
+            renderMaestros();
+            renderEstadoDeCuotas();
+            renderTesoreriaSelectors();
+            renderPagos();
+            renderCaja();
+            renderVentasEventos();
+            actualizarSelectEventos();
+            cargarCuotasEnFormulario();
         }
 
         // ================== EVENT LISTENERS GENERALES ==================
@@ -1343,13 +1387,11 @@
             inicializarCatalogos();
             descargarDatosNube();
             
-            // Toggle Acordeón Médico
             document.getElementById('toggle-medico').onclick = () => {
                 document.getElementById('medico-fields').classList.toggle('hidden');
                 document.getElementById('icono-medico').classList.toggle('fa-chevron-up');
             };
 
-            // Select Nivel que activa Grado
             document.getElementById('nivel').addEventListener('change', () => actualizarGrados('nivel', 'grado'));
 
             // === EVENTOS DE CUOTAS ===
@@ -1433,6 +1475,7 @@
                     
                     if(alumno.estatus === 'Nuevo Ingreso') document.getElementById('estatus-nuevo').checked = true;
                     if(alumno.estatus === 'Reinscripción') document.getElementById('estatus-reinscripcion').checked = true;
+                    if(alumno.estatus === 'Baja') document.getElementById('estatus-nuevo').checked = false; 
                     
                     form.nombres.value = alumno.nombres;
                     form.apellidos.value = alumno.apellidos;
@@ -1471,7 +1514,6 @@
                     if (confirmed) {
                         localAlumnos = localAlumnos.filter(a => a.id !== id);
                         saveData('alumnos', localAlumnos);
-                        cargarDatosIniciales();
                     }
                 }
             });
@@ -1498,7 +1540,7 @@
                 const estatusInput = form.querySelector('input[name="estatus"]:checked');
                 const alumnoData = {
                     id: document.getElementById('alumno-id-edit').value || generateId(),
-                    estatus: estatusInput ? estatusInput.value : '',
+                    estatus: estatusInput ? estatusInput.value : 'Nuevo Ingreso',
                     nombres: form.nombres.value,
                     apellidos: form.apellidos.value,
                     fechaNacimiento: form.fechaNacimiento.value,
@@ -1522,9 +1564,7 @@
                 else localAlumnos.push(alumnoData);
                 
                 saveData('alumnos', localAlumnos);
-                cargarDatosIniciales();
                 document.getElementById('btn-cancelar-alumno-edit').click();
-                mostrarMensaje('Éxito', 'Alumno guardado correctamente en la BD.', 'success');
             };
 
             // === EVENTOS TABLA MAESTROS ===
@@ -1563,7 +1603,7 @@
                     document.getElementById('form-nomina').onsubmit = (ev) => {
                         ev.preventDefault();
                         const nData = { id: generateId(), maestroId: document.getElementById('nomina-maestro-id').value, maestroNombre: document.getElementById('nomina-maestro-nombre').value, fechaPago: document.getElementById('nomina-fecha').value, monto: parseFloat(document.getElementById('nomina-monto').value) };
-                        localNomina.push(nData); saveData('nomina', localNomina); mc.classList.remove('active'); imprimirReciboNomina(nData); cargarDatosIniciales();
+                        localNomina.push(nData); saveData('nomina', localNomina); mc.classList.remove('active'); imprimirReciboNomina(nData);
                     };
                 }
 
@@ -1617,7 +1657,7 @@
                     const confirmed = await mostrarMensaje("Confirmar Eliminación", `¿Eliminar a <strong>${maestro.nombres} ${maestro.apellidos}</strong>?`, "confirm");
                     if (confirmed) {
                         localMaestros = localMaestros.filter(m => m.id !== id);
-                        saveData('maestros', localMaestros); cargarDatosIniciales();
+                        saveData('maestros', localMaestros);
                     }
                 }
             });
@@ -1625,7 +1665,7 @@
             document.getElementById('btn-cancelar-maestro-edit').addEventListener('click', () => {
                 document.getElementById('form-agregar-maestro').reset();
                 document.getElementById('maestro-id-edit').value = '';
-                document.getElementById('form-maestro-title').innerHTML = '<i class="fas fa-chalkboard-teacher text-indigo-500"></i> Agregar Maestro';
+                document.getElementById('form-maestro-title').innerHTML = `<i class="fas fa-chalkboard-teacher text-indigo-500"></i> Agregar Maestro`;
                 const btnGuardar = document.getElementById('btn-guardar-maestro');
                 btnGuardar.innerHTML = '<i class="fas fa-save"></i> Guardar Maestro';
                 btnGuardar.classList.replace('bg-amber-500', 'bg-indigo-600');
@@ -1645,9 +1685,8 @@
                 const idx = localMaestros.findIndex(m => m.id === data.id);
                 if(idx > -1) localMaestros[idx] = data; else localMaestros.push(data);
                 
-                saveData('maestros', localMaestros); cargarDatosIniciales();
+                saveData('maestros', localMaestros);
                 document.getElementById('btn-cancelar-maestro-edit').click();
-                mostrarMensaje('Éxito', 'Maestro guardado.', 'success');
             };
 
             // === EVENTOS DE PAGOS ===
@@ -1672,8 +1711,8 @@
                 document.getElementById('total-pagado').textContent = currency(total); checkPagoValido();
             };
 
-            document.getElementById('btn-agregar-concepto').addEventListener('click', () => { const concepto = document.getElementById('pago-concepto-select').value; const monto = parseFloat(document.getElementById('pago-concepto-monto').value); if (!concepto || isNaN(monto) || monto <= 0) return mostrarMensaje('Aviso', 'Ingresa un concepto y un monto.', 'info'); pagoConceptosTemp.push({ concepto, monto }); document.getElementById('pago-concepto-monto').value = ''; renderConceptosPago(); });
-            document.getElementById('btn-agregar-metodo').addEventListener('click', () => { const metodo = document.getElementById('pago-metodo-select').value; const monto = parseFloat(document.getElementById('pago-metodo-monto').value); if (!metodo || isNaN(monto) || monto <= 0) return mostrarMensaje('Aviso', 'Ingresa un método y un monto.', 'info'); pagoMetodosTemp.push({ metodo, monto }); document.getElementById('pago-metodo-monto').value = ''; renderMetodosPago(); });
+            document.getElementById('btn-agregar-concepto').addEventListener('click', () => { const concepto = document.getElementById('pago-concepto-select').value; const monto = parseFloat(document.getElementById('pago-concepto-monto').value); if (!concepto || isNaN(monto) || monto <= 0) return; pagoConceptosTemp.push({ concepto, monto }); document.getElementById('pago-concepto-monto').value = ''; renderConceptosPago(); });
+            document.getElementById('btn-agregar-metodo').addEventListener('click', () => { const metodo = document.getElementById('pago-metodo-select').value; const monto = parseFloat(document.getElementById('pago-metodo-monto').value); if (!metodo || isNaN(monto) || monto <= 0) return; pagoMetodosTemp.push({ metodo, monto }); document.getElementById('pago-metodo-monto').value = ''; renderMetodosPago(); });
             document.getElementById('lista-conceptos-pago').addEventListener('click', (e) => { const btn = e.target.closest('.rm-concepto'); if(!btn) return; pagoConceptosTemp.splice(btn.dataset.idx, 1); renderConceptosPago(); });
             document.getElementById('lista-metodos-pago').addEventListener('click', (e) => { const btn = e.target.closest('.rm-metodo'); if(!btn) return; pagoMetodosTemp.splice(btn.dataset.idx, 1); renderMetodosPago(); });
             document.getElementById('pago-alumno').addEventListener('change', checkPagoValido); document.getElementById('pago-fecha').addEventListener('change', checkPagoValido);
@@ -1683,9 +1722,8 @@
                 const data = { id: document.getElementById('pago-id-edit').value || generateId(), alumnoId: document.getElementById('pago-alumno').value, fecha: document.getElementById('pago-fecha').value, conceptos: [...pagoConceptosTemp], metodosDePago: [...pagoMetodosTemp], total: pagoConceptosTemp.reduce((s, c) => s + c.monto, 0), notas: document.getElementById('pago-notas').value, estado: 'activo' };
                 const idx = localPagos.findIndex(p => p.id === data.id);
                 if(idx > -1) localPagos[idx] = data; else localPagos.push(data);
-                saveData('pagos', localPagos); cargarDatosIniciales();
+                saveData('pagos', localPagos);
                 e.target.reset(); document.getElementById('pago-id-edit').value = ''; pagoConceptosTemp = []; pagoMetodosTemp = []; renderConceptosPago(); renderMetodosPago();
-                mostrarMensaje('Éxito', 'Transacción guardada.', 'success');
             };
 
             document.getElementById('lista-pagos').addEventListener('click', async (e) => {
@@ -1693,7 +1731,7 @@
                 if (btnAnular && !btnAnular.disabled) {
                     if (await mostrarMensaje("Anular Pago", "¿Estás seguro de anular esta transacción?", "confirm")) {
                         const motivo = await mostrarPromptModal("Motivo de Anulación", "Razón para anular el recibo:");
-                        if (motivo) { const p = localPagos.find(x => x.id === btnAnular.dataset.id); p.estado = 'anulado'; p.motivoAnulacion = motivo; saveData('pagos', localPagos); cargarDatosIniciales(); }
+                        if (motivo) { const p = localPagos.find(x => x.id === btnAnular.dataset.id); p.estado = 'anulado'; p.motivoAnulacion = motivo; saveData('pagos', localPagos); }
                     }
                 }
                 if (editBtn && !editBtn.disabled) {
@@ -1713,29 +1751,77 @@
             // === EVENTOS DE CAJA CHICA ===
             document.getElementById('form-caja-chica').onsubmit = (e) => {
                 e.preventDefault();
-                localCajaChica.push({ id: generateId(), fecha: document.getElementById('caja-fecha').value, tipo: document.getElementById('caja-tipo').value, concepto: document.getElementById('caja-concepto').value, monto: parseFloat(document.getElementById('caja-monto').value) });
-                saveData('cajaChica', localCajaChica); cargarDatosIniciales(); e.target.reset(); mostrarMensaje('Éxito', 'Movimiento registrado en caja.', 'success');
+                const tipoMovimiento = document.querySelector('input[name="caja-tipo"]:checked').value;
+                const cajaId = document.getElementById('caja-id-edit').value;
+                const movimiento = { 
+                    id: cajaId || generateId(), 
+                    fecha: document.getElementById('caja-fecha').value, 
+                    tipo: tipoMovimiento, 
+                    concepto: document.getElementById('caja-concepto').value, 
+                    monto: parseFloat(document.getElementById('caja-monto').value) 
+                };
+                
+                if (cajaId) {
+                    const idx = localCajaChica.findIndex(c => c.id === cajaId);
+                    if (idx > -1) localCajaChica[idx] = movimiento;
+                } else {
+                    localCajaChica.push(movimiento);
+                }
+                
+                saveData('cajaChica', localCajaChica); 
+                document.getElementById('btn-cancelar-caja-edit').click();
             };
 
             const renderCaja = () => {
                 const tbody = document.getElementById('lista-caja-chica'); let ing = 0, gas = 0; tbody.innerHTML = '';
                 localCajaChica.sort((a,b)=>b.fecha.localeCompare(a.fecha)).forEach(c => {
-                    if (c.tipo === 'ingreso') ing += c.monto; else gas += c.monto;
-                    tbody.innerHTML += `<tr class="hover:bg-slate-50"><td class="px-6 py-4 text-sm">${c.fecha}</td><td class="px-6 py-4 text-sm">${c.concepto}</td><td class="px-6 py-4 text-right font-bold ${c.tipo==='ingreso'?'text-emerald-600':'text-rose-600'}">${c.tipo==='ingreso'?'+':'-'} ${currency(c.monto)}</td></tr>`;
+                    const esIngreso = c.tipo === 'ingreso';
+                    if (esIngreso) ing += Number(c.monto || 0); else gas += Number(c.monto || 0);
+                    const editButton = esIngreso ? `<button data-id="${c.id}" class="edit-caja-btn text-indigo-500 hover:bg-indigo-50 p-1.5 rounded-lg transition-colors"><i class="fas fa-edit"></i></button>` : `<button disabled class="text-slate-300 cursor-not-allowed p-1.5" title="Gastos no editables, use anular"><i class="fas fa-edit"></i></button>`;
+                    tbody.innerHTML += `<tr class="hover:bg-slate-50"><td class="px-6 py-4 text-sm">${c.fecha}</td><td class="px-6 py-4 text-sm">${c.concepto}</td><td class="px-6 py-4 text-right font-bold ${esIngreso?'text-emerald-600':'text-rose-600'}">${esIngreso?'+':'-'} ${currency(c.monto)}</td><td class="px-6 py-4 text-center">${editButton} <button data-id="${c.id}" class="delete-caja-btn text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors"><i class="fas fa-trash"></i></button></td></tr>`;
                 });
                 document.getElementById('caja-total-ingresos').textContent = currency(ing); document.getElementById('caja-total-gastos').textContent = currency(gas); document.getElementById('caja-balance').textContent = currency(ing - gas); document.getElementById('contador-caja').textContent = `${localCajaChica.length} Reg`;
             };
-            // Sobrescribimos cargarDatosIniciales para inyectar renderCaja y Eventos al final
+            
+            document.getElementById('lista-caja-chica').addEventListener('click', async (e) => {
+                const editBtn = e.target.closest('.edit-caja-btn');
+                const deleteBtn = e.target.closest('.delete-caja-btn');
+                if (editBtn) {
+                    const mov = localCajaChica.find(c => c.id === editBtn.dataset.id);
+                    if (!mov) return;
+                    document.getElementById('caja-id-edit').value = mov.id;
+                    document.getElementById('caja-fecha').value = mov.fecha;
+                    document.getElementById('caja-concepto').value = mov.concepto;
+                    document.getElementById('caja-monto').value = mov.monto;
+                    if (mov.tipo === 'ingreso') document.getElementById('caja-tipo-ingreso').checked = true;
+                    else document.getElementById('caja-tipo-gasto').checked = true;
+                    document.getElementById('form-caja-title').innerHTML = `<i class="fas fa-edit text-amber-500"></i> Editando Ingreso`;
+                    document.getElementById('btn-guardar-caja').textContent = 'Actualizar Movimiento';
+                    document.getElementById('btn-guardar-caja').classList.replace('bg-slate-800', 'bg-amber-500');
+                    document.getElementById('btn-cancelar-caja-edit').classList.remove('hidden');
+                }
+                if (deleteBtn) {
+                    if (await mostrarMensaje('Confirmar Anulación', '¿Seguro que deseas eliminar/anular este registro de caja?', 'confirm')) {
+                        localCajaChica = localCajaChica.filter(c => c.id !== deleteBtn.dataset.id);
+                        saveData('cajaChica', localCajaChica);
+                    }
+                }
+            });
+
+            document.getElementById('btn-cancelar-caja-edit').addEventListener('click', () => {
+                document.getElementById('form-caja-chica').reset();
+                document.getElementById('caja-id-edit').value = '';
+                document.getElementById('caja-tipo-ingreso').checked = true;
+                document.getElementById('form-caja-title').innerHTML = `<i class="fas fa-exchange-alt text-indigo-500"></i> Nuevo Movimiento`;
+                document.getElementById('btn-guardar-caja').textContent = 'Registrar Movimiento';
+                document.getElementById('btn-guardar-caja').classList.replace('bg-amber-500', 'bg-slate-800');
+                document.getElementById('btn-cancelar-caja-edit').classList.add('hidden');
+            });
+
             const originalCargar = cargarDatosIniciales;
             cargarDatosIniciales = function() { 
                 originalCargar(); 
-                
-                // Cargas inyectadas dinámicamente
-                localEventos = loadData('eventos');
-                localVentasEventos = loadData('ventasEventos');
                 renderCaja(); 
-                
-                // Llenar selector de alumnos en Eventos Especiales
                 const selectVentaAlumno = document.getElementById('venta-evento-alumno');
                 if (selectVentaAlumno) {
                     selectVentaAlumno.innerHTML = '<option value="">Seleccione un alumno...</option>';
@@ -1748,8 +1834,6 @@
             };
 
             // === EVENTOS ESPECIALES (KERMESES, ETC) ===
-            
-            // Administrar Eventos (Modal)
             document.getElementById('btn-admin-eventos').addEventListener('click', () => {
                 let paquetesTemp = [];
                 const mc = document.getElementById('modal-container');
@@ -1758,14 +1842,12 @@
                 mc.innerHTML = `
                     <div class="modal-content" style="max-width: 800px;">
                         <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="fas fa-calendar-alt text-indigo-500"></i> Administrador de Eventos</h2>
-                        
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
                                 <h3 class="text-sm font-bold text-slate-700 uppercase mb-3">Crear Nuevo Evento</h3>
                                 <div class="space-y-3">
                                     <input type="text" id="nuevo-evento-nombre" placeholder="Nombre del Evento (Ej. Kermés Primavera)" class="form-input text-sm">
                                     <input type="date" id="nuevo-evento-fecha" value="${hoy}" class="form-input text-sm">
-                                    
                                     <div class="border border-indigo-100 rounded-lg p-3 bg-indigo-50/30">
                                         <p class="text-xs font-bold text-indigo-800 mb-2">Paquetes Disponibles</p>
                                         <div class="flex gap-2 mb-2">
@@ -1778,16 +1860,10 @@
                                     <button type="button" id="btn-guardar-evento" class="w-full bg-slate-800 text-white py-2 rounded-lg font-bold hover:bg-slate-700 transition-all">Registrar Evento en Catálogo</button>
                                 </div>
                             </div>
-                            
                             <div>
                                 <h3 class="text-sm font-bold text-slate-700 uppercase mb-3">Eventos Vigentes</h3>
                                 <div class="overflow-y-auto max-h-80 border border-slate-200 rounded-xl">
-                                    <table class="w-full text-left text-sm">
-                                        <thead class="bg-slate-100 sticky top-0 text-slate-500 uppercase text-xs">
-                                            <tr><th class="p-3">Evento</th><th class="p-3 text-center">Acción</th></tr>
-                                        </thead>
-                                        <tbody id="lista-eventos-modal" class="divide-y divide-slate-100"></tbody>
-                                    </table>
+                                    <table class="w-full text-left text-sm"><thead class="bg-slate-100 sticky top-0 text-slate-500 uppercase text-xs"><tr><th class="p-3">Evento</th><th class="p-3 text-center">Acción</th></tr></thead><tbody id="lista-eventos-modal" class="divide-y divide-slate-100"></tbody></table>
                                 </div>
                             </div>
                         </div>
@@ -1817,7 +1893,7 @@
                 document.getElementById('btn-add-paquete-temp').addEventListener('click', () => {
                     const n = document.getElementById('temp-paquete-nombre').value;
                     const c = parseFloat(document.getElementById('temp-paquete-costo').value);
-                    if(!n || isNaN(c) || c < 0) return mostrarMensaje('Error', 'Ingresa un nombre y un costo válido para el paquete.', 'error');
+                    if(!n || isNaN(c) || c < 0) return;
                     paquetesTemp.push({ id: generateId(), nombre: n, costo: c });
                     document.getElementById('temp-paquete-nombre').value = '';
                     document.getElementById('temp-paquete-costo').value = '';
@@ -1832,14 +1908,13 @@
                 document.getElementById('btn-guardar-evento').addEventListener('click', () => {
                     const nom = document.getElementById('nuevo-evento-nombre').value;
                     const fec = document.getElementById('nuevo-evento-fecha').value;
-                    if(!nom || !fec || paquetesTemp.length === 0) return mostrarMensaje('Error', 'Se requiere nombre, fecha y al menos un paquete.', 'error');
+                    if(!nom || !fec || paquetesTemp.length === 0) return;
                     
                     localEventos.push({ id: generateId(), concepto: nom, fecha: fec, paquetes: [...paquetesTemp], estado: 'activo' });
                     saveData('eventos', localEventos);
                     
                     document.getElementById('nuevo-evento-nombre').value = '';
                     paquetesTemp = []; renderPaquetesTemp(); renderEventosCat(); actualizarSelectEventos();
-                    mostrarMensaje('Éxito', 'Evento registrado correctamente.', 'success');
                 });
 
                 document.getElementById('lista-eventos-modal').addEventListener('click', async (e) => {
@@ -1855,7 +1930,6 @@
                 document.getElementById('btn-cerrar-admin-eventos').onclick = () => mc.classList.remove('active');
             });
 
-            // Lógica Punto de Venta Eventos
             function actualizarSelectEventos() {
                 const selectEv = document.getElementById('venta-evento-select');
                 if(!selectEv) return;
@@ -1935,9 +2009,6 @@
                 document.getElementById('venta-paquete-select').classList.add('bg-slate-100', 'cursor-not-allowed');
                 document.getElementById('venta-evento-total').textContent = "$0.00";
                 paqueteSeleccionadoObj = null; validarBtnVentaEvento();
-                
-                renderVentasEventos();
-                mostrarMensaje('¡Venta Exitosa!', 'El boleto ha sido registrado.', 'success');
             });
 
             function renderVentasEventos() {
@@ -1986,7 +2057,7 @@
                     const motivo = await mostrarPromptModal("Anular Boleto", "¿Cuál es el motivo para cancelar esta venta?");
                     if(motivo) {
                         v.estado = 'anulado'; v.motivoAnulacion = motivo;
-                        saveData('ventasEventos', localVentasEventos); renderVentasEventos();
+                        saveData('ventasEventos', localVentasEventos);
                     }
                 }
             });
@@ -2014,7 +2085,6 @@
 
     </script>
     <script>
-        // Navegación Sidebar Simple
         function changeSection(sectionName) {
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('content-active'));
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
