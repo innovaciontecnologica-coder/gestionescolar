@@ -2043,18 +2043,190 @@
                 saveData('colegiaturasPagos', colegiaturasPagos);
                 cerrarModalGeneral();
                 renderColegiaturas();
-                mostrarMensaje("Éxito", `Colegiatura de ${mesName} cobrada correctamente.`, "success");
+                imprimirTicketColegiatura(pago.id);
+                mostrarMensaje("Éxito", `Colegiatura de ${mesName} cobrada correctamente. Se generó el ticket de impresión.`, "success");
             };
         };
 
+        window.imprimirTicketColegiatura = function(pagoId) {
+            const p = colegiaturasPagos.find(x => String(x.id) === String(pagoId));
+
+            if (!p) {
+                mostrarMensaje("No encontrado", "No se localizó el pago de colegiatura para imprimir el ticket.", "error");
+                return;
+            }
+
+            const al = localAlumnos.find(a => String(a.id) === String(p.alumnoId));
+            const alumnoNombre = al ? `${al.nombres || ''} ${al.apellidos || ''}`.trim() : 'Alumno no localizado';
+            const nivel = al ? (al.nivel || 'N/A') : 'N/A';
+            const grado = al ? (al.grado || 'N/A') : 'N/A';
+            const grupo = al ? (al.grupo || 'N/A') : 'N/A';
+            const tutor = al ? (al.tutor || 'N/A') : 'N/A';
+            const responsable2 = al ? (al.responsable2 || '') : '';
+
+            const cycleMonths = getCycleMonths(configColegiaturas.mesInicio || 8);
+            const mesEncontrado = cycleMonths.find(m => Number(m.id) === Number(p.mes));
+            const mesNombre = mesEncontrado ? mesEncontrado.name : `Mes ${p.mes}`;
+
+            const fechaPago = normalizarFechaInput(p.fecha || new Date().toISOString().split('T')[0]);
+            const timestamp = Number(p.timestamp || Date.now());
+            const horaPago = new Date(timestamp).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+            const fechaLegible = new Date(fechaPago + 'T00:00:00').toLocaleDateString('es-MX', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            const monto = Number(p.monto || 0);
+            const metodo = p.metodo || 'N/A';
+            const folio = String(p.id || 'S/F');
+
+            const escapeHtml = (valor) => String(valor ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+
+            const construirCopia = (tipoCopia) => `
+                <div class="ticket-copy">
+                    <div class="center">
+                        <div class="brand">Control Labastida</div>
+                        <div class="subtitle">Ticket de pago de colegiatura</div>
+                        <div class="copy-badge">${escapeHtml(tipoCopia)}</div>
+                    </div>
+
+                    <div class="folio">
+                        <strong>Folio:</strong><br>
+                        ${escapeHtml(folio)}
+                    </div>
+
+                    <div class="line"></div>
+
+                    <div class="row"><span class="label">Fecha:</span><span class="value">${escapeHtml(fechaLegible)}</span></div>
+                    <div class="row"><span class="label">Hora:</span><span class="value">${escapeHtml(horaPago)}</span></div>
+                    <div class="row"><span class="label">Método:</span><span class="value">${escapeHtml(metodo)}</span></div>
+
+                    <div class="line"></div>
+
+                    <div class="row"><span class="label">Alumno:</span><span class="value">${escapeHtml(alumnoNombre)}</span></div>
+                    <div class="row"><span class="label">Nivel:</span><span class="value">${escapeHtml(nivel)}</span></div>
+                    <div class="row"><span class="label">Grado/Grupo:</span><span class="value">${escapeHtml(grado)}° "${escapeHtml(grupo)}"</span></div>
+                    <div class="row"><span class="label">Tutor:</span><span class="value">${escapeHtml(tutor)}</span></div>
+                    ${responsable2 ? `<div class="row"><span class="label">Resp. 2:</span><span class="value">${escapeHtml(responsable2)}</span></div>` : ''}
+
+                    <div class="line"></div>
+
+                    <div class="concepto">Colegiatura ${escapeHtml(mesNombre)}</div>
+
+                    <div class="total-box">
+                        <div class="total-label">TOTAL PAGADO</div>
+                        <div class="total">${currency(monto)}</div>
+                    </div>
+
+                    <div class="footer">
+                        Comprobante interno de pago. Conserve este ticket para cualquier aclaración.
+                    </div>
+
+                    <div class="firma">Recibió: Administración</div>
+                </div>
+            `;
+
+            const ticketHtml = `
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket Colegiatura ${escapeHtml(folio)}</title>
+    <style>
+        @page { size: 80mm auto; margin: 4mm; }
+        * { box-sizing: border-box; }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            width: 72mm;
+            margin: 0 auto;
+            padding: 0;
+            color: #111827;
+            background: #ffffff;
+            font-size: 11px;
+        }
+        .ticket-copy { width: 100%; padding: 4mm 2mm; page-break-inside: avoid; }
+        .center { text-align: center; }
+        .brand { font-size: 17px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
+        .subtitle { font-size: 11px; margin-top: 2px; color: #374151; }
+        .copy-badge {
+            display: inline-block;
+            margin-top: 6px;
+            padding: 3px 8px;
+            border: 1px solid #111827;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+        }
+        .folio {
+            margin-top: 8px;
+            padding: 5px;
+            border: 1px solid #111827;
+            border-radius: 4px;
+            font-size: 10px;
+            word-break: break-all;
+            text-align: center;
+        }
+        .line { border-top: 1px dashed #111827; margin: 8px 0; }
+        .row { display: flex; justify-content: space-between; gap: 8px; margin: 3px 0; }
+        .label { font-weight: 700; color: #374151; }
+        .value { text-align: right; font-weight: 600; max-width: 43mm; }
+        .concepto { text-align: center; font-size: 14px; font-weight: 800; margin: 8px 0 4px; text-transform: uppercase; }
+        .total-box { margin-top: 8px; padding: 8px 4px; border: 2px solid #111827; border-radius: 5px; text-align: center; }
+        .total-label { font-size: 11px; font-weight: 700; }
+        .total { font-size: 22px; font-weight: 900; margin-top: 2px; }
+        .footer { text-align: center; font-size: 10px; margin-top: 8px; color: #374151; }
+        .firma { margin-top: 18px; border-top: 1px solid #111827; padding-top: 3px; text-align: center; font-size: 10px; }
+        .cut { border-top: 1px dashed #111827; margin: 10px 0; text-align: center; font-size: 9px; color: #6b7280; }
+        .no-print { margin: 12px auto; width: 72mm; display: flex; gap: 8px; justify-content: center; }
+        .no-print button { border: 0; border-radius: 8px; padding: 9px 12px; font-weight: 700; cursor: pointer; }
+        .print-btn { background: #4f46e5; color: white; }
+        .close-btn { background: #e5e7eb; color: #111827; }
+        @media print {
+            body { width: 72mm; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <button class="print-btn" onclick="window.print()">Imprimir</button>
+        <button class="close-btn" onclick="window.close()">Cerrar</button>
+    </div>
+    ${construirCopia('COPIA CLIENTE')}
+    <div class="cut">--- cortar aquí ---</div>
+    ${construirCopia('COPIA ESCUELA')}
+</body>
+</html>`;
+
+            const w = window.open('', '_blank', 'width=420,height=720');
+
+            if (!w) {
+                mostrarMensaje(
+                    "Ventana bloqueada",
+                    "El navegador bloqueó la ventana de impresión. Permite ventanas emergentes para este sitio y vuelve a intentar.",
+                    "error"
+                );
+                return;
+            }
+
+            w.document.open();
+            w.document.write(ticketHtml);
+            w.document.close();
+            w.focus();
+            setTimeout(() => {
+                w.print();
+            }, 350);
+        };
+
         window.abrirReciboCol = function(pagoId) {
-            const p = colegiaturasPagos.find(x => x.id === pagoId);
-            if(!p) return;
-            const al = localAlumnos.find(a => a.id === p.alumnoId);
-            const nAl = al ? `${al.nombres} ${al.apellidos}` : 'N/A';
-            const mesName = MONTH_SHORT_NAMES[getCycleMonths(configColegiaturas.mesInicio || 8).find(m => m.id === p.mes).monthNum - 1] || 'S/M';
-            const html = `<html><head><style>body{font-family:sans-serif;width:300px;margin:0 auto;padding:20px;text-align:center;}hr{border:0;border-top:1px dashed #000;margin:15px 0;}table{width:100%;text-align:left;}td.r{text-align:right;}</style></head><body onload="window.print();window.close();"><h2>Colegio Labastida</h2><p>Recibo de Colegiatura</p><hr><p>Folio: ${p.id}<br>Fecha: ${p.fecha}<br>Alumno: ${nAl}</p><hr><p style="font-size:18px;font-weight:bold;">MENSUALIDAD: ${mesName}</p><hr><h3>TOTAL PAGADO: ${currency(p.monto)}</h3><p>Método: ${p.metodo}</p><hr><p>¡Gracias por su pago!</p></body></html>`;
-            const w = window.open('','_blank'); w.document.write(html); w.document.close();
+            imprimirTicketColegiatura(pagoId);
         };
 
         window.renderReporteDiarioCol = function() {
