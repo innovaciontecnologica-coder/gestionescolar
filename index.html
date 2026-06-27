@@ -486,20 +486,8 @@
                     <div class="overflow-x-auto p-0">
                         <table class="w-full text-left border-collapse">
                             <thead class="bg-slate-50 border-b border-slate-200">
-                                <tr>
-                                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider sticky left-0 bg-slate-50 z-10">Alumno / Config.</th>
-                                    <th class="px-4 py-4 text-center text-xs font-bold text-slate-500 uppercase">M1</th>
-                                    <th class="px-4 py-4 text-center text-xs font-bold text-slate-500 uppercase">M2</th>
-                                    <th class="px-4 py-4 text-center text-xs font-bold text-slate-500 uppercase">M3</th>
-                                    <th class="px-4 py-4 text-center text-xs font-bold text-slate-500 uppercase">M4</th>
-                                    <th class="px-4 py-4 text-center text-xs font-bold text-slate-500 uppercase">M5</th>
-                                    <th class="px-4 py-4 text-center text-xs font-bold text-slate-500 uppercase">M6</th>
-                                    <th class="px-4 py-4 text-center text-xs font-bold text-slate-500 uppercase">M7</th>
-                                    <th class="px-4 py-4 text-center text-xs font-bold text-slate-500 uppercase">M8</th>
-                                    <th class="px-4 py-4 text-center text-xs font-bold text-slate-500 uppercase">M9</th>
-                                    <th class="px-4 py-4 text-center text-xs font-bold text-slate-500 uppercase">M10</th>
-                                    <th class="px-4 py-4 text-center text-xs font-bold text-slate-500 uppercase">M11</th>
-                                    <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase">Progreso</th>
+                                <tr id="colegiaturas-table-headers">
+                                    <!-- Headers rendered dynamically by JavaScript -->
                                 </tr>
                             </thead>
                             <tbody id="lista-colegiaturas" class="divide-y divide-slate-100"></tbody>
@@ -823,28 +811,173 @@
         // --- ESTADO GLOBAL Y VARIABLES ---
         let localAlumnos = [], localMaestros = [], localPagos = [], localCuotas = [], localAbonos = [], localCajaChica = [], pagosFiltrados = [], localNomina = [], alumnosFiltrados = [], maestrosFiltrados = [];
         let localEventos = [], localVentasEventos = []; 
-        let configColegiaturas = {}; // Configuración global de colegiaturas (mes de inicio y costo base)
+        let configColegiaturas = { mesInicio: 8, costoBase: 2500 }; // Configuración global de colegiaturas
         let colegiaturasPagos = []; // Registro de pagos de colegiatura
-        let paqueteSeleccionadoObj = null; // Declarado globalmente para prevenir ReferenceErrors
+        let paqueteSeleccionadoObj = null;
 
         const NIVELES_ESCOLARES = ["Preescolar", "Primaria", "Secundaria", "Integrado Preescolar", "Integrado Primaria", "Integrado Secundaria"];
         const MESES_NOMBRES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        const MONTH_SHORT_NAMES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
         
         const CONCEPTOS_PAGO = ["Convivios", "Extemporáneos", "Fotografías", "Guardia", "Libros", "Material Didáctico", "Paseos", "Taller", "Uniformes", "Seguro Escolar"];
         const METODOS_PAGO = ["Efectivo", "Tarjeta de débito", "Tarjeta de crédito", "Transferencia"];
         const currency = n => `$${Number(n || 0).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
-        // URL OFICIAL Y CORRECTA (NUEVA CONEXIÓN REGISTRADA)
-        const API_URL = "https://script.google.com/macros/s/AKfycbwN55CkuyPCVEY4pP6RbExQ86Lb8hWkVbvJfzWcR-o_szZEpFv-YJ9w-05SlkNI61NcTg/exec";
+
+        const DEFAULT_CONFIG_COLEGIATURAS = {
+            mesInicio: 8,
+            costoBase: 2500,
+            tipos: [
+                { id: 't1', nombre: 'Normal', costo: 2500 },
+                { id: 't2', nombre: 'Beca SEP 50%', costo: 1250 },
+                { id: 't3', nombre: 'Beca 100%', costo: 0 }
+            ]
+        };
+
+        function deepClone(obj) {
+            return JSON.parse(JSON.stringify(obj));
+        }
+
+        function tryParseJson(value, fallback) {
+            if (typeof value !== 'string') return value ?? fallback;
+            const trimmed = value.trim();
+            if (!trimmed) return fallback;
+            if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) return value;
+            try { return JSON.parse(trimmed); } catch (e) { return fallback; }
+        }
+
+        function normalizarFechaInput(valor) {
+            if (valor === null || valor === undefined || valor === '') return '';
+            if (typeof valor === 'number') {
+                // Conversión de número serial de Excel/Sheets a fecha ISO corta.
+                const excelEpoch = Date.UTC(1899, 11, 30);
+                const fecha = new Date(excelEpoch + valor * 86400000);
+                return Number.isNaN(fecha.getTime()) ? String(valor) : fecha.toISOString().split('T')[0];
+            }
+            if (valor instanceof Date) return valor.toISOString().split('T')[0];
+            const str = String(valor).trim();
+            if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.substring(0, 10);
+            const fecha = new Date(str);
+            return Number.isNaN(fecha.getTime()) ? str : fecha.toISOString().split('T')[0];
+        }
+
+        function normalizarConfigColegiaturas(raw) {
+            let cfg = Array.isArray(raw) ? (raw[0] || {}) : (raw || {});
+            cfg = tryParseJson(cfg, {});
+            if (!cfg || typeof cfg !== 'object' || Array.isArray(cfg)) cfg = {};
+
+            const base = deepClone(DEFAULT_CONFIG_COLEGIATURAS);
+            const result = {
+                ...base,
+                ...cfg,
+                mesInicio: Number(cfg.mesInicio || base.mesInicio),
+                costoBase: Number(cfg.costoBase || base.costoBase),
+                tipos: tryParseJson(cfg.tipos, base.tipos)
+            };
+
+            if (!Array.isArray(result.tipos) || result.tipos.length === 0) {
+                result.tipos = deepClone(base.tipos);
+            }
+
+            result.tipos = result.tipos
+                .filter(t => t && typeof t === 'object')
+                .map((t, idx) => ({
+                    id: t.id || ('tipo-' + idx + '-' + generateId()),
+                    nombre: String(t.nombre || 'Normal'),
+                    costo: Number(t.costo || 0)
+                }));
+
+            return result;
+        }
+
+        function normalizarConfigAlumno(configCol) {
+            const cfg = tryParseJson(configCol, configCol) || {};
+            const costoDefault = Number(configColegiaturas?.costoBase || DEFAULT_CONFIG_COLEGIATURAS.costoBase);
+            return {
+                costoBase: Number(cfg.costoBase ?? costoDefault),
+                concepto: cfg.concepto || 'Normal',
+                exemptMonths: Array.isArray(cfg.exemptMonths) ? cfg.exemptMonths.map(Number) : []
+            };
+        }
+
+        function normalizarAlumno(alumno) {
+            if (!alumno || typeof alumno !== 'object') return alumno;
+            const normalizado = { ...alumno };
+            normalizado.fechaNacimiento = normalizarFechaInput(normalizado.fechaNacimiento);
+            if (normalizado.configCol) normalizado.configCol = normalizarConfigAlumno(normalizado.configCol);
+            return normalizado;
+        }
+
+        function normalizarPagoColegiatura(pago) {
+            if (!pago || typeof pago !== 'object') return pago;
+            return {
+                ...pago,
+                mes: Number(pago.mes),
+                monto: Number(pago.monto || 0),
+                fecha: normalizarFechaInput(pago.fecha),
+                timestamp: Number(pago.timestamp || Date.now())
+            };
+        }
+
+        function normalizarAbono(abono) {
+            if (!abono || typeof abono !== 'object') return abono;
+            const normalizado = { ...abono };
+            // Corrige registros importados con monto/fecha invertidos.
+            const montoPareceFecha = typeof normalizado.monto === 'string' && /^\d{4}-\d{2}-\d{2}/.test(normalizado.monto);
+            const fechaPareceMonto = normalizado.fechaAbono !== '' && !Number.isNaN(Number(normalizado.fechaAbono));
+            if (montoPareceFecha && fechaPareceMonto) {
+                const fecha = normalizado.monto;
+                normalizado.monto = Number(normalizado.fechaAbono);
+                normalizado.fechaAbono = fecha;
+            }
+            normalizado.monto = Number(normalizado.monto || 0);
+            normalizado.fechaAbono = normalizarFechaInput(normalizado.fechaAbono);
+            return normalizado;
+        }
+
+        function normalizarDatosTabla(key, data) {
+            if (key === 'configColegiaturas') return normalizarConfigColegiaturas(data);
+            const lista = Array.isArray(data) ? data : [];
+            if (key === 'alumnos') return lista.map(normalizarAlumno);
+            if (key === 'colegiaturasPagos') return lista.map(normalizarPagoColegiatura);
+            if (key === 'abonos') return lista.map(normalizarAbono);
+            return lista;
+        }
+
+        // URL del Apps Script de Google Sheets (Nueva URL Proporcionada por Arturo)
+        const API_URL = "https://script.google.com/macros/s/AKfycbxwWOQS1NHFaX_mDS0WSliIF--m4Xio2EO7pwwAgheATJeJPT7hU6PzfxZovDLpWHHpoQ/exec";
         let autoSaveTimeout = null;
 
         // Evitamos que el parser de HTML de los navegadores se confunda con etiquetas de script literales
         const sOpen = '<script' + '>';
         const sClose = '</' + 'script' + '>';
 
+        // Helper para obtener la matriz de 11 meses del ciclo escolar basada en un mes de inicio (1-based, ej. 8 = Agosto)
+        function getCycleMonths(startMonthNum) {
+            let months = [];
+            let currentMonth = Number(startMonthNum || 8);
+            for (let i = 1; i <= 11; i++) {
+                months.push({
+                    id: i, // ID interno del mes (1 al 11)
+                    name: MONTH_SHORT_NAMES[currentMonth - 1],
+                    monthNum: currentMonth
+                });
+                currentMonth++;
+                if (currentMonth > 12) currentMonth = 1;
+            }
+            return months;
+        }
+
         // --- SISTEMA DE DATOS Y AUTO-GUARDADO ---
         function loadData(key) {
-            try { return JSON.parse(localStorage.getItem(key)) || (key === 'configColegiaturas' ? {} : []); } catch (e) { return (key === 'configColegiaturas' ? {} : []); }
+            try {
+                const raw = localStorage.getItem(key);
+                const parsed = raw ? JSON.parse(raw) : (key === 'configColegiaturas' ? null : []);
+                return normalizarDatosTabla(key, parsed);
+            } catch (e) {
+                console.warn('No se pudo leer localStorage para', key, e);
+                return normalizarDatosTabla(key, key === 'configColegiaturas' ? null : []);
+            }
         }
         
         function saveData(key, data) {
@@ -1083,6 +1216,38 @@
             printWindow.document.close();
         }
 
+        // Imprime ticket/boleto específico de un evento vendido
+        function imprimirBoletoEvento(v) {
+            if(!v) return;
+            const alumno = localAlumnos.find(a => a.id === v.alumnoId);
+            const evento = localEventos.find(e => e.id === v.eventoId);
+            const paquete = evento ? evento.paquetes.find(p => p.id === v.paqueteId) : null;
+            
+            const nomAl = alumno ? `${alumno.nombres} ${alumno.apellidos}` : 'N/A';
+            const nomEv = evento ? evento.concepto : 'Evento Especial';
+            const nomPkt = paquete ? paquete.nombre : 'N/A';
+            
+            const html = `<html><head><style>body{font-family:sans-serif;width:300px;margin:0 auto;padding:20px;text-align:center;}hr{border:0;border-top:1px dashed #000;margin:15px 0;}table{width:100%;text-align:left;}td.r{text-align:right;}</style></head><body onload="window.print();window.close();"><h2>Colegio Labastida</h2><p>Boleto de Evento Especial</p><hr><p>Folio: ${v.id.substring(0,8).toUpperCase()}<br>Fecha Venta: ${v.fechaVenta}<br>Alumno: ${nomAl}</p><hr><table><tr><td>Evento:</td><td class="r"><b>${nomEv}</b></td></tr><tr><td>Paquete:</td><td class="r">${nomPkt}</td></tr></table><hr><h3>TOTAL PAGADO: ${currency(v.monto)}</h3><hr><p>¡Disfruta del evento!</p></body></html>`;
+            const w = window.open('','_blank'); w.document.write(html); w.document.close();
+        }
+
+        // --- FUNCIÓN GLOBAL DE VALIDACIÓN PARA EL PUNTO DE VENTA ---
+        function validarBtnVentaEvento() {
+            const btn = document.getElementById('btn-guardar-venta-evento');
+            if(!btn) return;
+            const selectVentaAlumno = document.getElementById('venta-evento-alumno');
+            const alId = selectVentaAlumno ? selectVentaAlumno.value : '';
+            
+            // Verifica que existan tanto el ID del alumno como el paquete seleccionado
+            if(alId && (paqueteSeleccionadoObj || window.paqueteSeleccionadoObj)) {
+                btn.disabled = false; 
+                btn.className = "w-full bg-indigo-600 text-white py-3 px-4 rounded-xl font-bold hover:bg-indigo-700 shadow-md transition-all flex justify-center items-center gap-2";
+            } else {
+                btn.disabled = true; 
+                btn.className = "w-full bg-slate-300 text-slate-500 py-3 px-4 rounded-xl font-bold transition-all cursor-not-allowed flex justify-center items-center gap-2";
+            }
+        }
+
         function cargarDatosIniciales() {
             localAlumnos = loadData('alumnos');
             localMaestros = loadData('maestros');
@@ -1096,10 +1261,10 @@
             colegiaturasPagos = loadData('colegiaturasPagos');
             configColegiaturas = loadData('configColegiaturas');
             
-            // Asignación de configuración general de colegiaturas por defecto
-            if(Object.keys(configColegiaturas).length === 0) {
-                configColegiaturas = { mesInicio: 8, costoBase: 2500 }; 
-            }
+            configColegiaturas = normalizarConfigColegiaturas(configColegiaturas);
+            localAlumnos = normalizarDatosTabla('alumnos', localAlumnos);
+            colegiaturasPagos = normalizarDatosTabla('colegiaturasPagos', colegiaturasPagos);
+            localAbonos = normalizarDatosTabla('abonos', localAbonos);
 
             renderAll();
         }
@@ -1116,7 +1281,6 @@
                 const res = await response.json();
                 
                 if (res.success && res.data) {
-                    // Limpieza total contra datos fantasma locales
                     localStorage.setItem('alumnos', JSON.stringify(res.data.alumnos || []));
                     localStorage.setItem('maestros', JSON.stringify(res.data.maestros || []));
                     localStorage.setItem('pagos', JSON.stringify(res.data.pagos || []));
@@ -1126,11 +1290,8 @@
                     localStorage.setItem('eventos', JSON.stringify(res.data.eventos || [])); 
                     localStorage.setItem('ventasEventos', JSON.stringify(res.data.ventasEventos || [])); 
                     localStorage.setItem('cajaChica', JSON.stringify(res.data.cajaChica || [])); 
-                    localStorage.setItem('colegiaturasPagos', JSON.stringify(res.data.colegiaturasPagos || [])); 
-                    
-                    if(res.data.configColegiaturas && res.data.configColegiaturas.length > 0) {
-                        localStorage.setItem('configColegiaturas', JSON.stringify(res.data.configColegiaturas[0] || {}));
-                    }
+                    localStorage.setItem('colegiaturasPagos', JSON.stringify(normalizarDatosTabla('colegiaturasPagos', res.data.colegiaturasPagos || []))); 
+                    localStorage.setItem('configColegiaturas', JSON.stringify(normalizarConfigColegiaturas(res.data.configColegiaturas)));
                     
                     if (badge) {
                         badge.className = "px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-600 flex items-center gap-1.5 ml-2 border border-emerald-100";
@@ -1149,6 +1310,37 @@
             }
         }
 
+        async function postJsonToSheets(payload, requireReadableResponse = true) {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload),
+                redirect: 'follow'
+            });
+
+            if (!requireReadableResponse) return { success: true };
+
+            const text = await response.text();
+            let parsed;
+            try {
+                parsed = JSON.parse(text);
+            } catch (e) {
+                throw new Error('El servidor respondió, pero no devolvió JSON válido. Revisa la implementación del Apps Script.');
+            }
+            if (!parsed.success) throw new Error(parsed.error || 'El servidor rechazó la operación.');
+            return parsed;
+        }
+
+        async function postJsonToSheetsFallbackOpaque(payload) {
+            // Último recurso: envía la petición aunque el navegador no permita leer la respuesta CORS.
+            await fetch(API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify(payload)
+            });
+            return { success: true, opaque: true };
+        }
+
         window.syncAllTables = async function(isManual = false) {
             const badge = document.getElementById('status-badge');
             if (badge) {
@@ -1157,35 +1349,53 @@
             }
             
             let errors = 0;
+            let opaqueSends = 0;
             const tablesToSync = ["alumnos", "maestros", "cuotas", "abonos", "pagos", "cajaChica", "eventos", "ventasEventos", "nomina", "colegiaturasPagos"];
             
             for (let table of tablesToSync) {
-                let localDataBlock = loadData(table);
+                const localDataBlock = normalizarDatosTabla(table, loadData(table));
+                const payload = { action: 'syncTable', table: table, rows: localDataBlock };
                 try {
-                    await fetch(API_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        body: JSON.stringify({ action: 'syncTable', table: table, rows: localDataBlock })
-                    });
-                } catch (e) { errors++; }
+                    await postJsonToSheets(payload, true);
+                } catch (e) {
+                    console.warn('Sync confirmado falló; intentando envío opaco:', table, e);
+                    try {
+                        await postJsonToSheetsFallbackOpaque(payload);
+                        opaqueSends++;
+                    } catch (fallbackError) {
+                        console.error('Error definitivo al sincronizar', table, fallbackError);
+                        errors++;
+                    }
+                }
             }
             
+            const configPayload = { action: 'syncTable', table: 'configColegiaturas', rows: [normalizarConfigColegiaturas(configColegiaturas)] };
             try {
-                await fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify({ action: 'syncTable', table: 'configColegiaturas', rows: [configColegiaturas] })
-                });
-            } catch (e) { errors++; }
+                await postJsonToSheets(configPayload, true);
+            } catch (e) {
+                console.warn('Sync confirmado falló; intentando envío opaco: configColegiaturas', e);
+                try {
+                    await postJsonToSheetsFallbackOpaque(configPayload);
+                    opaqueSends++;
+                } catch (fallbackError) {
+                    console.error('Error definitivo al sincronizar configColegiaturas', fallbackError);
+                    errors++;
+                }
+            }
             
             if (badge) {
-                if (errors === 0) {
+                if (errors === 0 && opaqueSends === 0) {
                     badge.className = "px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-600 flex items-center gap-1.5 ml-2 border border-emerald-100";
                     badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Nube Sincronizada`;
-                    if(isManual) mostrarMensaje("Éxito Total", "Información resguardada en Google Sheets.", "success");
+                    if(isManual) mostrarMensaje("Éxito Total", "Información confirmada en Google Sheets.", "success");
+                } else if (errors === 0 && opaqueSends > 0) {
+                    badge.className = "px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-50 text-amber-700 flex items-center gap-1.5 ml-2 border border-amber-100";
+                    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> Enviado sin confirmación`;
+                    if(isManual) mostrarMensaje("Enviado", "La información se envió a Google Sheets, pero el navegador no permitió confirmar la respuesta. Revisa la hoja para validar el guardado.", "info");
                 } else {
                     badge.className = "px-2.5 py-1 text-xs font-semibold rounded-full bg-red-50 text-red-600 flex items-center gap-1.5 ml-2 border border-red-100";
                     badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> Error de guardado`;
+                    if(isManual) mostrarMensaje("Error", "No se pudieron guardar todas las tablas en la nube. Revisa la URL de implementación y permisos del Apps Script.", "error");
                 }
             }
         };
@@ -1267,11 +1477,14 @@
             
             filtrados.forEach(al => {
                 const badgeColor = al.estatus === 'Nuevo Ingreso' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-amber-50 text-amber-700 border-amber-100';
+                const contactoPagoHtml = al.tutor ? al.tutor : 'Sin tutor';
+                const respPago2Html = al.responsable2 ? '<br><i class="fas fa-hand-holding-usd text-emerald-500 mt-1"></i> ' + al.responsable2 : '';
+
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50 transition-colors">
                         <td class="px-6 py-4">
                             <div class="font-medium text-slate-800">${al.nombres} ${al.apellidos}</div>
-                            <div class="text-xs text-slate-500 mt-1" title="Contactos de Pago"><i class="fas fa-user-shield text-slate-400"></i> ${al.tutor || 'Sin tutor'} ${al.responsable2 ? `<br><i class="fas fa-hand-holding-usd text-emerald-500 mt-1"></i> ${al.responsable2}` : ''}</div>
+                            <div class="text-xs text-slate-500 mt-1" title="Contactos de Pago"><i class="fas fa-user-shield text-slate-400"></i> ${contactoPagoHtml}${respPago2Html}</div>
                         </td>
                         <td class="px-6 py-4 text-sm text-slate-600">${al.nivel} ${al.grado}° "${al.grupo}"</td>
                         <td class="px-6 py-4"><span class="px-2.5 py-1 text-xs font-bold rounded-md border ${badgeColor}">${al.estatus}</span></td>
@@ -1287,10 +1500,7 @@
             const tbody = document.getElementById('lista-maestros');
             if (!tbody) return;
             tbody.innerHTML = '';
-            
-            const contadorMaestros = document.getElementById('contador-maestros');
-            if(contadorMaestros) contadorMaestros.textContent = `${localMaestros.length} Maestros`;
-            
+            document.getElementById('contador-maestros').textContent = `${localMaestros.length} Maestros`;
             if(localMaestros.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400 text-sm">No hay maestros registrados.</td></tr>';
                 return;
@@ -1319,10 +1529,7 @@
             const tbody = document.getElementById('lista-pagos');
             if (!tbody) return;
             tbody.innerHTML = '';
-            
-            const contadorPagos = document.getElementById('contador-pagos');
-            if(contadorPagos) contadorPagos.textContent = `${localPagos.length} Transacciones`;
-            
+            document.getElementById('contador-pagos').textContent = `${localPagos.length} Transacciones`;
             if(localPagos.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400 text-sm">No hay transacciones registradas.</td></tr>';
                 return;
@@ -1333,14 +1540,15 @@
                 const nombreAl = alumno ? `${alumno.nombres} ${alumno.apellidos}` : 'Desconocido';
                 const conceptos = (p.conceptos || []).map(c => `• ${c.concepto}`).join('<br>');
                 const rowClass = p.estado === 'anulado' ? 'pago-anulado' : 'hover:bg-slate-50 transition-colors';
-                
+                const anuladoMsgHtml = p.estado === 'anulado' ? '<div class="text-xs font-bold text-red-600 mt-1">ANULADO: ' + p.motivoAnulacion + '</div>' : '';
+
                 tbody.innerHTML += `
                     <tr class="${rowClass}">
                         <td class="px-6 py-4 text-sm text-slate-600">${p.fecha}</td>
                         <td class="px-6 py-4 text-sm text-slate-800">
                             <div class="font-medium">${nombreAl}</div>
                             <div class="text-xs text-slate-500 mt-1">${conceptos}</div>
-                            ${p.estado === 'anulado' ? `<div class="text-xs font-bold text-red-600 mt-1">ANULADO: ${p.motivoAnulacion}</div>` : ''}
+                            ${anuladoMsgHtml}
                         </td>
                         <td class="px-6 py-4 text-right font-bold text-emerald-600">${currency(p.total)}</td>
                         <td class="px-6 py-4 text-center">
@@ -1391,9 +1599,22 @@
 
         window.renderColegiaturas = function() {
             const tbody = document.getElementById('lista-colegiaturas');
-            if(!tbody) return;
-            tbody.innerHTML = '';
+            const headersRow = document.getElementById('colegiaturas-table-headers');
+            if(!tbody || !headersRow) return;
             
+            // Obtener el mes de inicio del ciclo escolar (1-based)
+            const mesInicio = Number(configColegiaturas.mesInicio || 8);
+            const cycleMonths = getCycleMonths(mesInicio);
+
+            // Renderizar encabezados de tabla de manera dinámica
+            let headersHtml = `<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider sticky left-0 bg-slate-50 z-10">Alumno / Concepto</th>`;
+            cycleMonths.forEach(m => {
+                headersHtml += `<th class="px-4 py-4 text-center text-xs font-bold text-slate-500 uppercase">${m.name}</th>`;
+            });
+            headersHtml += `<th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase">Progreso</th>`;
+            headersRow.innerHTML = headersHtml;
+
+            // Filtros de búsqueda
             const fNom = document.getElementById('filtro-col-nombre').value.toLowerCase();
             const fGrado = document.getElementById('filtro-col-grado').value;
             const fGrupo = document.getElementById('filtro-col-grupo').value;
@@ -1405,28 +1626,52 @@
                 return matchNom && matchGra && matchGru;
             });
 
+            tbody.innerHTML = '';
             if(filtrados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="13" class="p-6 text-center text-slate-400 text-sm">No hay alumnos que coincidan con la búsqueda.</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="${cycleMonths.length + 2}" class="p-6 text-center text-slate-400 text-sm">No hay alumnos que coincidan con la búsqueda.</td></tr>`;
             } else {
                 filtrados.forEach(al => {
-                    let configAlu = al.configCol ? al.configCol : configColegiaturas;
+                    let configAlu = al.configCol ? al.configCol : { costoBase: (configColegiaturas.costoBase || 2500), concepto: "Normal", exemptMonths: [] };
+                    if(!configAlu.exemptMonths) configAlu.exemptMonths = [];
+                    
                     let costoMensual = configAlu.costoBase || 2500;
+                    let conceptoDescuento = configAlu.concepto || "Normal";
                     
                     let htmlMeses = '';
                     let pagosAlu = colegiaturasPagos.filter(p => p.alumnoId === al.id);
                     let pagados = 0;
+                    let exentosCount = 0;
                     
-                    for(let i=1; i<=11; i++) {
-                        let isPagado = pagosAlu.find(p => p.mes === i);
+                    cycleMonths.forEach(m => {
+                        let isPagado = pagosAlu.find(p => p.mes === m.id);
+                        let isExento = configAlu.exemptMonths.includes(m.id);
+
                         if(isPagado) {
                             pagados++;
-                            htmlMeses += `<td class="px-2 py-4 text-center"><button onclick="abrirReciboCol('${isPagado.id}')" class="w-8 h-8 rounded-md bg-emerald-100 text-emerald-700 font-bold text-xs shadow-sm" title="Pagado: ${currency(isPagado.monto)}"><i class="fas fa-check"></i></button></td>`;
+                            htmlMeses += `<td class="px-2 py-4 text-center">
+                                <button onclick="abrirReciboCol('${isPagado.id}')" class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 font-bold text-xs shadow-sm hover:scale-105 transition-transform" title="Pagado: ${currency(isPagado.monto)}">
+                                    <i class="fas fa-check text-sm"></i>
+                                </button>
+                            </td>`;
+                        } else if(isExento) {
+                            exentosCount++;
+                            htmlMeses += `<td class="px-2 py-4 text-center">
+                                <button onclick="abrirMenuOpcionesMes('${al.id}', ${m.id}, '${m.name}', ${costoMensual})" class="w-10 h-10 rounded-lg bg-slate-100 text-slate-400 font-bold text-xs border border-dashed border-slate-200 hover:border-indigo-300 hover:text-indigo-500 transition-colors" title="No Aplica (Late Enrollment)">
+                                    N/A
+                                </button>
+                            </td>`;
                         } else {
-                            htmlMeses += `<td class="px-2 py-4 text-center"><button onclick="abrirCobroCol('${al.id}', ${i}, ${costoMensual})" class="w-8 h-8 rounded-md bg-slate-100 text-slate-400 hover:bg-indigo-100 hover:text-indigo-700 font-bold text-xs transition-colors" title="Cobrar M${i}"><i class="fas fa-plus"></i></button></td>`;
+                            htmlMeses += `<td class="px-2 py-4 text-center">
+                                <button onclick="abrirMenuOpcionesMes('${al.id}', ${m.id}, '${m.name}', ${costoMensual})" class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-400 hover:bg-indigo-100 hover:text-indigo-700 font-bold text-xs transition-colors" title="Pendiente de Cobrar">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </td>`;
                         }
-                    }
+                    });
                     
-                    let progress = Math.round((pagados / 11) * 100);
+                    // Progreso de meses (excluyendo meses que "No Aplica")
+                    let mesesEvaluables = 11 - exentosCount;
+                    let progress = mesesEvaluables > 0 ? Math.round((pagados / mesesEvaluables) * 100) : 100;
                     let progColor = progress === 100 ? 'bg-emerald-500' : 'bg-indigo-500';
 
                     tbody.innerHTML += `
@@ -1434,14 +1679,18 @@
                             <td class="px-6 py-4 sticky left-0 bg-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] z-10">
                                 <div class="font-bold text-slate-800">${al.nombres} ${al.apellidos}</div>
                                 <div class="text-xs text-slate-500 mt-1 flex justify-between items-center pr-2">
-                                    <span>${al.grado}° "${al.grupo}"</span>
-                                    <button onclick="configurarColAlumno('${al.id}')" class="text-indigo-500 hover:underline"><i class="fas fa-cog"></i> ${currency(costoMensual)}</button>
+                                    <span class="bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded font-medium text-[10px]">${conceptoDescuento}</span>
+                                    <button onclick="configurarColAlumno('${al.id}')" class="text-indigo-500 hover:underline flex items-center gap-1">
+                                        <i class="fas fa-cog"></i> ${currency(costoMensual)}
+                                    </button>
                                 </div>
                             </td>
                             ${htmlMeses}
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2">
-                                    <div class="w-full bg-slate-200 rounded-full h-2"><div class="${progColor} h-2 rounded-full" style="width: ${progress}%"></div></div>
+                                    <div class="w-20 bg-slate-200 rounded-full h-2">
+                                        <div class="${progColor} h-2 rounded-full" style="width: ${progress}%"></div>
+                                    </div>
                                     <span class="text-xs font-bold text-slate-600 w-8">${progress}%</span>
                                 </div>
                             </td>
@@ -1452,56 +1701,138 @@
             renderReporteDiarioCol();
         };
 
-        window.renderReporteDiarioCol = function() {
-            const tbody = document.getElementById('lista-reporte-colegiaturas');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-            const hoy = new Date().toISOString().split("T")[0];
-            const pagosHoy = colegiaturasPagos.filter(p => p.fecha === hoy);
+        window.abrirMenuOpcionesMes = function(alId, mesId, mesName, costoMensual) {
+            const al = localAlumnos.find(a => a.id === alId);
+            const isExento = al.configCol && al.configCol.exemptMonths && al.configCol.exemptMonths.includes(mesId);
+            const mc = document.getElementById('modal-container');
             
-            let recHoy = 0;
-            const elFechaHoy = document.getElementById('fecha-hoy-reporte');
-            if (elFechaHoy) {
-                elFechaHoy.textContent = new Date().toLocaleDateString('es-MX', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-            }
+            mc.innerHTML = `
+                <div class="modal-content max-w-md">
+                    <h2 class="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2"><i class="fas fa-tasks text-indigo-500"></i> Gestión de Mensualidad: ${mesName}</h2>
+                    <p class="text-sm text-slate-500 mb-6">Alumno: <strong class="text-slate-700">${al.nombres} ${al.apellidos}</strong></p>
+                    
+                    <div class="space-y-3">
+                        <button onclick="cerrarModalGeneral(); abrirCobroCol('${alId}', ${mesId}, '${mesName}', ${costoMensual})" class="w-full flex items-center justify-between p-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold rounded-xl transition-all border border-emerald-100 shadow-sm">
+                            <span><i class="fas fa-money-bill-wave mr-2"></i> Registrar Cobro</span>
+                            <span class="text-sm text-emerald-600">${currency(costoMensual)}</span>
+                        </button>
+                        
+                        ${isExento ? `
+                            <button onclick="cerrarModalGeneral(); toggleExencionMesAlumno('${alId}', ${mesId}, false)" class="w-full flex items-center justify-between p-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all border border-slate-200">
+                                <span><i class="fas fa-undo mr-2"></i> Restaurar a Pendiente</span>
+                                <span class="text-xs bg-slate-200 px-2 py-0.5 rounded text-slate-500">Exento</span>
+                            </button>
+                        ` : `
+                            <button onclick="cerrarModalGeneral(); toggleExencionMesAlumno('${alId}', ${mesId}, true)" class="w-full flex items-center justify-between p-4 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold rounded-xl transition-all border border-amber-100">
+                                <span><i class="fas fa-ban mr-2"></i> Marcar como No Aplica (Exento)</span>
+                                <span class="text-xs text-amber-600 font-normal">Inscripción Tardía</span>
+                            </button>
+                        `}
+                    </div>
+                    
+                    <div class="mt-6 flex justify-end">
+                        <button onclick="cerrarModalGeneral()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 font-medium">Cerrar</button>
+                    </div>
+                </div>
+            `;
+            mc.classList.add('active');
+        };
 
-            if(pagosHoy.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">No se han registrado cobros el día de hoy.</td></tr>';
-            } else {
-                pagosHoy.sort((a,b)=>b.timestamp - a.timestamp).forEach(p => {
-                    recHoy += parseFloat(p.monto);
-                    const al = localAlumnos.find(a => a.id === p.alumnoId);
-                    const nAl = al ? `${al.nombres} ${al.apellidos}` : 'N/A';
-                    const h = new Date(p.timestamp).toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-slate-100">
-                            <td class="p-4 font-mono text-xs text-slate-500">${p.id.substring(0,6)} <span class="ml-2 text-[10px] bg-slate-200 px-1 rounded">${h}</span></td>
-                            <td class="p-4 font-medium text-slate-800">${nAl}</td>
-                            <td class="p-4 text-indigo-700 font-bold">Mes ${p.mes}</td>
-                            <td class="p-4 text-slate-600">${p.metodo}</td>
-                            <td class="p-4 text-right font-bold text-emerald-600">${currency(p.monto)}</td>
-                        </tr>
-                    `;
-                });
+        window.toggleExencionMesAlumno = function(alId, mesId, eximir) {
+            const al = localAlumnos.find(a => a.id === alId);
+            if(!al.configCol) {
+                al.configCol = { costoBase: (configColegiaturas.costoBase || 2500), concepto: "Normal", exemptMonths: [] };
             }
-            const elRecHoy = document.getElementById('colegiaturas-recaudado-hoy');
-            if (elRecHoy) elRecHoy.textContent = currency(recHoy);
+            if(!al.configCol.exemptMonths) al.configCol.exemptMonths = [];
+            
+            if(eximir) {
+                if(!al.configCol.exemptMonths.includes(mesId)) {
+                    al.configCol.exemptMonths.push(mesId);
+                }
+            } else {
+                al.configCol.exemptMonths = al.configCol.exemptMonths.filter(id => id !== mesId);
+            }
+            
+            saveData('alumnos', localAlumnos);
+            renderColegiaturas();
+        };
+
+        window.cerrarModalGeneral = function() {
+            document.getElementById('modal-container').classList.remove('active');
         };
 
         window.configurarColegiaturasGenerales = function() {
             const mc = document.getElementById('modal-container');
+            const actualMes = Number(configColegiaturas.mesInicio || 8);
+            
+            let opcionesMeses = '';
+            MONTH_SHORT_NAMES.forEach((m, idx) => {
+                let mNum = idx + 1;
+                opcionesMeses += `<option value="${mNum}" ${mNum === actualMes ? 'selected' : ''}>${m}</option>`;
+            });
+
+            // Renderizado de las cuotas guardadas
+            let tiposHtml = '';
+            const tipos = configColegiaturas.tipos || [];
+            tipos.forEach(t => {
+                tiposHtml += `
+                    <tr class="hover:bg-slate-50 border-b border-slate-100 last:border-0">
+                        <td class="p-2 font-medium text-slate-700">${t.nombre}</td>
+                        <td class="p-2 text-right font-bold text-slate-800">${currency(t.costo)}</td>
+                        <td class="p-2 text-center">
+                            <button type="button" onclick="eliminarTipoColegiaturaGlobal('${t.id}')" class="text-red-500 hover:text-red-700 p-1"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+
             mc.innerHTML = `
-                <div class="modal-content">
-                    <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fas fa-cogs text-indigo-500 mr-2"></i> Configuración Global Colegiaturas</h2>
-                    <p class="text-sm text-slate-500 mb-6">Esta configuración aplicará por defecto a todos los alumnos que no tengan una cuota personalizada.</p>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Costo Base General Mensual</label>
-                            <input type="number" id="cg-costo" value="${configColegiaturas.costoBase || 2500}" class="form-input text-lg font-bold">
+                <div class="modal-content" style="max-width: 650px;">
+                    <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fas fa-cogs text-indigo-500 mr-2"></i> Configuración del Ciclo Escolar</h2>
+                    <p class="text-sm text-slate-500 mb-6">Ajusta los parámetros generales y tipos de colegiaturas del ciclo escolar de 11 mensualidades.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Parámetros de Inicio</h3>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Costo Base General Mensual</label>
+                                <input type="number" id="cg-costo" value="${configColegiaturas.costoBase || 2500}" class="form-input text-lg font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Mes de Inicio del Ciclo</label>
+                                <select id="cg-mes-inicio" class="form-input">
+                                    ${opcionesMeses}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                <span>Tipos de Colegiatura</span>
+                                <span class="text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded font-bold">${tipos.length} Guardados</span>
+                            </h3>
+                            
+                            <div class="flex gap-1.5 mb-3 mt-2">
+                                <input type="text" id="nuevo-tipo-col-nombre" placeholder="Concepto (ej. Beca SEP 50%)" class="form-input text-xs flex-1">
+                                <input type="number" id="nuevo-tipo-col-costo" placeholder="Costo" class="form-input text-xs w-16">
+                                <button type="button" onclick="agregarTipoColegiaturaGlobal()" class="bg-indigo-600 text-white px-2.5 rounded-lg text-xs hover:bg-indigo-700 transition-colors flex items-center justify-center"><i class="fas fa-plus"></i></button>
+                            </div>
+
+                            <div class="max-h-40 overflow-y-auto border border-slate-200 rounded-lg bg-white shadow-inner">
+                                <table class="w-full text-xs text-left">
+                                    <thead class="bg-slate-100 text-slate-500 sticky top-0">
+                                        <tr><th class="p-2">Concepto</th><th class="p-2 text-right">Costo</th><th class="p-2 text-center"></th></tr>
+                                    </thead>
+                                    <tbody id="lista-tipos-col-global">
+                                        ${tiposHtml || '<tr><td colspan="3" class="p-3 text-center text-slate-400 italic">No hay tipos personalizados.</td></tr>'}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                    <div class="mt-6 flex justify-end gap-3">
-                        <button onclick="document.getElementById('modal-container').classList.remove('active')" class="px-4 py-2 bg-slate-100 rounded-lg text-slate-600 font-medium">Cancelar</button>
+
+                    <div class="mt-8 flex justify-end gap-3 border-t border-slate-100 pt-4">
+                        <button onclick="cerrarModalGeneral()" class="px-4 py-2 bg-slate-100 rounded-lg text-slate-600 font-medium">Cancelar</button>
                         <button onclick="guardarConfigColGen()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium shadow-sm">Guardar Configuración</button>
                     </div>
                 </div>
@@ -1509,31 +1840,116 @@
             mc.classList.add('active');
         };
 
-        window.guardarConfigColGen = function() {
-            configColegiaturas.costoBase = parseFloat(document.getElementById('cg-costo').value);
-            saveData('configColegiaturas', configColegiaturas);
-            document.getElementById('modal-container').classList.remove('active');
-            renderColegiaturas();
+        window.agregarTipoColegiaturaGlobal = function() {
+            const nom = document.getElementById('nuevo-tipo-col-nombre').value;
+            const cos = parseFloat(document.getElementById('nuevo-tipo-col-costo').value);
+            if(!nom || isNaN(cos) || cos < 0) {
+                mostrarMensaje('Error', 'Ingresa un concepto descriptivo y un costo válido.', 'error');
+                return;
+            }
+            if(!configColegiaturas.tipos) configColegiaturas.tipos = [];
+            configColegiaturas.tipos.push({
+                id: generateId(),
+                nombre: nom,
+                costo: cos
+            });
+            document.getElementById('nuevo-tipo-col-nombre').value = '';
+            document.getElementById('nuevo-tipo-col-costo').value = '';
+            refreshTiposColegiaturaModalList();
+        };
+
+        window.eliminarTipoColegiaturaGlobal = function(id) {
+            if(!configColegiaturas.tipos) configColegiaturas.tipos = [];
+            configColegiaturas.tipos = configColegiaturas.tipos.filter(t => t.id !== id);
+            refreshTiposColegiaturaModalList();
+        };
+
+        window.refreshTiposColegiaturaModalList = function() {
+            const tbody = document.getElementById('lista-tipos-col-global');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            const tipos = configColegiaturas.tipos || [];
+            if(tipos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="p-3 text-center text-slate-400 italic">No hay tipos personalizados.</td></tr>';
+                return;
+            }
+            tipos.forEach(t => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 border-b border-slate-100 last:border-0">
+                        <td class="p-2 font-medium text-slate-700">${t.nombre}</td>
+                        <td class="p-2 text-right font-bold text-slate-800">${currency(t.costo)}</td>
+                        <td class="p-2 text-center">
+                            <button type="button" onclick="eliminarTipoColegiaturaGlobal('${t.id}')" class="text-red-500 hover:text-red-700 p-1"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
         };
 
         window.configurarColAlumno = function(alId) {
             const al = localAlumnos.find(a => a.id === alId);
-            const defCosto = al.configCol ? al.configCol.costoBase : (configColegiaturas.costoBase || 2500);
+            const actualConfig = al.configCol ? al.configCol : { costoBase: (configColegiaturas.costoBase || 2500), concepto: "Normal", exemptMonths: [] };
+            if(!actualConfig.exemptMonths) actualConfig.exemptMonths = [];
+
             const mc = document.getElementById('modal-container');
+            const cycleMonths = getCycleMonths(configColegiaturas.mesInicio || 8);
+
+            // Generar opciones del select basado en los tipos guardados
+            const tipos = configColegiaturas.tipos || [];
+            let selectorTiposHtml = '<option value="">-- Personalizado / Manual --</option>';
+            tipos.forEach(t => {
+                const seleccionado = (actualConfig.concepto === t.nombre && actualConfig.costoBase === t.costo) ? 'selected' : '';
+                selectorTiposHtml += `<option value="${t.id}" ${seleccionado} data-costo="${t.costo}" data-nombre="${t.nombre}">${t.nombre} (${currency(t.costo)})</option>`;
+            });
+
+            // Generar los checkboxes de exención por mes
+            let exemptCheckboxesHtml = '';
+            cycleMonths.forEach(m => {
+                let isChecked = actualConfig.exemptMonths.includes(m.id) ? 'checked' : '';
+                exemptCheckboxesHtml += `
+                    <label class="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 p-2 rounded-lg cursor-pointer border border-slate-200">
+                        <input type="checkbox" name="exempt-month-chk" value="${m.id}" ${isChecked} class="w-4 h-4 text-indigo-600 rounded">
+                        <span class="text-xs font-bold text-slate-700">${m.name}</span>
+                    </label>
+                `;
+            });
+
             mc.innerHTML = `
-                <div class="modal-content">
-                    <h2 class="text-xl font-bold text-slate-800 mb-2">Cuota Personalizada</h2>
-                    <p class="text-sm text-slate-500 mb-6">Alumno: <strong>${al.nombres} ${al.apellidos}</strong></p>
+                <div class="modal-content" style="max-width: 600px;">
+                    <h2 class="text-xl font-bold text-slate-800 mb-2">Cuota & Concepto Personalizado</h2>
+                    <p class="text-sm text-slate-500 mb-4">Alumno: <strong>${al.nombres} ${al.apellidos}</strong></p>
+                    
                     <div class="space-y-4">
+                        <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                            <label class="block text-xs font-bold text-indigo-800 uppercase mb-1">Seleccionar Tipo de Colegiatura</label>
+                            <select id="ca-tipo-select" onchange="window.cargarValoresTipoSeleccionado(this)" class="form-input border-indigo-200 mt-1 font-medium">
+                                ${selectorTiposHtml}
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Concepto de Colegiatura</label>
+                                <input type="text" id="ca-concepto" value="${actualConfig.concepto || 'Normal'}" placeholder="Ej. Beca SEP 50%" class="form-input">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Costo Mensual (Repetitivo)</label>
+                                <input type="number" id="ca-costo" value="${actualConfig.costoBase || 2500}" class="form-input text-lg font-bold text-indigo-700">
+                            </div>
+                        </div>
+
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Costo Mensual (Aplicando becas/descuentos)</label>
-                            <input type="number" id="ca-costo" value="${defCosto}" class="form-input text-lg font-bold text-indigo-700">
+                            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Exenciones por Inscripción Tardía (Meses que No Aplican)</h4>
+                            <div class="grid grid-cols-4 gap-2">
+                                ${exemptCheckboxesHtml}
+                            </div>
                         </div>
                     </div>
-                    <div class="mt-6 flex justify-between">
+
+                    <div class="mt-8 flex justify-between border-t border-slate-100 pt-4">
                         <button onclick="borrarConfigColAlumno('${al.id}')" class="text-sm text-red-500 hover:underline">Restaurar a Global</button>
                         <div class="flex gap-3">
-                            <button onclick="document.getElementById('modal-container').classList.remove('active')" class="px-4 py-2 bg-slate-100 rounded-lg text-slate-600 font-medium">Cancelar</button>
+                            <button onclick="cerrarModalGeneral()" class="px-4 py-2 bg-slate-100 rounded-lg text-slate-600 font-medium">Cancelar</button>
                             <button onclick="guardarConfigColAlumno('${al.id}')" class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium shadow-sm">Guardar Cuota</button>
                         </div>
                     </div>
@@ -1542,11 +1958,33 @@
             mc.classList.add('active');
         };
 
+        window.cargarValoresTipoSeleccionado = function(selectEl) {
+            const selectedOpt = selectEl.options[selectEl.selectedIndex];
+            if(!selectedOpt.value) return; // Personalizado
+            const costo = selectedOpt.getAttribute('data-costo');
+            const nombre = selectedOpt.getAttribute('data-nombre');
+            
+            document.getElementById('ca-concepto').value = nombre;
+            document.getElementById('ca-costo').value = costo;
+        };
+
         window.guardarConfigColAlumno = function(alId) {
             const al = localAlumnos.find(a => a.id === alId);
-            al.configCol = { costoBase: parseFloat(document.getElementById('ca-costo').value) };
+            
+            // Obtener meses exentos seleccionados
+            let checkedExemptMonths = [];
+            document.querySelectorAll('input[name="exempt-month-chk"]:checked').forEach(chk => {
+                checkedExemptMonths.push(parseInt(chk.value));
+            });
+
+            al.configCol = { 
+                costoBase: parseFloat(document.getElementById('ca-costo').value),
+                concepto: document.getElementById('ca-concepto').value || "Normal",
+                exemptMonths: checkedExemptMonths
+            };
+
             saveData('alumnos', localAlumnos);
-            document.getElementById('modal-container').classList.remove('active');
+            cerrarModalGeneral();
             renderColegiaturas();
         };
 
@@ -1554,35 +1992,37 @@
             const al = localAlumnos.find(a => a.id === alId);
             delete al.configCol;
             saveData('alumnos', localAlumnos);
-            document.getElementById('modal-container').classList.remove('active');
+            cerrarModalGeneral();
             renderColegiaturas();
         };
 
-        window.abrirCobroCol = function(alId, mes, costoSug) {
+        window.abrirCobroCol = function(alId, mesId, mesName, costoSug) {
             const al = localAlumnos.find(a => a.id === alId);
             const hoy = new Date().toISOString().split("T")[0];
             const mc = document.getElementById('modal-container');
+            const cobroMetodosHtml = METODOS_PAGO.map(m=>`<option value="${m}">${m}</option>`).join('');
+
             mc.innerHTML = `
-                <div class="modal-content">
-                    <h2 class="text-xl font-bold text-slate-800 mb-2">Cobrar Colegiatura - Mes ${mes}</h2>
+                <div class="modal-content max-w-md">
+                    <h2 class="text-xl font-bold text-slate-800 mb-2">Cobrar Colegiatura - ${mesName}</h2>
                     <p class="text-sm text-slate-500 mb-6">Alumno: <strong>${al.nombres} ${al.apellidos}</strong></p>
                     <form id="form-cobro-col" class="space-y-4">
-                        <input type="hidden" id="cc-mes" value="${mes}">
+                        <input type="hidden" id="cc-mes" value="${mesId}">
                         <input type="hidden" id="cc-alid" value="${al.id}">
                         <div class="grid grid-cols-2 gap-4">
                             <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha</label><input type="date" id="cc-fecha" value="${hoy}" class="form-input"></div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Método</label>
-                                <select id="cc-metodo" class="form-input">${METODOS_PAGO.map(m=>`<option value="${m}">${m}</option>`).join('')}</select>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Método de Pago</label>
+                                <select id="cc-metodo" class="form-input">${cobroMetodosHtml}</select>
                             </div>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Monto a Cobrar</label>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Monto Cobrado</label>
                             <input type="number" id="cc-monto" value="${costoSug}" step="0.01" required class="form-input text-2xl font-black text-emerald-600">
                         </div>
                         <div class="mt-6 flex justify-end gap-3">
-                            <button type="button" onclick="document.getElementById('modal-container').classList.remove('active')" class="px-5 py-2.5 bg-slate-100 rounded-xl text-slate-600 font-medium">Cancelar</button>
-                            <button type="submit" class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-medium shadow-sm">Procesar Pago</button>
+                            <button type="button" onclick="cerrarModalGeneral()" class="px-5 py-2.5 bg-slate-100 rounded-xl text-slate-600 font-medium">Cancelar</button>
+                            <button type="submit" class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-medium shadow-sm shadow-indigo-100">Procesar Cobro</button>
                         </div>
                     </form>
                 </div>
@@ -1601,9 +2041,9 @@
                 };
                 colegiaturasPagos.push(pago);
                 saveData('colegiaturasPagos', colegiaturasPagos);
-                mc.classList.remove('active');
+                cerrarModalGeneral();
                 renderColegiaturas();
-                mostrarMensaje("Éxito", `Colegiatura del Mes ${pago.mes} cobrada correctamente.`, "success");
+                mostrarMensaje("Éxito", `Colegiatura de ${mesName} cobrada correctamente.`, "success");
             };
         };
 
@@ -1612,9 +2052,159 @@
             if(!p) return;
             const al = localAlumnos.find(a => a.id === p.alumnoId);
             const nAl = al ? `${al.nombres} ${al.apellidos}` : 'N/A';
-            const html = `<html><head><style>body{font-family:sans-serif;width:300px;margin:0 auto;padding:20px;text-align:center;}hr{border:0;border-top:1px dashed #000;margin:15px 0;}table{width:100%;text-align:left;}td.r{text-align:right;}</style></head><body onload="window.print();window.close();"><h2>Colegio Labastida</h2><p>Recibo de Colegiatura</p><hr><p>Folio: ${p.id}<br>Fecha: ${p.fecha}<br>Alumno: ${nAl}</p><hr><p style="font-size:18px;font-weight:bold;">MES ${p.mes}</p><hr><h3>TOTAL PAGADO: ${currency(p.monto)}</h3><p>Método: ${p.metodo}</p><hr><p>¡Gracias por su pago!</p></body></html>`;
+            const mesName = MONTH_SHORT_NAMES[getCycleMonths(configColegiaturas.mesInicio || 8).find(m => m.id === p.mes).monthNum - 1] || 'S/M';
+            const html = `<html><head><style>body{font-family:sans-serif;width:300px;margin:0 auto;padding:20px;text-align:center;}hr{border:0;border-top:1px dashed #000;margin:15px 0;}table{width:100%;text-align:left;}td.r{text-align:right;}</style></head><body onload="window.print();window.close();"><h2>Colegio Labastida</h2><p>Recibo de Colegiatura</p><hr><p>Folio: ${p.id}<br>Fecha: ${p.fecha}<br>Alumno: ${nAl}</p><hr><p style="font-size:18px;font-weight:bold;">MENSUALIDAD: ${mesName}</p><hr><h3>TOTAL PAGADO: ${currency(p.monto)}</h3><p>Método: ${p.metodo}</p><hr><p>¡Gracias por su pago!</p></body></html>`;
             const w = window.open('','_blank'); w.document.write(html); w.document.close();
         };
+
+        window.renderReporteDiarioCol = function() {
+            const tbody = document.getElementById('lista-reporte-colegiaturas');
+            const totalEl = document.getElementById('colegiaturas-recaudado-hoy');
+            const fechaEl = document.getElementById('fecha-hoy-reporte');
+            if (!tbody) return;
+
+            const hoy = new Date().toISOString().split('T')[0];
+            if (fechaEl) fechaEl.textContent = new Date(hoy + 'T00:00:00').toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            const pagosHoy = colegiaturasPagos
+                .map(normalizarPagoColegiatura)
+                .filter(p => p.fecha === hoy)
+                .sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
+
+            const totalHoy = pagosHoy.reduce((sum, p) => sum + Number(p.monto || 0), 0);
+            if (totalEl) totalEl.textContent = currency(totalHoy);
+
+            if (pagosHoy.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">No se han emitido recibos de colegiatura hoy.</td></tr>';
+                return;
+            }
+
+            const cycleMonths = getCycleMonths(configColegiaturas.mesInicio || 8);
+            tbody.innerHTML = pagosHoy.map(p => {
+                const alumno = localAlumnos.find(a => a.id === p.alumnoId);
+                const alumnoNombre = alumno ? `${alumno.nombres} ${alumno.apellidos}` : 'Alumno no localizado';
+                const mes = cycleMonths.find(m => Number(m.id) === Number(p.mes));
+                const mesNombre = mes ? mes.name : `Mes ${p.mes}`;
+                const hora = p.timestamp ? new Date(Number(p.timestamp)).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                return `
+                    <tr class="hover:bg-slate-50 border-b border-slate-50 last:border-0">
+                        <td class="p-4"><button onclick="abrirReciboCol('${p.id}')" class="text-indigo-600 hover:underline font-bold">${String(p.id).substring(0, 12)}</button><div class="text-xs text-slate-400">${hora}</div></td>
+                        <td class="p-4 font-medium text-slate-700">${alumnoNombre}</td>
+                        <td class="p-4 text-slate-600">${mesNombre}</td>
+                        <td class="p-4 text-slate-600">${p.metodo || 'N/A'}</td>
+                        <td class="p-4 text-right font-bold text-emerald-600">${currency(p.monto)}</td>
+                    </tr>`;
+            }).join('');
+        };
+
+        window.guardarConfigColGen = function() {
+            const costo = parseFloat(document.getElementById('cg-costo')?.value);
+            const mesInicio = parseInt(document.getElementById('cg-mes-inicio')?.value, 10);
+
+            if (Number.isNaN(costo) || costo < 0) {
+                mostrarMensaje('Dato inválido', 'El costo base mensual debe ser un número igual o mayor a cero.', 'error');
+                return;
+            }
+            if (Number.isNaN(mesInicio) || mesInicio < 1 || mesInicio > 12) {
+                mostrarMensaje('Dato inválido', 'Selecciona un mes de inicio válido.', 'error');
+                return;
+            }
+
+            configColegiaturas = normalizarConfigColegiaturas({
+                ...configColegiaturas,
+                costoBase: costo,
+                mesInicio,
+                tipos: configColegiaturas.tipos || DEFAULT_CONFIG_COLEGIATURAS.tipos
+            });
+            saveData('configColegiaturas', configColegiaturas);
+            cerrarModalGeneral();
+            renderColegiaturas();
+            mostrarMensaje('Configuración guardada', 'El ciclo de colegiaturas fue actualizado correctamente.', 'success');
+        };
+
+        window.abrirModalAbono = function(alumnoId) {
+            const alumno = localAlumnos.find(a => a.id === alumnoId);
+            if (!alumno) return mostrarMensaje('Alumno no encontrado', 'No se pudo localizar el alumno seleccionado.', 'error');
+            const cuota = localCuotas.find(c => c.nombre === alumno.tipoCuota || c.id === alumno.tipoCuota);
+            const costo = Number(cuota?.costo || 0);
+            const totalPagado = localAbonos.filter(a => a.alumnoId === alumnoId).reduce((sum, a) => sum + Number(a.monto || 0), 0);
+            const saldo = Math.max(costo - totalPagado, 0);
+            const hoy = new Date().toISOString().split('T')[0];
+            const metodosHtml = METODOS_PAGO.map(m => `<option value="${m}">${m}</option>`).join('');
+            const mc = document.getElementById('modal-container');
+
+            mc.innerHTML = `
+                <div class="modal-content max-w-md">
+                    <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fas fa-hand-holding-dollar text-emerald-500 mr-2"></i>Registrar Abono</h2>
+                    <p class="text-sm text-slate-500 mb-4">Alumno: <strong>${alumno.nombres} ${alumno.apellidos}</strong></p>
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl p-4 mb-4 text-sm">
+                        <div class="flex justify-between"><span>Cuota asignada</span><strong>${cuota ? cuota.nombre : 'Sin cuota'}</strong></div>
+                        <div class="flex justify-between"><span>Costo</span><strong>${currency(costo)}</strong></div>
+                        <div class="flex justify-between"><span>Pagado</span><strong class="text-emerald-600">${currency(totalPagado)}</strong></div>
+                        <div class="flex justify-between"><span>Saldo</span><strong class="text-rose-600">${currency(saldo)}</strong></div>
+                    </div>
+                    <form id="form-abono-cuota" class="space-y-4">
+                        <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha</label><input type="date" id="abono-fecha" value="${hoy}" required class="form-input"></div>
+                        <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Método</label><select id="abono-metodo" class="form-input">${metodosHtml}</select></div>
+                        <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Monto</label><input type="number" id="abono-monto" value="${saldo || ''}" step="0.01" min="0.01" required class="form-input text-lg font-bold text-emerald-700"></div>
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button type="button" onclick="cerrarModalGeneral()" class="px-4 py-2 bg-slate-100 rounded-lg text-slate-600 font-medium">Cancelar</button>
+                            <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium shadow-sm">Guardar Abono</button>
+                        </div>
+                    </form>
+                </div>`;
+            mc.classList.add('active');
+
+            document.getElementById('form-abono-cuota').onsubmit = (e) => {
+                e.preventDefault();
+                const monto = parseFloat(document.getElementById('abono-monto').value);
+                if (Number.isNaN(monto) || monto <= 0) return mostrarMensaje('Dato inválido', 'Ingresa un monto válido.', 'error');
+                localAbonos.push({
+                    id: 'ABO-' + generateId().toUpperCase(),
+                    alumnoId,
+                    monto,
+                    metodo: document.getElementById('abono-metodo').value,
+                    fechaAbono: document.getElementById('abono-fecha').value
+                });
+                saveData('abonos', localAbonos);
+                cerrarModalGeneral();
+                renderEstadoDeCuotas();
+                mostrarMensaje('Abono registrado', 'El abono fue guardado correctamente.', 'success');
+            };
+        };
+
+        window.abrirModalHistorialAbonos = function(alumnoId) {
+            const alumno = localAlumnos.find(a => a.id === alumnoId);
+            if (!alumno) return;
+            const abonos = localAbonos
+                .filter(a => a.alumnoId === alumnoId)
+                .map(normalizarAbono)
+                .sort((a, b) => String(b.fechaAbono).localeCompare(String(a.fechaAbono)));
+            const rows = abonos.length === 0
+                ? '<tr><td colspan="4" class="p-4 text-center text-slate-400">No hay abonos registrados.</td></tr>'
+                : abonos.map(a => `
+                    <tr class="border-b border-slate-100 last:border-0">
+                        <td class="p-3 text-slate-600">${a.fechaAbono || ''}</td>
+                        <td class="p-3 text-slate-600">${a.metodo || ''}</td>
+                        <td class="p-3 text-right font-bold text-emerald-600">${currency(a.monto)}</td>
+                        <td class="p-3 text-xs text-slate-400">${String(a.id).substring(0, 12)}</td>
+                    </tr>`).join('');
+            const mc = document.getElementById('modal-container');
+            mc.innerHTML = `
+                <div class="modal-content">
+                    <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fas fa-history text-indigo-500 mr-2"></i>Historial de Abonos</h2>
+                    <p class="text-sm text-slate-500 mb-4">Alumno: <strong>${alumno.nombres} ${alumno.apellidos}</strong></p>
+                    <div class="overflow-y-auto max-h-80 border border-slate-200 rounded-xl">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 sticky top-0 text-xs text-slate-500 uppercase"><tr><th class="p-3">Fecha</th><th class="p-3">Método</th><th class="p-3 text-right">Monto</th><th class="p-3">Folio</th></tr></thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                    <div class="mt-6 flex justify-end"><button onclick="cerrarModalGeneral()" class="px-5 py-2.5 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200">Cerrar</button></div>
+                </div>`;
+            mc.classList.add('active');
+        };
+
 
         const renderCaja = () => {
             const tbody = document.getElementById('lista-caja-chica'); let ing = 0, gas = 0; 
@@ -1691,23 +2281,6 @@
             });
         }
 
-        // --- REINSERCIÓN DE LA FUNCIÓN GLOBAL CORRECTA ---
-        function validarBtnVentaEvento() {
-            const btn = document.getElementById('btn-guardar-venta-evento');
-            if(!btn) return;
-            const selectVentaAlumno = document.getElementById('venta-evento-alumno');
-            const alId = selectVentaAlumno ? selectVentaAlumno.value : '';
-            
-            // Verifica que existan tanto el ID del alumno como el paquete seleccionado
-            if(alId && window.paqueteSeleccionadoObj) {
-                btn.disabled = false; 
-                btn.className = "w-full bg-indigo-600 text-white py-3 px-4 rounded-xl font-bold hover:bg-indigo-700 shadow-md transition-all flex justify-center items-center gap-2";
-            } else {
-                btn.disabled = true; 
-                btn.className = "w-full bg-slate-300 text-slate-500 py-3 px-4 rounded-xl font-bold transition-all cursor-not-allowed flex justify-center items-center gap-2";
-            }
-        }
-
         function actualizarSelectEventos() {
             const selectEv = document.getElementById('venta-evento-select');
             if(!selectEv) return;
@@ -1741,6 +2314,7 @@
             renderColegiaturas();
         }
 
+        // --- MANEJADOR DE EVENTOS DOM (INICIALIZACIÓN) ---
         document.addEventListener('DOMContentLoaded', () => {
             inicializarCatalogos();
             descargarDatosNube();
@@ -2158,7 +2732,7 @@
                     }
                     if (editBtn && !editBtn.disabled) {
                         const pago = localPagos.find(p => p.id === editBtn.dataset.id);
-                        document.getElementById('pago-id-edit').value = pago.id; document.getElementById('pago-alumno').value = pago.alumnoId; document.getElementById('pago-fecha').value = pago.fecha; document.getElementById('pago-notes').value = pago.notas || '';
+                        document.getElementById('pago-id-edit').value = pago.id; document.getElementById('pago-alumno').value = pago.alumnoId; document.getElementById('pago-fecha').value = pago.fecha; document.getElementById('pago-notes').value = pago.notes || '';
                         pagoConceptosTemp = [...pago.conceptos]; pagoMetodosTemp = [...pago.metodosDePago]; renderConceptosPago(); renderMetodosPago();
                         document.getElementById('btn-cancelar-pago-edit').classList.remove('hidden'); document.getElementById('form-pago-title').innerHTML = '<i class="fas fa-edit text-amber-500"></i> Editando Cobro';
                     }
@@ -2362,7 +2936,7 @@
                     const evId = e.target.value;
                     const selectPkt = document.getElementById('venta-paquete-select');
                     document.getElementById('venta-evento-total').textContent = "$0.00";
-                    window.paqueteSeleccionadoObj = null;
+                    paqueteSeleccionadoObj = null;
                     validarBtnVentaEvento();
 
                     if(!evId) {
@@ -2387,11 +2961,11 @@
                     const evId = document.getElementById('venta-evento-select').value;
                     if(!pktId || !evId) {
                         document.getElementById('venta-evento-total').textContent = "$0.00";
-                        window.paqueteSeleccionadoObj = null;
+                        paqueteSeleccionadoObj = null;
                     } else {
                         const evento = localEventos.find(x => x.id === evId);
-                        window.paqueteSeleccionadoObj = evento.paquetes.find(p => p.id === pktId);
-                        document.getElementById('venta-evento-total').textContent = currency(window.paqueteSeleccionadoObj.costo);
+                        paqueteSeleccionadoObj = evento.paquetes.find(p => p.id === pktId);
+                        document.getElementById('venta-evento-total').textContent = currency(paqueteSeleccionadoObj.costo);
                     }
                     validarBtnVentaEvento();
                 });
@@ -2408,8 +2982,8 @@
                         id: generateId(),
                         eventoId: document.getElementById('venta-evento-select').value,
                         alumnoId: document.getElementById('venta-evento-alumno').value,
-                        paqueteId: window.paqueteSeleccionadoObj.id,
-                        monto: window.paqueteSeleccionadoObj.costo,
+                        paqueteId: paqueteSeleccionadoObj.id,
+                        monto: paqueteSeleccionadoObj.costo,
                         fechaVenta: new Date().toISOString().split("T")[0],
                         estado: 'activo'
                     };
@@ -2420,7 +2994,7 @@
                     document.getElementById('venta-paquete-select').disabled = true;
                     document.getElementById('venta-paquete-select').classList.add('bg-slate-100', 'cursor-not-allowed');
                     document.getElementById('venta-evento-total').textContent = "$0.00";
-                    window.paqueteSeleccionadoObj = null; validarBtnVentaEvento();
+                    paqueteSeleccionadoObj = null; validarBtnVentaEvento();
                 });
             }
 
