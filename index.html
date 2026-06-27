@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es-MX">
 <head>
@@ -826,6 +825,7 @@
         let localEventos = [], localVentasEventos = []; 
         let configColegiaturas = {}; // Configuración global de colegiaturas (mes de inicio y costo base)
         let colegiaturasPagos = []; // Registro de pagos de colegiatura
+        let paqueteSeleccionadoObj = null; // Declarado globalmente para prevenir ReferenceErrors
 
         const NIVELES_ESCOLARES = ["Preescolar", "Primaria", "Secundaria", "Integrado Preescolar", "Integrado Primaria", "Integrado Secundaria"];
         const MESES_NOMBRES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
@@ -837,6 +837,10 @@
         // URL OFICIAL Y CORRECTA (NUEVA CONEXIÓN REGISTRADA)
         const API_URL = "https://script.google.com/macros/s/AKfycbwN55CkuyPCVEY4pP6RbExQ86Lb8hWkVbvJfzWcR-o_szZEpFv-YJ9w-05SlkNI61NcTg/exec";
         let autoSaveTimeout = null;
+
+        // Evitamos que el parser de HTML de los navegadores se confunda con etiquetas de script literales
+        const sOpen = '<script' + '>';
+        const sClose = '</' + 'script' + '>';
 
         // --- SISTEMA DE DATOS Y AUTO-GUARDADO ---
         function loadData(key) {
@@ -911,9 +915,7 @@
                                 <div class="text-slate-600 mt-2 text-sm leading-relaxed">${message}</div>
                             </div>
                         </div>
-                        <div class="mt-8 flex justify-end gap-3 ${type !== 'confirm' ? 'justify-center' : ''}">
-                            ${buttonsHtml}
-                        </div>
+                        <div class="mt-8 flex justify-end gap-3 ${type !== 'confirm' ? 'justify-center' : ''}">${buttonsHtml}</div>
                     </div>`;
                 modalContainer.classList.add('active');
 
@@ -1067,11 +1069,11 @@
                         </div>
                     </div>
 
-                    <script>
+                    ${sOpen}
                         window.onload = function() {
                             setTimeout(() => { window.print(); setTimeout(window.close, 500); }, 600);
                         }
-                    <\/script>
+                    ${sClose}
                 </body>
                 </html>
             `;
@@ -1689,6 +1691,32 @@
             });
         }
 
+        // --- REINSERCIÓN DE LA FUNCIÓN GLOBAL CORRECTA ---
+        function validarBtnVentaEvento() {
+            const btn = document.getElementById('btn-guardar-venta-evento');
+            if(!btn) return;
+            const selectVentaAlumno = document.getElementById('venta-evento-alumno');
+            const alId = selectVentaAlumno ? selectVentaAlumno.value : '';
+            
+            // Verifica que existan tanto el ID del alumno como el paquete seleccionado
+            if(alId && window.paqueteSeleccionadoObj) {
+                btn.disabled = false; 
+                btn.className = "w-full bg-indigo-600 text-white py-3 px-4 rounded-xl font-bold hover:bg-indigo-700 shadow-md transition-all flex justify-center items-center gap-2";
+            } else {
+                btn.disabled = true; 
+                btn.className = "w-full bg-slate-300 text-slate-500 py-3 px-4 rounded-xl font-bold transition-all cursor-not-allowed flex justify-center items-center gap-2";
+            }
+        }
+
+        function actualizarSelectEventos() {
+            const selectEv = document.getElementById('venta-evento-select');
+            if(!selectEv) return;
+            selectEv.innerHTML = '<option value="">Seleccione un evento...</option>';
+            localEventos.filter(e => e.estado === 'activo').forEach(ev => {
+                selectEv.innerHTML += `<option value="${ev.id}">${ev.concepto} (${ev.fecha})</option>`;
+            });
+        }
+
         function renderTesoreriaSelectors() {
             const selectAlumno = document.getElementById('pago-alumno');
             if (selectAlumno) {
@@ -1793,7 +1821,7 @@
                         }
                     };
                 });
-            });
+            }
 
             // === EVENTOS TABLA ALUMNOS ===
             const listAlu = document.getElementById('lista-alumnos');
@@ -2110,7 +2138,7 @@
             if(formAgPag) {
                 formAgPag.onsubmit = (e) => {
                     e.preventDefault();
-                    const data = { id: document.getElementById('pago-id-edit').value || generateId(), alumnoId: document.getElementById('pago-alumno').value, fecha: document.getElementById('pago-fecha').value, conceptos: [...pagoConceptosTemp], metodosDePago: [...pagoMetodosTemp], total: pagoConceptosTemp.reduce((s, c) => s + c.monto, 0), notas: document.getElementById('pago-notas').value, estado: 'activo' };
+                    const data = { id: document.getElementById('pago-id-edit').value || generateId(), alumnoId: document.getElementById('pago-alumno').value, fecha: document.getElementById('pago-fecha').value, conceptos: [...pagoConceptosTemp], metodosDePago: [...pagoMetodosTemp], total: pagoConceptosTemp.reduce((s, c) => s + c.monto, 0), notas: document.getElementById('pago-notes').value, estado: 'activo' };
                     const idx = localPagos.findIndex(p => p.id === data.id);
                     if(idx > -1) localPagos[idx] = data; else localPagos.push(data);
                     saveData('pagos', localPagos);
@@ -2130,7 +2158,7 @@
                     }
                     if (editBtn && !editBtn.disabled) {
                         const pago = localPagos.find(p => p.id === editBtn.dataset.id);
-                        document.getElementById('pago-id-edit').value = pago.id; document.getElementById('pago-alumno').value = pago.alumnoId; document.getElementById('pago-fecha').value = pago.fecha; document.getElementById('pago-notas').value = pago.notas || '';
+                        document.getElementById('pago-id-edit').value = pago.id; document.getElementById('pago-alumno').value = pago.alumnoId; document.getElementById('pago-fecha').value = pago.fecha; document.getElementById('pago-notes').value = pago.notas || '';
                         pagoConceptosTemp = [...pago.conceptos]; pagoMetodosTemp = [...pago.metodosDePago]; renderConceptosPago(); renderMetodosPago();
                         document.getElementById('btn-cancelar-pago-edit').classList.remove('hidden'); document.getElementById('form-pago-title').innerHTML = '<i class="fas fa-edit text-amber-500"></i> Editando Cobro';
                     }
