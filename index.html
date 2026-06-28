@@ -787,18 +787,33 @@
             </section>
 
             <section id="content-acerca" class="content-section">
-                <div class="bg-white p-12 rounded-3xl shadow-sm border border-slate-200 max-w-3xl mx-auto text-center mt-10">
-                    <div class="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-graduation-cap text-5xl text-indigo-500"></i>
+                <div class="max-w-5xl mx-auto mt-8 space-y-8">
+                    <div class="bg-slate-950 rounded-3xl shadow-2xl border border-slate-800 overflow-hidden">
+                        <img
+                            src="assets/FIXTECH.png"
+                            alt="FixTech Software Solutions"
+                            class="w-full h-auto block"
+                            loading="lazy"
+                            onerror="this.style.display='none'; document.getElementById('fixtech-img-error').classList.remove('hidden');"
+                        >
+                        <div id="fixtech-img-error" class="hidden p-6 text-center text-amber-200 bg-slate-900 border-t border-slate-800">
+                            No se encontró la imagen <strong>assets/FIXTECH.png</strong>. Verifica que esté subida en GitHub con ese nombre exacto.
+                        </div>
                     </div>
-                    <h2 class="text-3xl font-black text-slate-800 mb-4">Control Escolar Pro</h2>
-                    <p class="text-slate-500 text-lg mb-8 leading-relaxed">
-                        Sistema integral de gestión educativa optimizado para velocidad, eficiencia y diseño moderno. Sincronización en la nube con Google Sheets.
-                    </p>
-                    <div class="bg-slate-50 rounded-2xl p-6 inline-block text-left border border-slate-100">
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Desarrollo y Diseño UI/UX</p>
-                        <h4 class="text-xl font-bold text-indigo-900">Arturo Palacios González</h4>
-                        <p class="text-slate-600 font-medium">Lic. en Intervención Educativa</p>
+
+                    <div class="bg-white p-8 md:p-10 rounded-3xl shadow-sm border border-slate-200 text-center">
+                        <div class="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-5">
+                            <i class="fas fa-graduation-cap text-3xl text-indigo-500"></i>
+                        </div>
+                        <h2 class="text-3xl font-black text-slate-800 mb-4">Control Escolar Pro</h2>
+                        <p class="text-slate-500 text-lg mb-8 leading-relaxed max-w-3xl mx-auto">
+                            Sistema integral de gestión educativa optimizado para velocidad, eficiencia y diseño moderno. Sincronización en la nube con Google Sheets.
+                        </p>
+                        <div class="bg-slate-50 rounded-2xl p-6 inline-block text-left border border-slate-100">
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Desarrollo y Diseño UI/UX</p>
+                            <h4 class="text-xl font-bold text-indigo-900">FixTech Software Solutions</h4>
+                            <p class="text-slate-600 font-medium">Innovate. Create. Engineer.</p>
+                        </div>
                     </div>
                 </div>
             </section>
